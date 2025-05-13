@@ -1,1 +1,1 @@
-# PIC-DataSci-project
+# PIS-DataSci-project
