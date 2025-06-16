@@ -54,5 +54,3 @@ class Journal(IdentifiableEntity):
     
     # def getAreas(self):
         # boh
-
-# aggiungere anche handler e uploadhandler ?
