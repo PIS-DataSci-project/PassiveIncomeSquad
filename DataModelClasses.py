@@ -16,6 +16,19 @@ class IdentifiableEntity:
         ListIDS.append(self.identifier)
         return ListIDS
 
+class Category(IdentifiableEntity):
+    def __init__(self, identifier, quartile):
+        super().__init__(identifier)
+        self.quartile = quartile
+        self.identifier = identifier
+    
+    def getQuartile(self):
+        return self.quartile
+
+class Area(IdentifiableEntity):
+    def __init__(self, identifier):
+        super().__init__(identifier)
+        self.identifier = identifier
 
 class Journal(IdentifiableEntity):
     def __init__(self, identifier, title, language, publisher, seal, license, apc):
