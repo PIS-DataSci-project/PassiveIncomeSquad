@@ -1,0 +1,114 @@
+from sqlite3 import connect
+import json
+import pandas as pd
+
+class Handler:
+    def __init__(self, dbPathOrUrl=''):
+        self.dbPathOrUrl = dbPathOrUrl
+
+    def getDbPathOrUrl(self):
+        return self.dbPathOrUrl
+
+    def setDbPathOrUrl(self, pathOrUrl):
+        if pathOrUrl:
+            self.dbPathOrUrl = pathOrUrl
+            return True
+        return False
+
+class CategoryUploadHandler(Handler):
+    def pushDataToDb(self, path):
+        if not path.endswith('.json'):
+            print("Only JSON files supported")
+            return False
+        
+        try:
+            # Load data
+            with open(path, 'r', encoding='utf-8') as f:
+                scimago_data = json.load(f)
+            
+            # Prepare data containers
+            identifiers = []
+            categories = []
+            areas = []
+            
+            # Process each item
+            for item in scimago_data:
+                # Extract identifiers
+                if 'identifiers' in item:
+                    identifiers.extend(item['identifiers'])
+                
+                # Extract categories
+                if 'categories' in item:
+                    for category in item['categories']:
+                        cat_name = category.get('id', 'Unknown')
+                        quartile = category.get('quartile', 'N/A')
+                        categories.append((cat_name, quartile))
+                
+                # Extract research areas
+                if 'areas' in item:
+                    areas.extend(item['areas'])
+            
+            # Create DataFrames (no need to remove duplicates)
+            identifiers_df = pd.DataFrame(identifiers, columns=['identifier_value'])
+            categories_df = pd.DataFrame(categories, columns=['category_name', 'quartile'])
+            areas_df = pd.DataFrame(areas, columns=['area_name'])
+            
+            # Connect to database
+            conn = connect(self.dbPathOrUrl)
+            
+            # Create tables with UNIQUE constraints
+            conn.execute('''
+            CREATE TABLE IF NOT EXISTS identifiers (
+                identifier_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                identifier_value TEXT NOT NULL UNIQUE
+            )
+            ''')
+            
+            conn.execute('''
+            CREATE TABLE IF NOT EXISTS categories (
+                category_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                category_name TEXT NOT NULL,
+                quartile TEXT NOT NULL,
+                UNIQUE(category_name, quartile)
+            )
+            ''')
+            
+            conn.execute('''
+            CREATE TABLE IF NOT EXISTS areas (
+                area_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                area_name TEXT NOT NULL UNIQUE
+            )
+            ''')
+            
+            # Insert data - UNIQUE constraints will handle duplicates
+            identifiers_df.to_sql('identifiers', conn, if_exists='replace', index=False)
+            categories_df.to_sql('categories', conn, if_exists='replace', index=False)
+            areas_df.to_sql('areas', conn, if_exists='replace', index=False)
+            
+            # Commit changes
+            conn.commit()
+            conn.close()
+            
+            # Print results
+            print("Data import completed")
+            return True
+        
+        except Exception as e:
+            print("Error processing data:", str(e))
+            return False
+
+
+# Test the implementation
+if __name__ == "__main__":
+    # Create upload handler
+    handler = CategoryUploadHandler()
+    
+    # Set database path
+    handler.setDbPathOrUrl("scimago_data.db")
+    
+    # Process JSON file
+    json_file = 'G:/1申请文件/意大利/slide/Data Science/scimago.json'
+    if handler.pushDataToDb(json_file):
+        print("Data import successful")
+    else:
+        print("Data import failed")
