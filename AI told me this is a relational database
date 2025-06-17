@@ -1,0 +1,89 @@
+import sqlite3
+import json
+
+# 读取JSON数据
+with open('G:/1申请文件/意大利/slide/Data Science/scimago.json', 'r', encoding='utf-8') as f:
+    data = json.load(f)
+
+# 连接到SQLite数据库（如果不存在则创建）
+conn = sqlite3.connect('scimago.db')
+cursor = conn.cursor()
+
+# 创建表
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS journals (
+    journal_id INTEGER PRIMARY KEY AUTOINCREMENT
+)
+''')
+
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS identifiers (
+    issn_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    journal_id INTEGER,
+    issn TEXT,
+    FOREIGN KEY (journal_id) REFERENCES journals(journal_id)
+)
+''')
+
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS categories (
+    category_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    journal_id INTEGER,
+    category_name TEXT,
+    quartile TEXT,
+    FOREIGN KEY (journal_id) REFERENCES journals(journal_id)
+)
+''')
+
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS areas (
+    area_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    journal_id INTEGER,
+    area_name TEXT,
+    FOREIGN KEY (journal_id) REFERENCES journals(journal_id)
+)
+''')
+
+# 插入数据
+for journal in data:
+    try:
+        # 插入期刊并获取ID
+        cursor.execute('INSERT INTO journals DEFAULT VALUES')
+        journal_id = cursor.lastrowid
+        
+        # 插入标识符
+        for issn in journal.get('identifiers', []):
+            cursor.execute(
+                'INSERT INTO identifiers (journal_id, issn) VALUES (?, ?)',
+                (journal_id, issn)
+            )
+        
+        # 插入类别 - 使用get()方法避免KeyError
+        for category in journal.get('categories', []):
+            category_name = category.get('id', 'Unknown')
+            quartile = category.get('quartile', None)  # 如果缺少quartile，设为None
+            
+            cursor.execute(
+                'INSERT INTO categories (journal_id, category_name, quartile) VALUES (?, ?, ?)',
+                (journal_id, category_name, quartile)
+            )
+        
+        # 插入领域
+        for area in journal.get('areas', []):
+            cursor.execute(
+                'INSERT INTO areas (journal_id, area_name) VALUES (?, ?)',
+                (journal_id, area)
+            )
+            
+    except Exception as e:
+        print(f"处理期刊时出错: {journal.get('identifiers', ['未知ISSN'])}")
+        print(f"错误信息: {str(e)}")
+        conn.rollback()  # 回滚当前期刊的事务
+        continue  # 跳过当前期刊继续处理下一个
+
+# 提交更改并关闭连接
+conn.commit()
+conn.close()
+
+print("数据库已成功创建：scimago.db")
+print(f"共处理了 {len(data)} 个期刊记录")
