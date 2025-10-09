@@ -4,7 +4,7 @@ from rdflib import Graph, URIRef, RDF, Literal
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from Entities import *
 
-class Handler: 
+class Handler: # CLAUDIA 
     def __init__(self, dbPathOrUrl=None):
         self.dbPathOrUrl = dbPathOrUrl
 
@@ -14,7 +14,8 @@ class Handler:
     def setdbPathOrUrl(self, dbPathOrUrl): # enables to set a new path or URL for the database to handle.
         if dbPathOrUrl.strip():
             self.dbPathOrUrl = dbPathOrUrl
-            return True # CAPIRE 
+            return True # ????????? 
         else:
             return False
+
 
