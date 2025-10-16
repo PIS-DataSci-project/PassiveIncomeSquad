@@ -16,6 +16,6 @@ class Handler: # CLAUDIA
             self.dbPathOrUrl = dbPathOrUrl
             return True # ????????? 
         else:
-            return False
-
-
+            return False 
+        
+        # PROVA 
