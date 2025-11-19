@@ -3,7 +3,6 @@ from pandas import read_csv, DataFrame
 from rdflib import Graph, URIRef, RDF, Literal
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from Entities import *
-from DataModelClasses import *
 
 # URIs of the resources 
 
@@ -90,3 +89,4 @@ class JournalUploadHandler(UploadHandler): # ???
             for triple in myGraph.triples((None, None, None)):
                 store.add(triple)
             store.close()
+
