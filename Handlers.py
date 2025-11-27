@@ -17,10 +17,10 @@ Journal = URIRef("https://schema.org/Periodical")
 title = URIRef("https://schema.org/title")
 identifier = URIRef("http://schema.org/issn") 
 # EISSN = # issn ? # custom ? # URIRef("https://schema.org/identifier") # nel file scimago stanno insieme
-language: URIRef("http://schema.org/Language")  # type: ignore
-publisher: URIRef("http://schema.org/publishedBy") # type: ignore #publisher? 
+language = URIRef("http://schema.org/Language")  # type: ignore
+publisher = URIRef("http://schema.org/publishedBy") # type: ignore #publisher? 
 # publisher: URIRef("http://schema.org/publisher") 
-seal: URIRef("https://schema.org/award") # type: ignore # BOOLEAN 
+seal = URIRef("https://schema.org/award") # type: ignore # BOOLEAN 
 license = URIRef("https://schema.org/license")
 apc = URIRef("https://schema.org/---") # ?? BOOLEAN
 
@@ -43,14 +43,14 @@ class Handler: # CLAUDIA
         else:
             return False 
         
-class UploadHandler(Handler):
+class UploadHandler(Handler): # CLAUDIA
     def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
 
     def pushDataToDb(self, path):
         raise  # boh? 
     
-class JournalUploadHandler(UploadHandler): # ??? 
+class JournalUploadHandler(UploadHandler): # CLAUDIA 
     def __init__(self, dbPathOrUrl=None):
         super().__init__(dbPathOrUrl)
 
@@ -89,4 +89,3 @@ class JournalUploadHandler(UploadHandler): # ???
             for triple in myGraph.triples((None, None, None)):
                 store.add(triple)
             store.close()
-
