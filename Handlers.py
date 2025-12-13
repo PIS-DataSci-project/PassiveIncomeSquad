@@ -7,22 +7,18 @@ from Entities import *
 # URIs of the resources 
 
 baseUrl = "https://github.com/PassiveIncomeSquad/PIS-DataSci-project"
-# variable that is my base url: every row represents an entity (=journal) -> i need to assign an iri to represent 
-# that specific journal
 
 Journal = URIRef("https://schema.org/Periodical") 
 
 # attributes 
 
 title = URIRef("https://schema.org/title")
-identifier = URIRef("http://schema.org/issn") 
-# EISSN = # issn ? # custom ? # URIRef("https://schema.org/identifier") # nel file scimago stanno insieme
-language = URIRef("http://schema.org/Language")  # type: ignore
-publisher = URIRef("http://schema.org/publishedBy") # type: ignore #publisher? 
-# publisher: URIRef("http://schema.org/publisher") 
+identifier = URIRef("http://schema.org/identifier") 
+language = URIRef("http://schema.org/inLanguage")  # type: ignore
+publisher = URIRef("http://schema.org/publishedBy") 
 seal = URIRef("https://schema.org/award") # type: ignore # BOOLEAN 
 license = URIRef("https://schema.org/license")
-apc = URIRef("https://schema.org/---") # ?? BOOLEAN
+apc = URIRef("https://schema.org/processingFee") # Article Processing Charge
 
 # relations
 
@@ -74,11 +70,15 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
                         })
             for idx, row in journals.iterrows(): # iterating every row the doc because it's a df
                 localId = "journal-" + str(idx) # the url of the local entity we are going to create
-                subj = URIRef(baseUrl + "/" + localId) # uriref = base url + local id: unique url
+                subj = URIRef(baseUrl + localId) # uriref = base url + local id: unique url
                 myGraph.add((subj, RDF.type, Journal))
                 myGraph.add((subj, title, Literal(row["Journal title"]))) # tuple of 3 elements: subj, pred, obj = ONE input, not three
-                myGraph.add((subj, identifier, Literal(row["Journal ISSN (print version)"]))) #o internalId(row["identifiers"])))
-                # myGraph.add((subj, eissn, Literal(row["Journal EISSN (online version)"])))
+                # Combine ISSN and EISSN into one identifier
+                issn = row["Journal ISSN (print version)"].strip() if row["Journal ISSN (print version)"] else ""
+                eissn = row["Journal EISSN (online version)"].strip() if row["Journal EISSN (online version)"] else ""
+                combined_identifier = "; ".join(filter(None, [issn, eissn]))
+                if combined_identifier:
+                    myGraph.add((subj, identifier, Literal(combined_identifier)))
                 myGraph.add((subj, language, Literal(row["Languages in which the journal accepts manuscripts"])))
                 myGraph.add((subj, publisher, Literal(row["Publisher"])))
                 myGraph.add((subj, seal, Literal(row["DOAJ Seal"])))
