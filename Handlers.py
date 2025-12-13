@@ -1,6 +1,5 @@
-import pandas as pd
 from pandas import read_csv, DataFrame
-from rdflib import Graph, URIRef, RDF, Literal
+from rdflib import Graph, URIRef, RDF, Literal, XSD
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from Entities import *
 
@@ -47,16 +46,22 @@ class UploadHandler(Handler):
         pass
 
     
-class JournalUploadHandler(UploadHandler):
+class JournalUploadHandler(UploadHandler): # CLAUDIA
     """Uploads journal data from CSV to RDF triplestore"""
     def __init__(self, dbPathOrUrl=None):
         super().__init__()
         if dbPathOrUrl:
             self.setdbPathOrUrl(dbPathOrUrl)
     
+    def _normalize_bool(self, value):
+        """Convert Yes/No text values to boolean (case-insensitive)"""
+        if isinstance(value, str):
+            return value.strip().lower() == "yes"
+        return bool(value)
+    
     def createGraph(self, path):
         """Create RDF graph from CSV file"""
-        myGraph = Graph()
+        g = Graph()
         journals = read_csv(path, keep_default_na=False,
             dtype={
                 "Journal title": "string",
@@ -71,26 +76,30 @@ class JournalUploadHandler(UploadHandler):
         for idx, row in journals.iterrows():
             localId = "journal-" + str(idx)
             subj = URIRef(baseUrl + "/" + localId)
-            myGraph.add((subj, RDF.type, Journal))
-            myGraph.add((subj, title, Literal(row["Journal title"])))
+            g.add((subj, RDF.type, Journal))
+            g.add((subj, title, Literal(row["Journal title"])))
+            # Combine ISSN and EISSN
             issn = row["Journal ISSN (print version)"].strip()
             eissn = row["Journal EISSN (online version)"].strip()
             issn_and_eissn = "; ".join(filter(None, [issn, eissn]))
             if issn_and_eissn:
-                myGraph.add((subj, identifier, Literal(issn_and_eissn)))
-            myGraph.add((subj, language, Literal(row["Languages in which the journal accepts manuscripts"])))
-            myGraph.add((subj, publisher, Literal(row["Publisher"])))
-            myGraph.add((subj, seal, Literal(row["DOAJ Seal"])))
-            myGraph.add((subj, license, Literal(row["Journal license"])))
-            myGraph.add((subj, apc, Literal(row["APC"]))) 
-        return myGraph
-
+                g.add((subj, identifier, Literal(issn_and_eissn)))
+            g.add((subj, language, Literal(row["Languages in which the journal accepts manuscripts"])))
+            g.add((subj, publisher, Literal(row["Publisher"])))
+            g.add((subj, license, Literal(row["Journal license"])))
+            # Normalize boolean values
+            seal_bool = self._normalize_bool(row["DOAJ Seal"])
+            apc_bool = self._normalize_bool(row["APC"])
+            g.add((subj, seal, Literal(seal_bool, datatype=XSD.boolean)))
+            g.add((subj, apc, Literal(apc_bool, datatype=XSD.boolean)))
+        return g
+    
     def pushDataToDb(self, path):
+        g = self.createGraph(path)
         store = SPARQLUpdateStore()
         store.open((self.dbPathOrUrl, self.dbPathOrUrl))
         # Upload all triples to SPARQL store
-        for triple in myGraph.triples((None, None, None)):
+        for triple in g.triples((None, None, None)):
             store.add(triple)
         store.close()
-
 
