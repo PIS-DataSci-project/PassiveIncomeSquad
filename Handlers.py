@@ -89,6 +89,3 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
             for triple in myGraph.triples((None, None, None)):
                 store.add(triple)
             store.close()
-            
-def hi():
-    print("hi")
