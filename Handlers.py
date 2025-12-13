@@ -44,7 +44,7 @@ class UploadHandler(Handler): # CLAUDIA
         super().__init__(dbPathOrUrl)
 
     def pushDataToDb(self, path):
-        raise  # boh? 
+        pass  
     
 class JournalUploadHandler(UploadHandler): # CLAUDIA 
     def __init__(self, dbPathOrUrl=None):
@@ -89,3 +89,6 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
             for triple in myGraph.triples((None, None, None)):
                 store.add(triple)
             store.close()
+            
+def hi():
+    print("hi")
