@@ -6,6 +6,7 @@ class QueryHandler(Handler):
 def __init__(self, dbPathOrUrl: str):
     super().__init__(dbPathOrUrl)
 
-def getById(self, entity_id: str) -> pd.DataFrame:
-        pass
-  
+def getById(self, entity_id: str) -> pd.DataFrame:    
+     raise NotImplementedError(
+         "getById() must be implemented in subclasses"
+     )
