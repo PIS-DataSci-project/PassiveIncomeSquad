@@ -1,3 +1,6 @@
+from logging import Handler
+import pandas as pd 
+from Entities import *
 class QueryHandler(Handler):
  """
  Base class for executing queries against a database.
