@@ -3,20 +3,6 @@ from rdflib import Graph, URIRef, RDF, Literal, XSD
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from Entities import *
 
-# URI Definitions
-baseUrl = "https://github.com/PassiveIncomeSquad/PIS-DataSci-project"
-
-# Journal type and properties
-Journal = URIRef("https://schema.org/Periodical") 
-
-title = URIRef("https://schema.org/title")
-identifier = URIRef("http://schema.org/identifier") 
-language = URIRef("http://schema.org/inLanguage")
-publisher = URIRef("http://schema.org/publishedBy") 
-seal = URIRef("https://schema.org/award")
-license = URIRef("https://schema.org/license")
-apc = URIRef("https://schema.org/processingFee")
-
 
 class Handler:
     """Base handler for database connection management"""
@@ -61,6 +47,18 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
     
     def createGraph(self, path):
         """Create RDF graph from CSV file"""
+        # URI Definitions
+        baseUrl = "https://github.com/PassiveIncomeSquad/PIS-DataSci-project"
+        # Journal type and properties
+        Journal = URIRef("https://schema.org/Periodical") 
+        title = URIRef("https://schema.org/title")
+        identifier = URIRef("http://schema.org/identifier") 
+        language = URIRef("http://schema.org/inLanguage")
+        publisher = URIRef("http://schema.org/publishedBy") 
+        seal = URIRef("https://schema.org/award")
+        license = URIRef("https://schema.org/license")
+        apc = URIRef("https://schema.org/processingFee")
+        # Create RDF graph
         g = Graph()
         journals = read_csv(path, keep_default_na=False,
             dtype={
@@ -102,4 +100,3 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         for triple in g.triples((None, None, None)):
             store.add(triple)
         store.close()
-
