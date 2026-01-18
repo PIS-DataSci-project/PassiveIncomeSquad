@@ -104,14 +104,12 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         store.close()
 
 class QueryHandler(Handler): #Polina
- """
- Base class for executing queries against a database.
- """
+  """Base class for executing queries against a database."""
  
-def __init__(self, dbPathOrUrl: str):
-    super().__init__(dbPathOrUrl)
+  def __init__(self, dbPathOrUrl: str):
+      super().__init__(dbPathOrUrl)
 
-def getById(self, entity_id: str) -> pd.DataFrame:    
+  def getById(self, entity_id: str) -> pd.DataFrame:    
      raise NotImplementedError(
          "getById() must be implemented in subclasses"
      )
