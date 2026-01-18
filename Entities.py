@@ -32,7 +32,11 @@ class Journal(IdentifiableEntity): # CLAUDIA
         return self.publisher
     
     def getLanguage(self): # lista # vd faq sulle lingue
-        return self.language
+        listLangs = list()
+        if type(self.language) == list:
+            return self.language
+        listLangs.append(self.language)
+        return listLangs
 
     def getDOAJSeal(self): # boolean
         return self.seal
