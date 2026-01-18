@@ -1,11 +1,8 @@
 class IdentifiableEntity(object): # CLAUDIA 
-    def __init__(self, identifier): 
+    def __init__(self, identifiers): 
         self.id = list()
-        if isinstance(identifier, list):
-            for id in identifier:
-                self.id.append(id)
-        else:
-            self.id.append(identifier)
+        for id in identifiers:
+            self.id.append(id)
              
     def getIds(self):
         listIds = list()
@@ -16,7 +13,7 @@ class IdentifiableEntity(object): # CLAUDIA
 
 #subclass1 of IdentifiableEntity    
 class Journal(IdentifiableEntity): # CLAUDIA 
-    def __init__(self, identifier, title, language, publisher, seal, license, apc, categories, areas):
+    def __init__(self, identifiers, title, language, publisher, seal, license, apc, categories, areas):
         self.title = title
         self.publisher = publisher
         self.language = language
@@ -25,7 +22,7 @@ class Journal(IdentifiableEntity): # CLAUDIA
         self.apc = True if apc else False
         self.categories = categories 
         self.areas = areas
-        super().__init__(identifier)
+        super().__init__(identifiers)
         
     def getTitle(self):
         return self.title
@@ -67,9 +64,9 @@ class Journal(IdentifiableEntity): # CLAUDIA
 
 #subclass2 of IdentifiableEntity    
 class Category(IdentifiableEntity): # FAHMIDA
-    def __init__(self, identifier, quartile):
+    def __init__(self, identifiers, quartile):
         self.quartile = quartile
-        super().__init__(identifier)
+        super().__init__(identifiers)
 
 
 #method to get quartile
