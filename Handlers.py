@@ -108,8 +108,8 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
 class QueryHandler(Handler): #Polina
   #Base class for executing queries against a database.
  
-  def __init__(self, dbPathOrUrl: str):
-      super().__init__(dbPathOrUrl)
+  def __init__(self):
+        super().__init__()
 
   def getById(self, entity_id: str) -> pd.DataFrame:    
      raise NotImplementedError(
