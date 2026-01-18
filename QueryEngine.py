@@ -1,1 +1,5 @@
-#FullQueryEngine - We need to split the methods
+#We need to split the methods
+
+#Superclass --> BasicQueryEngine(object)
+
+#Subclass --> FullQueryEngine(BasicQueryEngine)
