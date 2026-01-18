@@ -110,24 +110,6 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
 
 #CategoryUploadHandler - River HEREE 
 #JSON --> DataFrame --> DB
-
-
-
-#---------------------------------------------------------------------------------------------
-
-#superclass QueryHandler
-class QueryHandler(Handler): #Polina
-  #Base class for executing queries against a database.
- 
-  def __init__(self):
-        super().__init__()
-
-  def getById(self, entity_id: str) -> pd.DataFrame:    
-     raise NotImplementedError(
-         "getById() must be implemented in subclasses"
-     )
-
-#JournalQueryHandler - Polina HERE
 class CategoryUploadHandler(UploadHandler): # River
     def __init__(self, dbPathOrUrl=None):
         super().__init__()
@@ -200,6 +182,24 @@ class CategoryUploadHandler(UploadHandler): # River
         conn.commit()
         conn.close()
         return True
+
+
+#---------------------------------------------------------------------------------------------
+
+#superclass QueryHandler
+class QueryHandler(Handler): #Polina
+  #Base class for executing queries against a database.
+ 
+  def __init__(self):
+        super().__init__()
+
+  def getById(self, entity_id: str) -> pd.DataFrame:    
+     raise NotImplementedError(
+         "getById() must be implemented in subclasses"
+     )
+
+#JournalQueryHandler - Polina HERE
+
 #CategoryQueryHandler
 # Subclass of QueryHandler - Fahmy  HERE--> i don't open file or normalize json here, i just query the DB. NO PANDAS LOADING HERE!
 class CategoryQueryHandler(QueryHandler):  #Fahmy
