@@ -100,3 +100,5 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         for triple in g.triples((None, None, None)):
             store.add(triple)
         store.close()
+
+#CategoryUploadHandler - River
