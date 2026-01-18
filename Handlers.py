@@ -188,7 +188,7 @@ class CategoryUploadHandler(UploadHandler): # River
 
 #---------------------------------------------------------------------------------------------
 
-#superclass QueryHandler
+#subclass of Handler
 class QueryHandler(Handler): #Polina
   #Base class for executing queries against a database.
  
