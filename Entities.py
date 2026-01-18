@@ -4,8 +4,6 @@ class IdentifiableEntity(object): # CLAUDIA
             self.id = []
             for id in identifier:
                 self.id.append(id)
-            self.identifier = self.id
-        else:
             self.identifier = identifier
              
     def getIds(self):
