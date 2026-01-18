@@ -1,4 +1,5 @@
 import pandas as pd 
+import json 
 from pandas import read_csv, DataFrame
 from rdflib import Graph, URIRef, RDF, Literal, XSD
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
