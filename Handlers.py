@@ -1,3 +1,4 @@
+import pandas as pd 
 from pandas import read_csv, DataFrame
 from rdflib import Graph, URIRef, RDF, Literal, XSD
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
@@ -100,5 +101,18 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         for triple in g.triples((None, None, None)):
             store.add(triple)
         store.close()
+
+class QueryHandler(Handler): #Polina
+ """
+ Base class for executing queries against a database.
+ """
+ 
+def __init__(self, dbPathOrUrl: str):
+    super().__init__(dbPathOrUrl)
+
+def getById(self, entity_id: str) -> pd.DataFrame:    
+     raise NotImplementedError(
+         "getById() must be implemented in subclasses"
+     )
 
 #CategoryUploadHandler - River
