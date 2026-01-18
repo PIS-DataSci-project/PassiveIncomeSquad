@@ -13,26 +13,31 @@ class IdentifiableEntity(object): # CLAUDIA
 
 #subclass1 of IdentifiableEntity    
 class Journal(IdentifiableEntity): # CLAUDIA 
-    def __init__(self, identifiers, title, language, publisher, seal, license, apc, categories, areas):
+    def __init__(self, identifiers, title, language, seal, license, apc, publisher=None, categories=None, areas=None):
         self.title = title
         self.publisher = publisher
         self.language = language
         self.seal = True if seal else False
         self.license = license
         self.apc = True if apc else False
-        self.categories = categories 
-        self.areas = areas
+        self.categories = categories if categories is not None else []
+        self.areas = areas if areas is not None else []
         super().__init__(identifiers)
         
     def getTitle(self):
         return self.title
 
-    def getPublisher(self):
+    def getPublisher(self): 
         return self.publisher
     
-    def getLanguage(self): # list
+    def hasPublisher(self, publisher): 
+        if self.publisher == publisher:
+            return True
+        return False
+    
+    def getLanguage(self):
         listLangs = list()
-        for lang in self.language.split(","):
+        for lang in self.language:
             listLangs.append(lang)
         listLangs.sort() # sort the list of languages
         return listLangs
@@ -43,20 +48,17 @@ class Journal(IdentifiableEntity): # CLAUDIA
     def getLicense(self):
         return self.license
 
-    def getAPC(self): # boolean
-        return self.apc
-    
     def getCategories(self):
         return self.categories 
-    
-    def getAreas(self): 
-        return self.areas    
     
     def hasCategory(self, category):
         if category in self.categories:
             return True
         return False
     
+    def getAreas(self): 
+        return self.areas    
+        
     def hasArea(self, area): 
         if area in self.areas:
             return True
