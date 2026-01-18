@@ -1,28 +1,30 @@
 class IdentifiableEntity(object): # CLAUDIA 
-    def __init__(self, identifier):
-        if type(identifier) == list:
-            self.id = []
+    def __init__(self, identifier): 
+        self.id = list()
+        if isinstance(identifier, list):
             for id in identifier:
                 self.id.append(id)
+        else:
+            self.id.append(identifier)
              
     def getIds(self):
         listIds = list()
-        if type(self.id) == list:
-            return self.id
-        listIds.append(self.id)
+        for id in self.id:
+            listIds.append(id)
+        listIds.sort() # sort the list of IDs
         return listIds
 
 #subclass1 of IdentifiableEntity    
 class Journal(IdentifiableEntity): # CLAUDIA 
-    def __init__(self, identifier, title, language, publisher, seal, license, apc, hasCategory, hasArea):
+    def __init__(self, identifier, title, language, publisher, seal, license, apc, categories, areas):
         self.title = title
         self.publisher = publisher
         self.language = language
-        self.seal = seal
+        self.seal = True if seal else False
         self.license = license
-        self.apc = apc
-        self.hasCategory = hasCategory
-        self.hasArea = hasArea
+        self.apc = True if apc else False
+        self.categories = categories 
+        self.areas = areas
         super().__init__(identifier)
         
     def getTitle(self):
@@ -31,11 +33,11 @@ class Journal(IdentifiableEntity): # CLAUDIA
     def getPublisher(self):
         return self.publisher
     
-    def getLanguage(self): # lista # vd faq sulle lingue
+    def getLanguage(self): # list
         listLangs = list()
-        if type(self.language) == list:
-            return self.language
-        listLangs.append(self.language)
+        for lang in self.language.split(","):
+            listLangs.append(lang)
+        listLangs.sort() # sort the list of languages
         return listLangs
 
     def getDOAJSeal(self): # boolean
@@ -48,10 +50,20 @@ class Journal(IdentifiableEntity): # CLAUDIA
         return self.apc
     
     def getCategories(self):
-        return self.hasCategory 
+        return self.categories 
     
-    def getAreas(self):
-        return self.hasArea    
+    def getAreas(self): 
+        return self.areas    
+    
+    def hasCategory(self, category):
+        if category in self.categories:
+            return True
+        return False
+    
+    def hasArea(self, area): 
+        if area in self.areas:
+            return True
+        return False
 
 #subclass2 of IdentifiableEntity    
 class Category(IdentifiableEntity): # FAHMIDA
