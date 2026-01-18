@@ -1,21 +1,21 @@
 import pandas as pd 
-import json 
+import json #CHECK IF THIS IS CORRECT OR FROM PANDAS FUNCTION
 from rdflib import Graph, URIRef, RDF, Literal, XSD
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from Entities import *
 
 
-class Handler:
-    """Base handler for database connection management"""
+class Handler(object):
+    #Base handler for database connection management
     def __init__(self):
         self.dbPathOrUrl = ""
 
     def getdbPathOrUrl(self):
-        """Get the current database path or URL"""
+        #Get the current database path or URL
         return self.dbPathOrUrl
 
     def setdbPathOrUrl(self, dbPathOrUrl):
-        """Set and validate database path or URL"""
+        #Set and validate database path or URL
         if dbPathOrUrl and dbPathOrUrl.strip():
             self.dbPathOrUrl = dbPathOrUrl
             return True
@@ -24,30 +24,30 @@ class Handler:
 
         
 class UploadHandler(Handler):
-    """Abstract handler for data upload operations"""
+    #Abstract handler for data upload operations
     def __init__(self):
         super().__init__()
 
     def pushDataToDb(self, path):
-        """Upload data to database - must be implemented by subclasses"""
+        #Upload data to database - must be implemented by subclasses
         pass
 
     
 class JournalUploadHandler(UploadHandler): # CLAUDIA
-    """Uploads journal data from CSV to RDF triplestore"""
+    #Uploads journal data from CSV to RDF triplestore
     def __init__(self, dbPathOrUrl=None):
         super().__init__()
         if dbPathOrUrl:
             self.setdbPathOrUrl(dbPathOrUrl)
     
     def _normalize_bool(self, value):
-        """Convert Yes/No text values to boolean (case-insensitive)"""
+        #Convert Yes/No text values to boolean (case-insensitive)
         if isinstance(value, str):
             return value.strip().lower() == "yes"
         return bool(value)
     
     def createGraph(self, path):
-        """Create RDF graph from CSV file"""
+        #Create RDF graph from CSV file
         # URI Definitions
         baseUrl = "https://github.com/PassiveIncomeSquad/PIS-DataSci-project"
         # Journal type and properties
@@ -102,8 +102,11 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
             store.add(triple)
         store.close()
 
+#CategoryUploadHandler - River HEREE
+
+#superclass QueryHandler
 class QueryHandler(Handler): #Polina
-  """Base class for executing queries against a database."""
+  #Base class for executing queries against a database.
  
   def __init__(self, dbPathOrUrl: str):
       super().__init__(dbPathOrUrl)
@@ -113,4 +116,6 @@ class QueryHandler(Handler): #Polina
          "getById() must be implemented in subclasses"
      )
 
-#CategoryUploadHandler - River
+#JournalQueryHandler - Polina HERE
+
+#CategoryQueryHandler - Fahmy HERE
