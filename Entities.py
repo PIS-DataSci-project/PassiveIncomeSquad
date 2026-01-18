@@ -1,12 +1,12 @@
-class IdentifiableEntity(object): # CLAUDIA #
-    def __init__(self, identifiers):
-        if type(identifiers) == list:
+class IdentifiableEntity(object): # CLAUDIA 
+    def __init__(self, identifier):
+        if type(identifier) == list:
             self.id = []
-            for id in identifiers:
+            for id in identifier:
                 self.id.append(id)
             self.identifier = self.id
         else:
-            self.identifier = identifiers
+            self.identifier = identifier
              
     def getIds(self):
         listIds = list()
