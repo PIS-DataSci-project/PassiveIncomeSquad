@@ -1,4 +1,5 @@
-class IdentifiableEntity(object): # CLAUDIA #
+#superclass
+class IdentifiableEntity(object): # CLAUDIA
     def __init__(self, identifiers):
         if type(identifiers) == list:
             self.id = []
@@ -7,7 +8,8 @@ class IdentifiableEntity(object): # CLAUDIA #
             self.identifier = self.id
         else:
             self.identifier = identifiers
-             
+
+ #method to get the ids
     def getIds(self):
         if type(self.identifier) == list:
             return self.identifier
@@ -15,6 +17,7 @@ class IdentifiableEntity(object): # CLAUDIA #
         ListIds.append(self.identifier)
         return ListIds
 
+#subclass1 of IdentifiableEntity    
 class Journal(IdentifiableEntity): # CLAUDIA 
     def __init__(self, identifier, title, language, publisher, seal, license, apc, hasCategory, hasArea):
         self.title = title
@@ -50,3 +53,18 @@ class Journal(IdentifiableEntity): # CLAUDIA
     
     def getAreas(self):
         return self.hasArea    
+
+#subclass2 of IdentifiableEntity    
+class Category(IdentifiableEntity): # FAHMIDA
+    def __init__(self, identifier, quartile):
+        self.quartile = quartile
+        super().__init__(identifier)
+
+
+#method to get quartile
+    def getQuartile(self):
+        return self.quartile
+
+#subclass3 of IdentifiableEntity    
+class Area(IdentifiableEntity): # FAHMIDA
+    pass
