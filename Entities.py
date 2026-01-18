@@ -1,19 +1,16 @@
-class IdentifiableEntity(object): # CLAUDIA #
+class IdentifiableEntity(object): # CLAUDIA # 
     def __init__(self, identifiers):
         if type(identifiers) == list:
             self.id = []
             for id in identifiers:
                 self.id.append(id)
-            self.identifier = self.id
-        else:
-            self.identifier = identifiers
-             
+            
     def getIds(self):
-        if type(self.identifier) == list:
-            return self.identifier
-        ListIds = list()
-        ListIds.append(self.identifier)
-        return ListIds
+        listIds = list()
+        if type(self.id) == list:
+            return self.id
+        listIds.append(self.id)
+        return listIds
 
 class Journal(IdentifiableEntity): # CLAUDIA 
     def __init__(self, identifier, title, language, publisher, seal, license, apc, hasCategory, hasArea):
