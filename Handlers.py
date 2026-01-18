@@ -128,7 +128,78 @@ class QueryHandler(Handler): #Polina
      )
 
 #JournalQueryHandler - Polina HERE
+class CategoryUploadHandler(UploadHandler): # River
+    def __init__(self, dbPathOrUrl=None):
+        super().__init__()
+        if dbPathOrUrl:
+            self.setdbPathOrUrl(dbPathOrUrl)
 
+    def pushDataToDb(self, path):
+        if not isinstance(path, str) or not path.endswith(".json"):
+            return False
+
+        with open(path, "r", encoding="utf-8") as file_handle:
+            data = json.load(file_handle)
+
+        conn = sqlite3.connect(self.dbPathOrUrl)
+        cur = conn.cursor()
+
+        # Tables
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS categories (
+                category_id TEXT,
+                quartile TEXT,
+                PRIMARY KEY (category_id, quartile)
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS journals (
+                journal_id TEXT PRIMARY KEY
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS journal_categories (
+                journal_id TEXT,
+                category_id TEXT,
+                quartile TEXT,
+                PRIMARY KEY (journal_id, category_id, quartile)
+            )
+            """
+        )
+
+        for record in data:
+            identifiers = record.get("identifiers", [])
+            categories = record.get("categories", [])
+
+            for category in categories:
+                category_id = category.get("id")
+                quartile = category.get("quartile")
+                if not (category_id and quartile):
+                    continue
+
+                cur.execute(
+                    "INSERT OR IGNORE INTO categories VALUES (?, ?)",
+                    (category_id, quartile),
+                )
+
+                for issn in identifiers:
+                    cur.execute(
+                        "INSERT OR IGNORE INTO journals VALUES (?)",
+                        (issn,),
+                    )
+                    cur.execute(
+                        "INSERT OR IGNORE INTO journal_categories VALUES (?, ?, ?)",
+                        (issn, category_id, quartile),
+                    )
+
+        conn.commit()
+        conn.close()
+        return True
 #CategoryQueryHandler
 # Subclass of QueryHandler - Fahmy  HERE--> i don't open file or normalize json here, i just query the DB. NO PANDAS LOADING HERE!
 class CategoryQueryHandler(QueryHandler):  #Fahmy
