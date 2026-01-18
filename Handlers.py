@@ -1,10 +1,16 @@
-import pandas as pd 
-import json #CHECK IF THIS IS CORRECT OR FROM PANDAS FUNCTION
-from rdflib import Graph, URIRef, RDF, Literal, XSD
-from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
+#General imports
 from Entities import *
 
+#For Graph Database
+from rdflib import Graph, URIRef, RDF, Literal, XSD
+from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
+#For Relational Database
+import json
+import pandas as pd 
+
+#---------------------------------------------------------------------------------------------
+#superclass
 class Handler(object):
     #Base handler for database connection management
     def __init__(self): # defines the constructor
@@ -22,7 +28,7 @@ class Handler(object):
         else:
             return False 
 
-        
+#subclass of Handler
 class UploadHandler(Handler):
     #Abstract handler for data upload operations
     def __init__(self):
@@ -32,9 +38,9 @@ class UploadHandler(Handler):
         #Upload data to database - must be implemented by subclasses
         pass
 
-    
+#subclass of UploadHandler
 class JournalUploadHandler(UploadHandler): # CLAUDIA
-    #Uploads journal data from CSV to RDF triplestore
+    #Uploads journal data from CSV to RDF triplestore --> uploads data and tells me where it comes from
     def __init__(self, dbPathOrUrl=None):
         super().__init__()
         if dbPathOrUrl:
@@ -102,7 +108,12 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
             store.add(triple)
         store.close()
 
-#CategoryUploadHandler - River HEREE
+#CategoryUploadHandler - River HEREE 
+#JSON --> DataFrame --> DB
+
+
+
+#---------------------------------------------------------------------------------------------
 
 #superclass QueryHandler
 class QueryHandler(Handler): #Polina
@@ -118,4 +129,24 @@ class QueryHandler(Handler): #Polina
 
 #JournalQueryHandler - Polina HERE
 
-#CategoryQueryHandler - Fahmy HERE
+#CategoryQueryHandler
+# Subclass of QueryHandler - Fahmy  HERE--> i don't open file or normalize json here, i just query the DB. NO PANDAS LOADING HERE!
+class CategoryQueryHandler(QueryHandler):  #Fahmy
+    def __init__(self, dbPathOrUrl=None):
+        super().__init__()
+        if dbPathOrUrl:
+            self.setdbPathOrUrl(dbPathOrUrl)
+
+    def getById(self, category_id: str) -> pd.DataFrame:
+        import sqlite3
+        conn = sqlite3.connect(self.dbPathOrUrl)
+
+        query = """
+        SELECT *
+        FROM categories
+        WHERE category_id = ?
+        """
+
+        df = pd.read_sql_query(query, conn, params=(category_id,))
+        conn.close()
+        return df
