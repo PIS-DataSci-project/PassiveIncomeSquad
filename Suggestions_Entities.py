@@ -1,7 +1,7 @@
 #SUGGEST: Peroni said to be explicit so we should add the superclass (object) to the classes when it is not explicit --> eg. IndentifiableEntity(object) and so the others too if it is not too much
 
 #superclass
-class IdentifiableEntity: # CLAUDIA 
+class IdentifiableEntity(object): # CLAUDIA 
     def __init__(self, identifier): #def __init__ is needed to define the constructor and self is the very first parameter that does a self reference to the object i am trying to create when i run the constructor
         if type(identifier) == list: #when there are 1...* idenifiers he puts in plural and then below and then add for set but here since you decided list you used append right? also is ==list = a =list()?
             self.id = []
