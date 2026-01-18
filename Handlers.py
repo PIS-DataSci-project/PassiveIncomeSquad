@@ -7,7 +7,7 @@ from Entities import *
 
 class Handler(object):
     #Base handler for database connection management
-    def __init__(self):
+    def __init__(self): # defines the constructor
         self.dbPathOrUrl = ""
 
     def getdbPathOrUrl(self):
