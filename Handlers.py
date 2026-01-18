@@ -1,6 +1,5 @@
 import pandas as pd 
 import json 
-from pandas import read_csv, DataFrame
 from rdflib import Graph, URIRef, RDF, Literal, XSD
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from Entities import *
@@ -62,7 +61,7 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         apc = URIRef("https://schema.org/processingFee")
         # Create RDF graph
         g = Graph()
-        journals = read_csv(path, keep_default_na=False,
+        journals = pd.read_csv(path, keep_default_na=False,
             dtype={
                 "Journal title": "string",
                 "Journal ISSN (print version)": "string",  
