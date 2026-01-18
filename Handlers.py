@@ -1,3 +1,4 @@
+#ALL IMPORTS AT THE TOP OF THE FILE
 #General imports
 from Entities import *
 
@@ -7,7 +8,8 @@ from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
 #For Relational Database
 import json
-import pandas as pd 
+import pandas as pd #for JournalUploadHandler
+import sqlite3 #for CategoryQueryHandler
 
 #---------------------------------------------------------------------------------------------
 #superclass
@@ -202,14 +204,13 @@ class QueryHandler(Handler): #Polina
 
 #CategoryQueryHandler
 # Subclass of QueryHandler - Fahmy  HERE--> i don't open file or normalize json here, i just query the DB. NO PANDAS LOADING HERE!
-class CategoryQueryHandler(QueryHandler):  #Fahmy
+class CategoryQueryHandler(QueryHandler): #Fahmy
     def __init__(self, dbPathOrUrl=None):
         super().__init__()
         if dbPathOrUrl:
             self.setdbPathOrUrl(dbPathOrUrl)
 
     def getById(self, category_id: str) -> pd.DataFrame:
-        import sqlite3
         conn = sqlite3.connect(self.dbPathOrUrl)
 
         query = """
