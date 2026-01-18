@@ -1,5 +1,6 @@
 import pandas as pd 
 import json 
+import sqlite3
 from rdflib import Graph, URIRef, RDF, Literal, XSD
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 from Entities import *
@@ -113,4 +114,139 @@ class QueryHandler(Handler): #Polina
          "getById() must be implemented in subclasses"
      )
 
-#CategoryUploadHandler - River
+class CategoryUploadHandler(UploadHandler): # River
+    """Uploads category data from Scimago JSON into a relational DB."""
+    def __init__(self, dbPathOrUrl=None):
+        super().__init__()
+        if dbPathOrUrl:
+            self.setdbPathOrUrl(dbPathOrUrl)
+
+    def pushDataToDb(self, path):
+        if not path.endswith(".json"):
+            return False
+
+        with open(path, "r", encoding="utf-8") as file_handle:
+            scimago_data = json.load(file_handle)
+
+        conn = sqlite3.connect(self.dbPathOrUrl)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS journals (
+                journal_id TEXT PRIMARY KEY
+            )
+            """
+        )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS categories (
+                category_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                category_name TEXT NOT NULL,
+                quartile TEXT NOT NULL,
+                UNIQUE(category_name, quartile)
+            )
+            """
+        )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS areas (
+                area_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                area_name TEXT NOT NULL UNIQUE
+            )
+            """
+        )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS journal_categories (
+                journal_id TEXT NOT NULL,
+                category_id INTEGER NOT NULL,
+                PRIMARY KEY (journal_id, category_id),
+                FOREIGN KEY (journal_id) REFERENCES journals(journal_id),
+                FOREIGN KEY (category_id) REFERENCES categories(category_id)
+            )
+            """
+        )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS journal_areas (
+                journal_id TEXT NOT NULL,
+                area_id INTEGER NOT NULL,
+                PRIMARY KEY (journal_id, area_id),
+                FOREIGN KEY (journal_id) REFERENCES journals(journal_id),
+                FOREIGN KEY (area_id) REFERENCES areas(area_id)
+            )
+            """
+        )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS category_areas (
+                category_id INTEGER NOT NULL,
+                area_id INTEGER NOT NULL,
+                PRIMARY KEY (category_id, area_id),
+                FOREIGN KEY (category_id) REFERENCES categories(category_id),
+                FOREIGN KEY (area_id) REFERENCES areas(area_id)
+            )
+            """
+        )
+
+        for item in scimago_data:
+            identifiers = item.get("identifiers", [])
+            categories = item.get("categories", [])
+            areas = item.get("areas", [])
+
+            area_ids = []
+            for area_name in areas:
+                if area_name:
+                    cursor.execute(
+                        "INSERT OR IGNORE INTO areas (area_name) VALUES (?)",
+                        (area_name,),
+                    )
+                    cursor.execute(
+                        "SELECT area_id FROM areas WHERE area_name = ?",
+                        (area_name,),
+                    )
+                    area_ids.append(cursor.fetchone()[0])
+
+            category_ids = []
+            for category in categories:
+                category_name = category.get("id")
+                quartile = category.get("quartile")
+                if category_name and quartile:
+                    cursor.execute(
+                        "INSERT OR IGNORE INTO categories (category_name, quartile) VALUES (?, ?)",
+                        (category_name, quartile),
+                    )
+                    cursor.execute(
+                        "SELECT category_id FROM categories WHERE category_name = ? AND quartile = ?",
+                        (category_name, quartile),
+                    )
+                    category_id = cursor.fetchone()[0]
+                    category_ids.append(category_id)
+                    for area_id in area_ids:
+                        cursor.execute(
+                            "INSERT OR IGNORE INTO category_areas (category_id, area_id) VALUES (?, ?)",
+                            (category_id, area_id),
+                        )
+
+            for identifier in identifiers:
+                if not identifier:
+                    continue
+                cursor.execute(
+                    "INSERT OR IGNORE INTO journals (journal_id) VALUES (?)",
+                    (identifier,),
+                )
+                for category_id in category_ids:
+                    cursor.execute(
+                        "INSERT OR IGNORE INTO journal_categories (journal_id, category_id) VALUES (?, ?)",
+                        (identifier, category_id),
+                    )
+                for area_id in area_ids:
+                    cursor.execute(
+                        "INSERT OR IGNORE INTO journal_areas (journal_id, area_id) VALUES (?, ?)",
+                        (identifier, area_id),
+                    )
+
+        conn.commit()
+        conn.close()
+        return True
