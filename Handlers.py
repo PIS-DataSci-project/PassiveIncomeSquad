@@ -130,11 +130,6 @@ class CategoryUploadHandler(UploadHandler):  # River
         cur = conn.cursor()
 
         # Tables
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS journals (
-            identifiers TEXT PRIMARY KEY
-        )
-        """)
 
         cur.execute("""
         CREATE TABLE IF NOT EXISTS categories (
@@ -143,15 +138,6 @@ class CategoryUploadHandler(UploadHandler):  # River
             identifiers TEXT,
             areas TEXT,
             PRIMARY KEY (category_id, quartile, identifiers, areas)
-        )
-        """)
-
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS journal_categories (
-            category_id TEXT,
-            quartile TEXT,
-            identifiers TEXT,
-            PRIMARY KEY (category_id, quartile, identifiers)
         )
         """)
 
@@ -191,14 +177,6 @@ class CategoryUploadHandler(UploadHandler):  # River
                     identifier = str(identifier)
 
                     # 写数据库
-                    cur.execute(
-                        "INSERT OR IGNORE INTO journals (identifiers) VALUES (?)",
-                        (identifier,),
-                    )
-                    cur.execute(
-                        "INSERT OR IGNORE INTO journal_categories (category_id, quartile, identifiers) VALUES (?, ?, ?)",
-                        (category_id, quartile, identifier),
-                    )
                     cur.execute(
                         "INSERT OR IGNORE INTO categories (category_id, quartile, identifiers, areas) VALUES (?, ?, ?, ?)",
                         (category_id, quartile, identifier, areas_text),
