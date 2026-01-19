@@ -1,3 +1,0 @@
-#CategoryQueryHandler - Fahmy
-
-#JournalQueryHandler - Polina
