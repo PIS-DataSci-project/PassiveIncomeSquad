@@ -231,4 +231,6 @@ class CategoryQueryHandler(QueryHandler): #Fahmy
         WHERE category_id = ?
         """
 
-        df = pd.read_sql_query(query, conn, params=(category_i
+        df = pd.read_sql_query(query, conn, params=(category_id,))
+        conn.close()
+        return df
