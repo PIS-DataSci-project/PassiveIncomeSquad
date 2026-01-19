@@ -1,6 +1,7 @@
 #ALL IMPORTS AT THE TOP OF THE FILE
 #General imports
 from Entities import *
+import pandas as pd 
 
 #For Graph Database
 from rdflib import Graph, URIRef, RDF, Literal, XSD
@@ -8,7 +9,6 @@ from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
 #For Relational Database
 import json
-import pandas as pd #for JournalUploadHandler
 import sqlite3 #for CategoryQueryHandler
 
 #---------------------------------------------------------------------------------------------
