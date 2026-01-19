@@ -15,7 +15,7 @@ class IdentifiableEntity(object): # CLAUDIA
 class Journal(IdentifiableEntity): # CLAUDIA 
     def __init__(self, identifiers, title, language, seal, license, apc, publisher=None, categories=None, areas=None):
         self.title = title
-        self.publisher = publisher
+        self.publisher = publisher if publisher else ""
         self.language = language
         self.seal = True if seal else False
         self.license = license
@@ -52,17 +52,13 @@ class Journal(IdentifiableEntity): # CLAUDIA
         return self.categories 
     
     def hasCategory(self, category):
-        if category in self.categories:
-            return True
-        return False
+        return category in self.categories
     
     def getAreas(self): 
         return self.areas    
         
     def hasArea(self, area): 
-        if area in self.areas:
-            return True
-        return False
+        return area in self.areas
 
 #subclass2 of IdentifiableEntity    
 class Category(IdentifiableEntity): # FAHMIDA

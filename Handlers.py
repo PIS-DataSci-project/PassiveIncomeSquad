@@ -38,7 +38,7 @@ class UploadHandler(Handler):
 
     def pushDataToDb(self, path):
         #Upload data to database - must be implemented by subclasses
-        pass
+        pass # To be implemented by subclasses
 
 #subclass of UploadHandler
 class JournalUploadHandler(UploadHandler): # CLAUDIA
