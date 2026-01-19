@@ -104,12 +104,13 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
     def pushDataToDb(self, path):
         g = self.createGraph(path)
         store = SPARQLUpdateStore()
-        endpoint = self.dbPathOrUrl()
+        endpoint = self.dbPathOrUrl 
         store.open((endpoint, endpoint))
         # Upload all triples to SPARQL store
         for triple in g.triples((None, None, None)):
             store.add(triple)
         store.close()
+        return True # indicate success
 
 #CategoryUploadHandler - River HEREE 
 #JSON --> DataFrame --> DB
