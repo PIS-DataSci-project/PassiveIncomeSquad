@@ -61,9 +61,9 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         # Journal type and properties
         Journal = URIRef("https://schema.org/Periodical") 
         title = URIRef("https://schema.org/title")
-        identifier = URIRef("http://schema.org/identifier") 
-        language = URIRef("http://schema.org/inLanguage")
-        publisher = URIRef("http://schema.org/publishedBy") 
+        identifier = URIRef("https://schema.org/identifier") 
+        language = URIRef("https://schema.org/inLanguage")
+        publisher = URIRef("https://schema.org/publishedBy") 
         seal = URIRef("https://schema.org/award")
         license = URIRef("https://schema.org/license")
         apc = URIRef("https://schema.org/processingFee")

@@ -102,3 +102,5 @@ except ConnectionError as e:
     print(f"✗ Connection error (is Blazegraph running?): {e}")
 except Exception as e:
     print(f"✗ Error pushing data: {e}")
+    
+    
