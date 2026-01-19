@@ -69,7 +69,7 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         apc = URIRef("https://schema.org/processingFee")
         # Create RDF graph
         g = Graph()
-        journals = pd.read_csv(path, keep_default_na=False)
+        journals = pd.read_csv(path, keep_default_na=False) # Read CSV into DataFrame
         for idx, row in journals.iterrows():
             localId = "journal-" + str(idx) 
             subj = URIRef(baseUrl + "/" + localId)
