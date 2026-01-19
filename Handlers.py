@@ -69,17 +69,7 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         apc = URIRef("https://schema.org/processingFee")
         # Create RDF graph
         g = Graph()
-        journals = pd.read_csv(path, keep_default_na=False,
-            dtype={
-                "Journal title": "string",
-                "Journal ISSN (print version)": "string",  
-                "Journal EISSN (online version)": "string",
-                "Languages in which the journal accepts manuscripts": "string",
-                "Publisher": "string",
-                "DOAJ Seal": "string",
-                "Journal license": "string", 
-                "APC": "string"
-            })
+        journals = pd.read_csv(path, keep_default_na=False)
         for idx, row in journals.iterrows():
             localId = "journal-" + str(idx) 
             subj = URIRef(baseUrl + "/" + localId)
@@ -112,7 +102,7 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
     def pushDataToDb(self, path):
         g = self.createGraph(path)
         store = SPARQLUpdateStore()
-        endpoint = self.dbPathOrUrl()
+        endpoint = self.dbPathOrUrl
         store.open((endpoint, endpoint))
         # Upload all triples to SPARQL store
         for triple in g.triples((None, None, None)):
