@@ -6,6 +6,7 @@ import pandas as pd
 #For Graph Database
 from rdflib import Graph, URIRef, RDF, Literal, XSD
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
+import requests
 
 #For Relational Database
 import json
@@ -211,6 +212,244 @@ class QueryHandler(Handler): #Polina
      )
 
 #JournalQueryHandler - Polina HERE
+class JournalQueryHandler(QueryHandler):
+      
+ def _escape_literal(self, value: str) -> str:
+
+        if value is None:
+            return ""
+            
+        return value.replace("\\", "\\\\").replace('"', '\\"')
+ 
+ def _execute_sparql_query(self, sparql_query: str) -> pd.DataFrame:
+        try:
+            response = requests.get(
+                self.getdbPathOrUrl(),
+                params={"query": sparql_query, "format": "json"},
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                bindings = data.get("results", {}).get("bindings", [])
+                
+                if not bindings:
+                    return pd.DataFrame()
+                
+                # Transform bindings to DataFrame rows
+                rows = []
+                for binding in bindings:
+                    row = {key: value.get("value", "") for key, value in binding.items()}
+                    rows.append(row)
+                
+                return pd.DataFrame(rows)
+            else:
+                print(f"SPARQL query failed with status: {response.status_code}")
+                return pd.DataFrame()
+        
+        except Exception as e:
+            print(f"Error executing SPARQL query: {e}")
+            return pd.DataFrame()
+    
+ def getById(self, entity_id: str) -> pd.DataFrame:
+        #Get journal by ISSN or EISSN identifier
+        if not entity_id:
+            return pd.DataFrame()
+        
+        escaped_id = self._escape_literal(entity_id)
+        
+        sparql_query = f'''
+        PREFIX schema: <https://schema.org/>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        
+        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        WHERE {{
+            ?journal rdf:type schema:Periodical .
+            OPTIONAL {{ ?journal schema:title ?title }}
+            ?journal schema:identifier ?identifier .
+            FILTER(CONTAINS(STR(?identifier), "{escaped_id}"))
+            OPTIONAL {{ ?journal schema:inLanguage ?language }}
+            OPTIONAL {{ ?journal schema:publishedBy ?publisher }}
+            OPTIONAL {{ ?journal schema:award ?seal }}
+            OPTIONAL {{ ?journal schema:license ?license }}
+            OPTIONAL {{ ?journal schema:processingFee ?apc }}
+        }}
+        '''
+        
+        return self._execute_sparql_query(sparql_query)
+    
+ def getByTitle(self, title: str) -> pd.DataFrame:
+        #Get journal by exact title match
+            sparql_query = '''
+            PREFIX schema: <https://schema.org/>
+            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        
+            SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+            WHERE {
+                ?journal rdf:type schema:Periodical .
+                OPTIONAL { ?journal schema:title ?title }
+                OPTIONAL { ?journal schema:identifier ?identifier }
+                OPTIONAL { ?journal schema:inLanguage ?language }
+                OPTIONAL { ?journal schema:publishedBy ?publisher }
+                OPTIONAL { ?journal schema:award ?seal }
+                OPTIONAL { ?journal schema:license ?license }
+                OPTIONAL { ?journal schema:processingFee ?apc }
+            }
+            ORDER BY ?title
+            '''
+            return self._execute_sparql_query(sparql_query)
+
+ def getAllJournals(self) -> pd.DataFrame:
+        #Get all journals from the database
+        sparql_query = '''
+        PREFIX schema: <https://schema.org/>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        
+        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        WHERE {
+            ?journal rdf:type schema:Periodical .
+            OPTIONAL { ?journal schema:title ?title }
+            OPTIONAL { ?journal schema:identifier ?identifier }
+            OPTIONAL { ?journal schema:inLanguage ?language }
+            OPTIONAL { ?journal schema:publishedBy ?publisher }
+            OPTIONAL { ?journal schema:award ?seal }
+            OPTIONAL { ?journal schema:license ?license }
+            OPTIONAL { ?journal schema:processingFee ?apc }
+        }
+        ORDER BY ?title
+        '''
+        
+        return self._execute_sparql_query(sparql_query)
+    
+ def getJournalsWithTitle(self, partial_title: str) -> pd.DataFrame:
+        #Get journals matching title
+        if not partial_title:
+            return pd.DataFrame()
+        
+        escaped_title = self._escape_literal(partial_title)
+        
+        sparql_query = f'''
+        PREFIX schema: <https://schema.org/>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        
+        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        WHERE {{
+            ?journal rdf:type schema:Periodical .
+            ?journal schema:title ?title .
+            FILTER(CONTAINS(LCASE(?title), LCASE("{escaped_title}")))
+            OPTIONAL {{ ?journal schema:identifier ?identifier }}
+            OPTIONAL {{ ?journal schema:inLanguage ?language }}
+            OPTIONAL {{ ?journal schema:publishedBy ?publisher }}
+            OPTIONAL {{ ?journal schema:award ?seal }}
+            OPTIONAL {{ ?journal schema:license ?license }}
+            OPTIONAL {{ ?journal schema:processingFee ?apc }}
+        }}
+        ORDER BY ?title
+        '''
+        
+        return self._execute_sparql_query(sparql_query)
+ 
+ def getJournalsPublishedBy(self, partial_publisher: str) -> pd.DataFrame:
+        #Get journals matching publisher (partial match, case-insensitive
+        if not partial_publisher:
+            return pd.DataFrame()
+        
+        escaped_publisher = self._escape_literal(partial_publisher)
+        
+        sparql_query = f'''
+        PREFIX schema: <https://schema.org/>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        
+        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        WHERE {{
+            ?journal rdf:type schema:Periodical .
+            OPTIONAL {{ ?journal schema:title ?title }}
+            ?journal schema:publishedBy ?publisher .
+            FILTER(CONTAINS(LCASE(?publisher), LCASE("{escaped_publisher}")))
+            OPTIONAL {{ ?journal schema:identifier ?identifier }}
+            OPTIONAL {{ ?journal schema:inLanguage ?language }}
+            OPTIONAL {{ ?journal schema:award ?seal }}
+            OPTIONAL {{ ?journal schema:license ?license }}
+            OPTIONAL {{ ?journal schema:processingFee ?apc }}
+        }}
+        ORDER BY ?title
+        '''
+        
+        return self._execute_sparql_query(sparql_query)
+    
+ def getJournalsWithLicense(self, license_type: str) -> pd.DataFrame:
+        #Get journals with exact license match
+        if not license_type:
+            return pd.DataFrame()
+        
+        escaped_license = self._escape_literal(license_type)
+        
+        sparql_query = f'''
+        PREFIX schema: <https://schema.org/>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        
+        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        WHERE {{
+            ?journal rdf:type schema:Periodical .
+            OPTIONAL {{ ?journal schema:title ?title }}
+            ?journal schema:license ?license .
+            FILTER(STR(?license) = "{escaped_license}")
+            OPTIONAL {{ ?journal schema:identifier ?identifier }}
+            OPTIONAL {{ ?journal schema:inLanguage ?language }}
+            OPTIONAL {{ ?journal schema:publishedBy ?publisher }}
+            OPTIONAL {{ ?journal schema:award ?seal }}
+            OPTIONAL {{ ?journal schema:processingFee ?apc }}
+        }}
+        ORDER BY ?title
+        '''
+        
+        return self._execute_sparql_query(sparql_query)
+ 
+ def getJournalsWithAPC(self) -> pd.DataFrame:
+        #Get journals that have an Article Processing Charge
+        sparql_query = '''
+        PREFIX schema: <https://schema.org/>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        
+        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        WHERE {
+            ?journal rdf:type schema:Periodical .
+            OPTIONAL { ?journal schema:title ?title }
+            ?journal schema:processingFee ?apc .
+            FILTER(?apc = true)
+            OPTIONAL { ?journal schema:identifier ?identifier }
+            OPTIONAL { ?journal schema:inLanguage ?language }
+            OPTIONAL { ?journal schema:publishedBy ?publisher }
+            OPTIONAL { ?journal schema:award ?seal }
+            OPTIONAL { ?journal schema:license ?license }
+        }
+        ORDER BY ?title
+        '''
+        
+        return self._execute_sparql_query(sparql_query) 
+ 
+ def getJournalsWithDOAJSeal(self) -> pd.DataFrame:
+        #Get journals that have a DOAJ Seal
+        sparql_query = '''
+        PREFIX schema: <https://schema.org/>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        
+        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        WHERE {
+            ?journal rdf:type schema:Periodical .
+            OPTIONAL { ?journal schema:title ?title }
+            ?journal schema:award ?seal .
+            FILTER(?seal = true)
+            OPTIONAL { ?journal schema:identifier ?identifier }
+            OPTIONAL { ?journal schema:inLanguage ?language }
+            OPTIONAL { ?journal schema:publishedBy ?publisher }
+            OPTIONAL { ?journal schema:license ?license }
+            OPTIONAL { ?journal schema:processingFee ?apc }
+        }
+        ORDER BY ?title
+        '''
+        
+        return self._execute_sparql_query(sparql_query)
 
 #CategoryQueryHandler
 # Subclass of QueryHandler - Fahmy  HERE--> i don't open file or normalize json here, i just query the DB. NO PANDAS LOADING HERE!
