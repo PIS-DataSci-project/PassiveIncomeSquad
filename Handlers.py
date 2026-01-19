@@ -9,7 +9,7 @@ from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
 #For Relational Database
 import json
-import sqlite3 #for CategoryQueryHandler
+import sqlite3 
 
 #---------------------------------------------------------------------------------------------
 #superclass
