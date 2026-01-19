@@ -104,17 +104,16 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
     def pushDataToDb(self, path):
         g = self.createGraph(path)
         store = SPARQLUpdateStore()
-        endpoint = self.dbPathOrUrl 
+        endpoint = self.dbPathOrUrl()
         store.open((endpoint, endpoint))
         # Upload all triples to SPARQL store
         for triple in g.triples((None, None, None)):
             store.add(triple)
         store.close()
-        return True # indicate success
 
 #CategoryUploadHandler - River HEREE 
 #JSON --> DataFrame --> DB
-class CategoryUploadHandler(UploadHandler): # River
+class CategoryUploadHandler(UploadHandler):  # River
     def __init__(self, dbPathOrUrl=None):
         super().__init__()
         if dbPathOrUrl:
@@ -131,61 +130,94 @@ class CategoryUploadHandler(UploadHandler): # River
         cur = conn.cursor()
 
         # Tables
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS categories (
-                category_id TEXT,
-                quartile TEXT,
-                PRIMARY KEY (category_id, quartile)
-            )
-            """
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS journals (
+            identifiers TEXT PRIMARY KEY
         )
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS journals (
-                journal_id TEXT PRIMARY KEY
-            )
-            """
+        """)
+
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS categories (
+            category_id TEXT,
+            quartile TEXT,
+            identifiers TEXT,
+            areas TEXT,
+            PRIMARY KEY (category_id, quartile, identifiers, areas)
         )
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS journal_categories (
-                journal_id TEXT,
-                category_id TEXT,
-                quartile TEXT,
-                PRIMARY KEY (journal_id, category_id, quartile)
-            )
-            """
+        """)
+
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS journal_categories (
+            category_id TEXT,
+            quartile TEXT,
+            identifiers TEXT,
+            PRIMARY KEY (category_id, quartile, identifiers)
         )
+        """)
+
+        # ⭐ 新增：用来做 DataFrame
+        rows = []
 
         for record in data:
             identifiers = record.get("identifiers", [])
             categories = record.get("categories", [])
 
+            if identifiers is None:
+                identifiers = []
+            elif not isinstance(identifiers, list):
+                identifiers = [identifiers]
+
             for category in categories:
+                if not isinstance(category, dict):
+                    continue
+
                 category_id = category.get("id")
                 quartile = category.get("quartile")
                 if not (category_id and quartile):
                     continue
 
-                cur.execute(
-                    "INSERT OR IGNORE INTO categories VALUES (?, ?)",
-                    (category_id, quartile),
-                )
+                areas = category.get("areas", record.get("areas"))
 
-                for issn in identifiers:
+                if isinstance(areas, list):
+                    areas_text = ",".join(map(str, areas))
+                elif areas is None:
+                    areas_text = None
+                else:
+                    areas_text = str(areas)
+
+                for identifier in identifiers:
+                    if identifier is None:
+                        continue
+                    identifier = str(identifier)
+
+                    # 写数据库
                     cur.execute(
-                        "INSERT OR IGNORE INTO journals VALUES (?)",
-                        (issn,),
+                        "INSERT OR IGNORE INTO journals (identifiers) VALUES (?)",
+                        (identifier,),
                     )
                     cur.execute(
-                        "INSERT OR IGNORE INTO journal_categories VALUES (?, ?, ?)",
-                        (issn, category_id, quartile),
+                        "INSERT OR IGNORE INTO journal_categories (category_id, quartile, identifiers) VALUES (?, ?, ?)",
+                        (category_id, quartile, identifier),
                     )
+                    cur.execute(
+                        "INSERT OR IGNORE INTO categories (category_id, quartile, identifiers, areas) VALUES (?, ?, ?, ?)",
+                        (category_id, quartile, identifier, areas_text),
+                    )
+
+                    # ⭐ 同时攒 DataFrame 的一行
+                    rows.append({
+                        "identifier": identifier,
+                        "category_id": category_id,
+                        "quartile": quartile,
+                        "areas": areas_text
+                    })
 
         conn.commit()
         conn.close()
-        return True
+
+        # ⭐ 真正生成 DataFrame
+        df = pd.DataFrame(rows)
+        return df
 
 
 #---------------------------------------------------------------------------------------------
