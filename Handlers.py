@@ -38,7 +38,7 @@ class UploadHandler(Handler):
 
     def pushDataToDb(self, path):
         #Upload data to database - must be implemented by subclasses
-        pass # To be implemented by subclasses
+        pass 
 
 #subclass of UploadHandler
 class JournalUploadHandler(UploadHandler): # CLAUDIA
@@ -81,7 +81,7 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
                 "APC": "string"
             })
         for idx, row in journals.iterrows():
-            localId = "journal-" + str(idx)
+            localId = "journal-" + str(idx) 
             subj = URIRef(baseUrl + "/" + localId)
             g.add((subj, RDF.type, Journal))
             g.add((subj, title, Literal(row["Journal title"])))
@@ -104,7 +104,8 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
     def pushDataToDb(self, path):
         g = self.createGraph(path)
         store = SPARQLUpdateStore()
-        store.open((self.dbPathOrUrl, self.dbPathOrUrl))
+        endpoint = self.dbPathOrUrl()
+        store.open((endpoint, endpoint))
         # Upload all triples to SPARQL store
         for triple in g.triples((None, None, None)):
             store.add(triple)

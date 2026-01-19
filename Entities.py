@@ -42,11 +42,14 @@ class Journal(IdentifiableEntity): # CLAUDIA
         listLangs.sort() # sort the list of languages
         return listLangs
 
-    def getDOAJSeal(self): # boolean
+    def hasDOAJSeal(self): # boolean
         return self.seal
     
     def getLicense(self):
         return self.license
+    
+    def hasAPC(self): # boolean
+        return self.apc
 
     def getCategories(self):
         return self.categories 
