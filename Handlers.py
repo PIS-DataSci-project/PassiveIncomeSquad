@@ -111,7 +111,7 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         store.close()
 
 #CategoryUploadHandler - River HEREE 
-#JSON --> DataFrame --> DB
+#JSON --> DB
 class CategoryUploadHandler(UploadHandler):  # River
     def __init__(self, dbPathOrUrl=None):
         super().__init__()
@@ -434,23 +434,177 @@ class JournalQueryHandler(QueryHandler):
         
         return self._execute_sparql_query(sparql_query)
 
-#CategoryQueryHandler
-# Subclass of QueryHandler - Fahmy  HERE--> i don't open file or normalize json here, i just query the DB. NO PANDAS LOADING HERE!
-class CategoryQueryHandler(QueryHandler): #Fahmy
+# CategoryQueryHandler
+# Subclass of QueryHandler
+class CategoryQueryHandler(QueryHandler): #Fahmida
+    """
+    DOCSTRING: This is a documentation string for the class itself.
+    It explains what the class does, how it queries the relational database,
+    and what kind of output (pandas DataFrame) it returns.
+    """
+
     def __init__(self, dbPathOrUrl=None):
         super().__init__()
         if dbPathOrUrl:
             self.setdbPathOrUrl(dbPathOrUrl)
 
+    # --------------------------------------------------
+    # OVERRIDDEN METHOD: getById
+    # --------------------------------------------------
     def getById(self, category_id: str) -> pd.DataFrame:
-        conn = sqlite3.connect(self.dbPathOrUrl)
-
+        """
+        DOCSTRING: Retrieves all rows related to a given category ID.
+        This overrides the abstract method defined in QueryHandler.
+        """
+        # SQL STRING LITERAL: This string contains the SQL query to execute
         query = """
-        SELECT *
+        SELECT category_id, quartile, identifiers, areas
         FROM categories
         WHERE category_id = ?
         """
+        return pd.read_sql_query(
+            query,
+            self.getdbPathOrUrl(),
+            params=(category_id,)
+        )
 
-        df = pd.read_sql_query(query, conn, params=(category_id,))
-        conn.close()
+    # --------------------------------------------------
+    # Return all category records
+    # --------------------------------------------------
+    def getAllCategories(self) -> pd.DataFrame:
+        """
+        DOCSTRING: Retrieves all categories from the relational database.
+        Columns returned:
+        - category_id
+        - quartile
+        - identifiers (journal identifier)
+        - areas (comma-separated string)
+        """
+        query = """
+        SELECT DISTINCT category_id, quartile, identifiers, areas
+        FROM categories
+        """  # SQL STRING LITERAL
+        return pd.read_sql_query(query, self.getdbPathOrUrl())
+
+    # --------------------------------------------------
+    # Return all distinct areas
+    # --------------------------------------------------
+    def getAllAreas(self) -> pd.DataFrame:
+        """
+        DOCSTRING: Retrieves all distinct areas assigned to categories.
+        Since 'areas' is stored as a comma-separated string, we:
+        1. Retrieve the column
+        2. Split values by comma
+        3. Explode them into separate rows
+        """
+        query = """
+        SELECT DISTINCT areas
+        FROM categories
+        WHERE areas IS NOT NULL
+        """  # SQL STRING LITERAL
+
+        df = pd.read_sql_query(query, self.getdbPathOrUrl())
+
+        # Split comma-separated values into lists
+        df["area"] = df["areas"].str.split(",")
+
+        # Turn lists into individual rows
+        df = df.explode("area")
+
+        # Clean and deduplicate
+        df = df[["area"]].dropna().drop_duplicates().reset_index(drop=True)
+
+        return df
+
+    # --------------------------------------------------
+    # Return categories filtered by quartile(s)
+    # --------------------------------------------------
+    def getCategoriesWithQuartile(self, quartiles: set[str]) -> pd.DataFrame:
+        """
+        DOCSTRING: Retrieves categories belonging to one or more quartiles.
+        Parameters:
+        - quartiles: set of quartile strings (e.g. {"Q1", "Q2"})
+        """
+        if not quartiles:
+            return pd.DataFrame()
+
+        # Prepare SQL placeholders (?, ?, ?) for the IN clause
+        placeholders = ",".join(["?"] * len(quartiles))
+
+        query = f"""
+        SELECT category_id, quartile, identifiers, areas
+        FROM categories
+        WHERE quartile IN ({placeholders})
+        """  # SQL STRING LITERAL
+
+        return pd.read_sql_query(
+            query,
+            self.getdbPathOrUrl(),
+            params=tuple(quartiles)
+        )
+
+    # --------------------------------------------------
+    # Return categories assigned to specific areas
+    # --------------------------------------------------
+    def getCategoriesAssignedToAreas(self, area_ids: set[str]) -> pd.DataFrame:
+        """
+        DOCSTRING: Retrieves categories that are assigned to at least one
+        of the specified areas.
+        Uses SQL LIKE because areas are stored as comma-separated strings.
+        """
+        if not area_ids:
+            return pd.DataFrame()
+
+        # Build multiple LIKE conditions joined by OR
+        conditions = " OR ".join(["areas LIKE ?"] * len(area_ids))
+        params = [f"%{area}%" for area in area_ids]
+
+        query = f"""
+        SELECT DISTINCT category_id, quartile, identifiers, areas
+        FROM categories
+        WHERE {conditions}
+        """  # SQL STRING LITERAL
+
+        return pd.read_sql_query(
+            query,
+            self.getdbPathOrUrl(),
+            params=params
+        )
+
+    # --------------------------------------------------
+    # Return areas assigned to specific categories
+    # --------------------------------------------------
+    def getAreasAssignedToCategories(self, category_ids: set[str]) -> pd.DataFrame:
+        """
+        DOCSTRING: Retrieves areas associated with one or more category IDs.
+        Steps:
+        1. Select areas for given categories
+        2. Split comma-separated values
+        3. Explode into individual rows
+        """
+        if not category_ids:
+            return pd.DataFrame()
+
+        placeholders = ",".join(["?"] * len(category_ids))
+
+        query = f"""
+        SELECT DISTINCT areas
+        FROM categories
+        WHERE category_id IN ({placeholders})
+          AND areas IS NOT NULL
+        """  # SQL STRING LITERAL
+
+        df = pd.read_sql_query(
+            query,
+            self.getdbPathOrUrl(),
+            params=tuple(category_ids)
+        )
+
+        # Split and explode areas
+        df["area"] = df["areas"].str.split(",")
+        df = df.explode("area")
+
+        # Clean and deduplicate
+        df = df[["area"]].dropna().drop_duplicates().reset_index(drop=True)
+
         return df
