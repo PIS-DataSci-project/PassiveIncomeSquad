@@ -19,11 +19,11 @@ class Handler(object):
     def __init__(self): # defines the constructor
         self.dbPathOrUrl = ""
 
-    def getdbPathOrUrl(self):
+    def getDbPathOrUrl(self):
         #Get the current database path or URL
         return self.dbPathOrUrl
 
-    def setdbPathOrUrl(self, dbPathOrUrl):
+    def setDbPathOrUrl(self, dbPathOrUrl):
         #Set and validate database path or URL
         if dbPathOrUrl and dbPathOrUrl.strip():
             self.dbPathOrUrl = dbPathOrUrl
@@ -47,7 +47,7 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
     def __init__(self, dbPathOrUrl=None):
         super().__init__()
         if dbPathOrUrl:
-            self.setdbPathOrUrl(dbPathOrUrl)
+            self.setDbPathOrUrl(dbPathOrUrl)
     
     def _normalize_bool(self, value):
         #Convert Yes/No text values to boolean (case-insensitive)
