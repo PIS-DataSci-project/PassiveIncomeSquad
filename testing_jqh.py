@@ -1,10 +1,10 @@
 import pandas as pd
-from Handlers import JournalQueryHandler  # Check your actual filename!
+from Handlers import JournalQueryHandler
 
 # ================================
 # CONFIG
 # ================================
-ENDPOINT = "http://10.44.28.33:9999/blazegraph/"  # Check this URL!
+ENDPOINT = "http://10.44.28.33:9999/blazegraph/namespace/doaj/sparql" 
 print("=" * 60)
 print("Testing JournalQueryHandler")
 print("Connecting to Blazegraph endpoint:")

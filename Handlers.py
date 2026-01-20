@@ -263,6 +263,7 @@ class JournalQueryHandler(QueryHandler):
         escaped_id = self._escape_literal(entity_id)
         
         sparql_query = f'''
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX schema: <https://schema.org/>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
         
