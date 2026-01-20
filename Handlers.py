@@ -108,6 +108,7 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         for triple in g.triples((None, None, None)):
             store.add(triple)
         store.close()
+        return True
 
 #CategoryUploadHandler - River HEREE 
 #JSON --> DB
@@ -115,7 +116,7 @@ class CategoryUploadHandler(UploadHandler):  # River
     def __init__(self, dbPathOrUrl=None):
         super().__init__()
         if dbPathOrUrl:
-            self.setdbPathOrUrl(dbPathOrUrl)
+            self.setDbPathOrUrl(dbPathOrUrl)
 
     def pushDataToDb(self, path):
         if not isinstance(path, str) or not path.endswith(".json"):
@@ -215,7 +216,7 @@ class JournalQueryHandler(QueryHandler):
     def __init__(self, dbPathOrUrl=None):
         super().__init__()
         if dbPathOrUrl:
-            self.setdbPathOrUrl(dbPathOrUrl)
+            self.setDbPathOrUrl(dbPathOrUrl)
 
     def _escape_literal(self, value: str) -> str:
 
@@ -227,7 +228,7 @@ class JournalQueryHandler(QueryHandler):
     def _execute_sparql_query(self, sparql_query: str) -> pd.DataFrame:
         try:
             response = requests.get(
-                self.getdbPathOrUrl(),
+                self.getDbPathOrUrl(),
                 params={"query": sparql_query, "format": "json"},
                 timeout=30
             )
@@ -448,7 +449,7 @@ class CategoryQueryHandler(QueryHandler):
     def __init__(self, dbPathOrUrl=None):
         super().__init__()
         if dbPathOrUrl:
-            self.setdbPathOrUrl(dbPathOrUrl)
+            self.setDbPathOrUrl(dbPathOrUrl)
 
     # -----------------------------
     # Get by category_id
@@ -459,7 +460,7 @@ class CategoryQueryHandler(QueryHandler):
         FROM categories
         WHERE category_id = ?
         """
-        conn = sqlite3.connect(self.getdbPathOrUrl())
+        conn = sqlite3.connect(self.getDbPathOrUrl())
         df = pd.read_sql_query(query, conn, params=(category_id,))
         conn.close()
         return df
@@ -472,7 +473,7 @@ class CategoryQueryHandler(QueryHandler):
         SELECT DISTINCT category_id, quartile, identifiers, areas
         FROM categories
         """
-        conn = sqlite3.connect(self.getdbPathOrUrl())
+        conn = sqlite3.connect(self.getDbPathOrUrl())
         df = pd.read_sql_query(query, conn)
         conn.close()
         return df
@@ -486,7 +487,7 @@ class CategoryQueryHandler(QueryHandler):
         FROM categories
         WHERE areas IS NOT NULL
         """
-        conn = sqlite3.connect(self.getdbPathOrUrl())
+        conn = sqlite3.connect(self.getDbPathOrUrl())
         df = pd.read_sql_query(query, conn)
         conn.close()
 
@@ -508,7 +509,7 @@ class CategoryQueryHandler(QueryHandler):
         FROM categories
         WHERE quartile IN ({placeholders})
         """
-        conn = sqlite3.connect(self.getdbPathOrUrl())
+        conn = sqlite3.connect(self.getDbPathOrUrl())
         df = pd.read_sql_query(query, conn, params=tuple(quartiles))
         conn.close()
         return df
@@ -526,7 +527,7 @@ class CategoryQueryHandler(QueryHandler):
         FROM categories
         WHERE {conditions}
         """
-        conn = sqlite3.connect(self.getdbPathOrUrl())
+        conn = sqlite3.connect(self.getDbPathOrUrl())
         df = pd.read_sql_query(query, conn, params=params)
         conn.close()
         return df
@@ -544,7 +545,7 @@ class CategoryQueryHandler(QueryHandler):
         WHERE category_id IN ({placeholders})
           AND areas IS NOT NULL
         """
-        conn = sqlite3.connect(self.getdbPathOrUrl())
+        conn = sqlite3.connect(self.getDbPathOrUrl())
         df = pd.read_sql_query(query, conn, params=tuple(category_ids))
         conn.close()
 

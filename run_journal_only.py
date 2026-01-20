@@ -14,8 +14,8 @@ if not os.path.exists(csv_path):
 
 # Set the Blazegraph SPARQL endpoint
 db_url = "http://127.0.0.1:9999/blazegraph/sparql" # same for everybody
-if handler.setdbPathOrUrl(db_url):
-    print(f"✓ Database URL set to: {handler.getdbPathOrUrl()}")
+if handler.setDbPathOrUrl(db_url):
+    print(f"✓ Database URL set to: {handler.getDbPathOrUrl()}")
 else:
     print("✗ Failed to set database URL")
     exit(1)
