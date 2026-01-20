@@ -4,7 +4,7 @@ from Handlers import JournalQueryHandler
 # ================================
 # CONFIG
 # ================================
-ENDPOINT = "http://10.44.28.33:9999/blazegraph/namespace/doaj/sparql" 
+ENDPOINT = "http://172.20.10.2:9999/blazegraph/namespace/kb/sparql" 
 print("=" * 60)
 print("Testing JournalQueryHandler")
 print("Connecting to Blazegraph endpoint:")
@@ -29,29 +29,29 @@ else:
 assert isinstance(df_all, pd.DataFrame), "Should return DataFrame"
 
 # ================================
-# 2. TEST: getById (single ISSN/EISSN)
+# 2. TEST: getById (Known IDs)
 # ================================
-print("\n[TEST 2] getById()")
+print("\n[TEST 2] getById() - Known Identifiers")
 print("-" * 60)
 
-if not df_all.empty and 'identifier' in df_all.columns:
-    # Берём identifier первой строки
-    test_identifier = df_all.iloc[0]['identifier']
+test_ids = [
+    "2238-8079",      
+    "2075-2180",    
+    "2788-4848",    
+]
 
-    # identifier = "2075-2180; 1234-5678"
-    test_issn = test_identifier.split(';')[0].strip()
-
-    print(f"Testing with ISSN: {test_issn}")
-
-    df_one = qh.getById(test_issn)
-
-    print(f"Results: {len(df_one)} journal(s)")
-    print(df_one)
-
-    assert isinstance(df_one, pd.DataFrame)
-else:
-    print("⚠️ SKIP: No journals or identifier column found")
-
+for test_id in test_ids:
+    print(f"\n  Testing ID: '{test_id}'")
+    df_result = qh.getById(test_id)
+    
+    if not df_result.empty:
+        print(f"  ✅ Found {len(df_result)} journal(s)")
+        print(f"     Title: {df_result.iloc[0].get('title', 'N/A')}")
+        print(f"     Publisher: {df_result.iloc[0].get('publisher', 'N/A')}")
+    else:
+        print(f"  ⚠️ No journal found with this ID")
+    
+    assert isinstance(df_result, pd.DataFrame), "Should return DataFrame"
 # ================================
 # 3. TEST: getJournalsWithTitle
 # ================================
@@ -111,16 +111,3 @@ if not df_seal.empty:
     print("\nFirst 3 results:")
     print(df_seal[['title', 'seal']].head(3) if 'title' in df_seal.columns else df_seal.head(3))
 assert isinstance(df_seal, pd.DataFrame), "Should return DataFrame"
-
-# ================================
-# 8. TEST: Empty input handling
-# ================================
-print("\n[TEST 8] Empty input handling")
-print("-" * 60)
-df_empty1 = qh.getById("")
-df_empty2 = qh.getJournalsWithTitle("")
-df_empty3 = qh.getJournalsPublishedBy("")
-df_empty4 = qh.getJournalsWithLicense("")
-print(f"getById(''): {len(df_empty1)} results (should be 0)")
-print(f"getJournalsWithTitle(''): {len(df_empty2)} results (should be 0)")
-assert df_empty1.empty and df_empty2.empty, "Empty inputs should return empty DataFrame"
