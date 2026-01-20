@@ -1,1 +1,0 @@
-#CategoryQueryHandler - Fahmy
