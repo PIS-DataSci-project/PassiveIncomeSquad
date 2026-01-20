@@ -97,7 +97,6 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
             output_path = csv_path.rsplit('.', 1)[0] + '.ttl'
         graph = self.createGraph(csv_path)
         graph.serialize(destination=output_path, format='turtle')
-        print(f"✓ Saved to {output_path}")
         return output_path
     
     def pushDataToDb(self, path):

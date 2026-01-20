@@ -15,7 +15,7 @@
 import unittest
 from os import sep
 from pandas import DataFrame
-from Handlers import * 
+from Handlers import *
 from impl import FullQueryEngine
 from Entities import *
 
