@@ -33,18 +33,22 @@ assert isinstance(df_all, pd.DataFrame), "Should return DataFrame"
 # ================================
 print("\n[TEST 2] getById()")
 print("-" * 60)
-if not df_all.empty and '2075-2180' in df_all.columns:
-    # Get first identifier (might be "1234-5678; 9876-5432" format)
-    test_identifier = df_all.iloc[0]['2075-2180']
-    # Extract first ISSN from combined string
+
+if not df_all.empty and 'identifier' in df_all.columns:
+    # Берём identifier первой строки
+    test_identifier = df_all.iloc[0]['identifier']
+
+    # identifier = "2075-2180; 1234-5678"
     test_issn = test_identifier.split(';')[0].strip()
+
     print(f"Testing with ISSN: {test_issn}")
-    
+
     df_one = qh.getById(test_issn)
+
     print(f"Results: {len(df_one)} journal(s)")
-    if not df_one.empty:
-        print(df_one)
-    assert isinstance(df_one, pd.DataFrame), "Should return DataFrame"
+    print(df_one)
+
+    assert isinstance(df_one, pd.DataFrame)
 else:
     print("⚠️ SKIP: No journals or identifier column found")
 
