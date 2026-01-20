@@ -63,10 +63,10 @@ assert isinstance(df_title, pd.DataFrame), "Should return DataFrame"
 # ================================
 # 4. TEST: getJournalsPublishedBy
 # ================================
-print("\n[TEST 4] getJournalsPublishedBy('University')")
+print("\n[TEST 4] getJournalsPublishedBy('Universidade')")
 print("-" * 60)
-df_pub = qh.getJournalsPublishedBy("University")
-print(f"Journals published by 'University': {len(df_pub)}")
+df_pub = qh.getJournalsPublishedBy("Universidade")
+print(f"Journals published by 'Universidade': {len(df_pub)}")
 if not df_pub.empty:
     print("\nFirst 3 results:")
     print(df_pub[['title', 'publisher']].head(3) if 'title' in df_pub.columns else df_pub.head(3))

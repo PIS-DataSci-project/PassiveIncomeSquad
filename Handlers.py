@@ -264,7 +264,7 @@ class JournalQueryHandler(QueryHandler):
         
         sparql_query = f'''
         PREFIX schema: <https://schema.org/>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
         
         SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {{
@@ -286,7 +286,7 @@ class JournalQueryHandler(QueryHandler):
         #Get all journals from the database
         sparql_query = '''
         PREFIX schema: <https://schema.org/>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
         
         SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {
@@ -313,7 +313,7 @@ class JournalQueryHandler(QueryHandler):
         
         sparql_query = f'''
         PREFIX schema: <https://schema.org/>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
         
         SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {{
@@ -341,7 +341,7 @@ class JournalQueryHandler(QueryHandler):
         
         sparql_query = f'''
         PREFIX schema: <https://schema.org/>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
         
         SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {{
@@ -369,7 +369,7 @@ class JournalQueryHandler(QueryHandler):
         
         sparql_query = f'''
         PREFIX schema: <https://schema.org/>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
         
         SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {{
@@ -392,7 +392,7 @@ class JournalQueryHandler(QueryHandler):
         #Get journals that have an Article Processing Charge
         sparql_query = '''
         PREFIX schema: <https://schema.org/>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
         
         SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {
@@ -415,7 +415,7 @@ class JournalQueryHandler(QueryHandler):
         #Get journals that have a DOAJ Seal
         sparql_query = '''
         PREFIX schema: <https://schema.org/>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
         
         SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {
