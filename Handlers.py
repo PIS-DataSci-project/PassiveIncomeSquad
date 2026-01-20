@@ -285,6 +285,7 @@ class JournalQueryHandler(QueryHandler):
     def getAllJournals(self) -> pd.DataFrame:
         #Get all journals from the database
         sparql_query = '''
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX schema: <https://schema.org/>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
         
@@ -312,6 +313,7 @@ class JournalQueryHandler(QueryHandler):
         escaped_title = self._escape_literal(partial_title)
         
         sparql_query = f'''
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX schema: <https://schema.org/>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
         
@@ -340,6 +342,7 @@ class JournalQueryHandler(QueryHandler):
         escaped_publisher = self._escape_literal(partial_publisher)
         
         sparql_query = f'''
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX schema: <https://schema.org/>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
         
@@ -368,6 +371,7 @@ class JournalQueryHandler(QueryHandler):
         escaped_license = self._escape_literal(license_type)
         
         sparql_query = f'''
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX schema: <https://schema.org/>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
         
@@ -391,6 +395,7 @@ class JournalQueryHandler(QueryHandler):
     def getJournalsWithAPC(self) -> pd.DataFrame:
         #Get journals that have an Article Processing Charge
         sparql_query = '''
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX schema: <https://schema.org/>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
         
@@ -414,6 +419,7 @@ class JournalQueryHandler(QueryHandler):
     def getJournalsWithDOAJSeal(self) -> pd.DataFrame:
         #Get journals that have a DOAJ Seal
         sparql_query = '''
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>        
         PREFIX schema: <https://schema.org/>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
         
