@@ -17,7 +17,7 @@ import sqlite3
 class Handler(object):
     #Base handler for database connection management
     def __init__(self): # defines the constructor
-        self.dbPathOrUrl = ""
+        self.dbPathOrUrl = "" # initialize empty path or URL
 
     def getDbPathOrUrl(self):
         #Get the current database path or URL
@@ -92,14 +92,9 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
             g.add((subj, apc, Literal(apc_bool, datatype=XSD.boolean)))
         return g
     
-    def serializeToTTL(self, csv_path, output_path=None):
-        if output_path is None:
-            output_path = csv_path.rsplit('.', 1)[0] + '.ttl'
-        graph = self.createGraph(csv_path)
-        graph.serialize(destination=output_path, format='turtle')
-        return output_path
-    
     def pushDataToDb(self, path):
+        if not self.dbPathOrUrl:
+            return False
         g = self.createGraph(path)
         store = SPARQLUpdateStore()
         endpoint = self.dbPathOrUrl
@@ -108,8 +103,15 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         for triple in g.triples((None, None, None)):
             store.add(triple)
         store.close()
-        return True
+        return True 
 
+    def serializeToTTL(self, csv_path, output_path=None):
+        if output_path is None:
+            output_path = csv_path.rsplit('.', 1)[0] + '.ttl'
+        graph = self.createGraph(csv_path)
+        graph.serialize(destination=output_path, format='turtle')
+        return output_path
+    
 #CategoryUploadHandler - River HEREE 
 #JSON --> DB
 class CategoryUploadHandler(UploadHandler):  # River
@@ -263,9 +265,8 @@ class JournalQueryHandler(QueryHandler):
         escaped_id = self._escape_literal(entity_id)
         
         sparql_query = f'''
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX schema: <https://schema.org/>
-        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
         SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {{
@@ -286,9 +287,8 @@ class JournalQueryHandler(QueryHandler):
     def getAllJournals(self) -> pd.DataFrame:
         #Get all journals from the database
         sparql_query = '''
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX schema: <https://schema.org/>
-        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
         SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {
@@ -314,9 +314,8 @@ class JournalQueryHandler(QueryHandler):
         escaped_title = self._escape_literal(partial_title)
         
         sparql_query = f'''
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX schema: <https://schema.org/>
-        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
         SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {{
@@ -343,9 +342,8 @@ class JournalQueryHandler(QueryHandler):
         escaped_publisher = self._escape_literal(partial_publisher)
         
         sparql_query = f'''
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX schema: <https://schema.org/>
-        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
         SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {{
@@ -372,9 +370,8 @@ class JournalQueryHandler(QueryHandler):
         escaped_license = self._escape_literal(license_type)
         
         sparql_query = f'''
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX schema: <https://schema.org/>
-        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
         SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {{
@@ -396,9 +393,8 @@ class JournalQueryHandler(QueryHandler):
     def getJournalsWithAPC(self) -> pd.DataFrame:
         #Get journals that have an Article Processing Charge
         sparql_query = '''
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX schema: <https://schema.org/>
-        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
         SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {
@@ -420,9 +416,8 @@ class JournalQueryHandler(QueryHandler):
     def getJournalsWithDOAJSeal(self) -> pd.DataFrame:
         #Get journals that have a DOAJ Seal
         sparql_query = '''
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>        
         PREFIX schema: <https://schema.org/>
-        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> 
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
         SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {
