@@ -1,4 +1,4 @@
-from Handlers import JournalUploadHandler
+from impl import JournalUploadHandler
 import os
 import requests
 from rdflib import Graph, URIRef, RDF

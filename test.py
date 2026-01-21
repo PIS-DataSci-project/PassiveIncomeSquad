@@ -15,9 +15,7 @@
 import unittest
 from os import sep
 from pandas import DataFrame
-from Handlers import *
-from impl import FullQueryEngine
-from Entities import *
+from impl import * 
 
 # REMEMBER: before launching the tests, please run the Blazegraph instance!
 

@@ -1,5 +1,5 @@
 import pandas as pd
-from Handlers import JournalQueryHandler
+from impl import JournalQueryHandler
 
 # ================================
 # CONFIG
