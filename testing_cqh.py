@@ -3,7 +3,7 @@
 # ------------------------
 # Test file for CategoryQueryHandler (relational DB)
 # No Graph DB dependencies
-from Handlers import CategoryQueryHandler
+from impl import CategoryQueryHandler
 
 # ------------------------
 # Configure database path
