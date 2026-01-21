@@ -642,4 +642,3 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
         df = df.explode("area")
         df = df[["area"]].dropna().drop_duplicates().reset_index(drop=True)
         return df
-
