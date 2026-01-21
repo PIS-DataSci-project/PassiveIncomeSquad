@@ -1,5 +1,5 @@
-from Handlers import CategoryUploadHandler
+from impl import CategoryUploadHandler
 
 handler = CategoryUploadHandler()
-handler.setdbPathOrUrl("relational.db")
+handler.setDbPathOrUrl("relational.db")
 print(handler.pushDataToDb("data/scimago-json.json"))
