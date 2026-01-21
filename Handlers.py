@@ -14,7 +14,7 @@ import sqlite3
 
 #---------------------------------------------------------------------------------------------
 #superclass
-class Handler(object):
+class Handler(object): # CLAUDIA
     #Base handler for database connection management
     def __init__(self): # defines the constructor
         self.dbPathOrUrl = "" # initialize empty path or URL
@@ -32,7 +32,7 @@ class Handler(object):
             return False 
 
 #subclass of Handler
-class UploadHandler(Handler):
+class UploadHandler(Handler): #CLAUDIA
     #Abstract handler for data upload operations
     def __init__(self):
         super().__init__()
@@ -438,7 +438,7 @@ class JournalQueryHandler(QueryHandler):
 
 # CategoryQueryHandler
 # Subclass of QueryHandler
-class CategoryQueryHandler(QueryHandler):
+class CategoryQueryHandler(QueryHandler): #FAHMIDA
     """
     Handles queries on the relational database 'categories' table.
     Returns pandas DataFrames with:
