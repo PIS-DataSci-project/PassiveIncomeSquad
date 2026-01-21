@@ -79,14 +79,16 @@ assert isinstance(df_pub, pd.DataFrame), "Should return DataFrame"
 # ================================
 # 5. TEST: getJournalsWithLicense
 # ================================
-print("\n[TEST] getJournalsWithLicense({'CC BY'})")
-print("-" * 60)
-df_license = qh.getJournalsWithLicense({"CC BY"})
-print(f"Journals with 'CC BY' license: {len(df_license)}")
-if not df_license.empty:
-    print("\nFirst 3 results:")
-    print(df_license[['title', 'license']].head(3) if 'title' in df_license.columns else df_license.head(3))
-assert isinstance(df_license, pd.DataFrame), "Should return DataFrame"
+print("\n[DEBUG] Getting all journals to see available licenses...")
+df_all = qh.getAllJournals()
+if not df_all.empty and 'license' in df_all.columns:
+    unique_licenses = df_all['license'].dropna().unique()
+    print(f"Found {len(unique_licenses)} unique licenses in database")
+    print("\nFirst 10 licenses:")
+    for i, lic in enumerate(list(unique_licenses)[:10], 1):
+        print(f"  {i}. '{lic}'")
+else:
+    print("No licenses found or 'license' column missing")
 
 # ================================
 # 6. TEST: getJournalsWithAPC

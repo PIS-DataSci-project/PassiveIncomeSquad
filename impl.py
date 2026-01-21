@@ -463,7 +463,7 @@ class JournalQueryHandler(QueryHandler):
             return pd.DataFrame()
         
         license_filter = " || ".join(
-            [f"?licence = {licence}" for licence in escaped_licenses]
+            [f"?license = {license}" for license in escaped_licenses]
         )
         
         sparql_query = f'''
@@ -475,7 +475,7 @@ class JournalQueryHandler(QueryHandler):
             ?journal rdf:type schema:Periodical .
             OPTIONAL {{ ?journal schema:title ?title }}
             ?journal schema:license ?license .
-            FILTER(STR(?license) = "{license_filter}")
+            FILTER({license_filter})
             OPTIONAL {{ ?journal schema:identifier ?identifier }}
             OPTIONAL {{ ?journal schema:inLanguage ?language }}
             OPTIONAL {{ ?journal schema:publishedBy ?publisher }}
