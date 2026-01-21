@@ -449,12 +449,22 @@ class JournalQueryHandler(QueryHandler):
         
         return self._execute_sparql_query(sparql_query)
     
-    def getJournalsWithLicense(self, license_type: str) -> pd.DataFrame:
+    def getJournalsWithLicense(self, licenses: str) -> pd.DataFrame:
         #Get journals with exact license match
-        if not license_type:
+        if not licenses:
+            return self.getAllJournals()
+        
+        # Build the license filter
+        escaped_licenses = [
+            f'"{self._escape_literal(license)}"' for license in licenses if license
+        ]
+
+        if not escaped_licenses:
             return pd.DataFrame()
         
-        escaped_license = self._escape_literal(license_type)
+        license_filter = " || ".join(
+            [f"?licence = {licence}" for licence in escaped_licenses]
+        )
         
         sparql_query = f'''
         PREFIX schema: <https://schema.org/>
