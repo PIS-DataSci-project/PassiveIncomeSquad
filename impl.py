@@ -475,7 +475,7 @@ class JournalQueryHandler(QueryHandler):
             ?journal rdf:type schema:Periodical .
             OPTIONAL {{ ?journal schema:title ?title }}
             ?journal schema:license ?license .
-            FILTER(STR(?license) = "{escaped_license}")
+            FILTER(STR(?license) = "{license_filter}")
             OPTIONAL {{ ?journal schema:identifier ?identifier }}
             OPTIONAL {{ ?journal schema:inLanguage ?language }}
             OPTIONAL {{ ?journal schema:publishedBy ?publisher }}

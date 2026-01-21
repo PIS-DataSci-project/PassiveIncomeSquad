@@ -79,9 +79,9 @@ assert isinstance(df_pub, pd.DataFrame), "Should return DataFrame"
 # ================================
 # 5. TEST: getJournalsWithLicense
 # ================================
-print("\n[TEST 5] getJournalsWithLicense('CC BY')")
+print("\n[TEST] getJournalsWithLicense({'CC BY'})")
 print("-" * 60)
-df_license = qh.getJournalsWithLicense("CC BY")
+df_license = qh.getJournalsWithLicense({"CC BY"})
 print(f"Journals with 'CC BY' license: {len(df_license)}")
 if not df_license.empty:
     print("\nFirst 3 results:")
