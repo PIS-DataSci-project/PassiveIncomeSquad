@@ -2,7 +2,7 @@
 import pandas as pd
 
 # Optional but good practice: type hints
-# from typing import List, Set
+from typing import List, Set
 
 # Superclass --> BasicQueryEngine(object)
 class BasicQueryEngine:
@@ -21,10 +21,12 @@ class BasicQueryEngine:
         # This list will store OBJECTS of type CategoryQueryHandler
         self.categoryQuery = []
 
+
     # ---------------------------------------------------------
     # CATEGORY-RELATED METHODS (assigned to Fahmida)
     # ---------------------------------------------------------
 
+    
     def getAllCategories(self) -> list:
         """
         UML: getAllCategories() : list[Category]
@@ -65,6 +67,7 @@ class BasicQueryEngine:
             for _, row in merged.iterrows()
         ]
 
+
     # ---------------------------------------------------------
 
     def getAllAreas(self) -> list:
@@ -101,6 +104,8 @@ class BasicQueryEngine:
 
     # ---------------------------------------------------------
 
+    # ---------------------------------------------------------
+
     def getCategoriesWithQuartile(self, quartiles: set) -> list:
         """
         UML: getCategoriesWithQuartile(quartiles : set[string]) : list[Category]
@@ -120,3 +125,77 @@ class BasicQueryEngine:
 
         if not dfs:
             return []
+
+        merged = pd.concat(dfs, ignore_index=True).drop_duplicates()
+
+        return [
+            Category(
+                id=row["categoryId"],
+                name=row["categoryName"]
+            )
+            for _, row in merged.iterrows()
+        ]
+
+
+
+    # ---------------------------------------------------------
+
+    def getCategoriesAssignedToAreas(self, area_ids: set) -> list:
+        """
+        UML: getCategoriesAssignedToAreas(area_ids : set[string]) : list[Category]
+
+        Returns categories assigned to the specified areas.
+        If the input set is empty, all areas are considered.
+        """
+
+        dfs = []
+
+        for handler in self.categoryQuery:
+            df = handler.getCategoriesAssignedToAreas(area_ids)
+
+            if df is not None and not df.empty:
+                dfs.append(df)
+
+        if not dfs:
+            return []
+
+        merged = pd.concat(dfs, ignore_index=True).drop_duplicates()
+
+        return [
+            Category(
+                id=row["categoryId"],
+                name=row["categoryName"]
+            )
+            for _, row in merged.iterrows()
+        ]
+
+    # ---------------------------------------------------------
+
+    def getAreasAssignedToCategories(self, category_ids: set) -> list:
+        """
+        UML: getAreasAssignedToCategories(category_ids : set[string]) : list[Area]
+
+        Returns areas assigned to the specified categories.
+        If the input set is empty, all categories are considered.
+        """
+
+        dfs = []
+
+        for handler in self.categoryQuery:
+            df = handler.getAreasAssignedToCategories(category_ids)
+
+            if df is not None and not df.empty:
+                dfs.append(df)
+
+        if not dfs:
+            return []
+
+        merged = pd.concat(dfs, ignore_index=True).drop_duplicates()
+
+        return [
+            Area(
+                id=row["areaId"],
+                name=row["areaName"]
+            )
+            for _, row in merged.iterrows()
+        ]
