@@ -14,7 +14,7 @@ import sqlite3
 
 #---------------------------------------------------------------------------------------------
 #superclass
-class Handler(object): # CLAUDIA
+class Handler(object): # 
     #Base handler for database connection management
     def __init__(self): # defines the constructor
         self.dbPathOrUrl = "" # initialize empty path or URL
@@ -32,7 +32,7 @@ class Handler(object): # CLAUDIA
             return False 
 
 #subclass of Handler
-class UploadHandler(Handler): #CLAUDIA
+class UploadHandler(Handler):
     #Abstract handler for data upload operations
     def __init__(self):
         super().__init__()
@@ -42,7 +42,7 @@ class UploadHandler(Handler): #CLAUDIA
         pass 
 
 #subclass of UploadHandler
-class JournalUploadHandler(UploadHandler): # CLAUDIA
+class JournalUploadHandler(UploadHandler): # Claudia
     #Uploads journal data from CSV to RDF triplestore --> uploads data and tells me where it comes from
     def __init__(self, dbPathOrUrl=None):
         super().__init__()
@@ -67,13 +67,14 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         publisher = URIRef("https://schema.org/publishedBy") 
         seal = URIRef("https://schema.org/award")
         license = URIRef("https://schema.org/license")
-        apc = URIRef("https://schema.org/processingFee")
+        apc = URIRef("https://schema.org/processingFee") # no external interoperability, only works locally
         # Create RDF graph
         g = Graph()
         journals = pd.read_csv(path, keep_default_na=False) # Read CSV into DataFrame
         for idx, row in journals.iterrows():
-            localId = "journal-" + str(idx) 
-            subj = URIRef(baseUrl + "/" + localId)
+            localId = "journal-" + str(idx) # unique local identifier for each journal 
+            subj = URIRef(baseUrl + "/" + localId) # Subject URI for the journal
+            # Add triples to the graph
             g.add((subj, RDF.type, Journal))
             g.add((subj, title, Literal(row["Journal title"])))
             # Combine ISSN and EISSN
@@ -89,7 +90,7 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
             seal_bool = self._normalize_bool(row["DOAJ Seal"])
             apc_bool = self._normalize_bool(row["APC"])
             g.add((subj, seal, Literal(seal_bool, datatype=XSD.boolean)))
-            g.add((subj, apc, Literal(apc_bool, datatype=XSD.boolean)))
+            g.add((subj, apc, Literal(apc_bool, datatype=XSD.boolean))) 
         return g
     
     def pushDataToDb(self, path):
@@ -105,7 +106,7 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         store.close()
         return True 
 
-    def serializeToTTL(self, csv_path, output_path=None):
+    def serializeToTTL(self, csv_path, output_path=None): 
         if output_path is None:
             output_path = csv_path.rsplit('.', 1)[0] + '.ttl'
         graph = self.createGraph(csv_path)
@@ -362,22 +363,12 @@ class JournalQueryHandler(QueryHandler):
         
         return self._execute_sparql_query(sparql_query)
     
-    def getJournalsWithLicense(self, licenses: str) -> pd.DataFrame:
+    def getJournalsWithLicense(self, license_type: str) -> pd.DataFrame:
         #Get journals with exact license match
-        if not licenses:
-            return self.getAllJournals()
-        
-        # Build the license filter
-        escaped_licenses = [
-            f'"{self._escape_literal(license)}"' for license in licenses if license
-        ]
-
-        if not escaped_licenses:
+        if not license_type:
             return pd.DataFrame()
         
-        license_filter = " || ".join(
-            [f"?license = {license}" for license in escaped_licenses]
-        )
+        escaped_license = self._escape_literal(license_type)
         
         sparql_query = f'''
         PREFIX schema: <https://schema.org/>
@@ -388,7 +379,7 @@ class JournalQueryHandler(QueryHandler):
             ?journal rdf:type schema:Periodical .
             OPTIONAL {{ ?journal schema:title ?title }}
             ?journal schema:license ?license .
-            FILTER({license_filter})
+            FILTER(STR(?license) = "{escaped_license}")
             OPTIONAL {{ ?journal schema:identifier ?identifier }}
             OPTIONAL {{ ?journal schema:inLanguage ?language }}
             OPTIONAL {{ ?journal schema:publishedBy ?publisher }}
@@ -448,7 +439,7 @@ class JournalQueryHandler(QueryHandler):
 
 # CategoryQueryHandler
 # Subclass of QueryHandler
-class CategoryQueryHandler(QueryHandler): #FAHMIDA
+class CategoryQueryHandler(QueryHandler):
     """
     Handles queries on the relational database 'categories' table.
     Returns pandas DataFrames with:
