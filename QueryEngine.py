@@ -10,31 +10,31 @@ class BasicQueryEngine: #Fahmida
         self.categoryQuery = []    # list of CategoryQueryHandler --> # empty list of CategoryQueryHandler objects
 
 #METHODSSS
-    def cleanJournalHandlers(self) -> bool:
+    def cleanJournalHandlers(self) -> bool: #Claudia
         """Clear all Journal Query Handlers"""
         self.journalQuery.clear()
         return True
     
-    def cleanCategoryHandlers(self) -> bool:
+    def cleanCategoryHandlers(self) -> bool: #River
         """Clear all Category Query Handlers"""
         self.categoryQuery.clear()
         return True
     
-    def addJournalHandler(self, handler) -> bool:
-        """Add a Journal Query Handler to the list"""
+    def addJournalHandler(self, handler) -> bool: #Claudia
         self.journalQuery.append(handler)
         return True
     
-    def addCategoryHandler(self, handler) -> bool:
+    def addCategoryHandler(self, handler) -> bool: #River
         """Add a Category Query Handler to the list"""
         self.categoryQuery.append(handler)
         return True
     
-    def getEntityById(self, id: str):
+    def getEntityById(self, id: str): #Claudia
         """Get an entity by its ID"""
         # Implementation needed
         return None
-    
+
+    #Polina methods from here
     def getAllJournals(self) -> list:
         """Get all journals from all journal handlers"""
         journals = []
@@ -76,7 +76,8 @@ class BasicQueryEngine: #Fahmida
         for handler in self.journalQuery:
             journals.extend(handler.getJournalsWithDOAJSeal())
         return journals
-    
+        
+    #Fahmida methods from heree
     def getAllCategories(self) -> list:
         """Get all categories from all category handlers"""
         categories = []
