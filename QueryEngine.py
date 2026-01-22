@@ -13,8 +13,8 @@ class BasicQueryEngine: #Fahmida
 
     def cleanJournalHandlers(self) -> bool: #Claudia
         """Clear all Journal Query Handlers"""
-        self.journalQuery.clear()
-        return True
+        self.journalQuery.clear() # remove all elements from the list
+        return True # indicate success
     
     def cleanCategoryHandlers(self) -> bool: #Claudia
         """Clear all Category Query Handlers"""
