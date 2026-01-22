@@ -3,33 +3,34 @@
 #QueryEngine
 #------------------------------------------------
 import pandas as pd 
+from impl import Journal, Category, Area, JournalQueryHandler, CategoryQueryHandler, IdentifiableEntity
+
 #Superclass --> BasicQueryEngine(object)
 class BasicQueryEngine: #Fahmida
     def __init__(self):
         self.journalQuery = []     # list of JournalQueryHandler --> journalQuery is an attribute that represents data, not classes! -> i'm storing objects created from that class
         self.categoryQuery = []    # list of CategoryQueryHandler --> # empty list of CategoryQueryHandler objects
 
-#METHODSSS
     def cleanJournalHandlers(self) -> bool: #Claudia
         """Clear all Journal Query Handlers"""
         self.journalQuery.clear()
         return True
     
-    def cleanCategoryHandlers(self) -> bool: #River
+    def cleanCategoryHandlers(self) -> bool: #Claudia
         """Clear all Category Query Handlers"""
-        self.categoryQuery.clear()
+        self.categoryQuery.clear() 
         return True
     
-    def addJournalHandler(self, handler) -> bool: #Claudia
-        self.journalQuery.append(handler)
-        return True
+    def addJournalHandler(self, handler) -> bool: #River
+        self.journalQuery.append(handler) # 
+        return True 
     
     def addCategoryHandler(self, handler) -> bool: #River
         """Add a Category Query Handler to the list"""
         self.categoryQuery.append(handler)
         return True
     
-    def getEntityById(self, id: str): #Claudia
+    def getEntityById(self, id: str): #Claudia # it's the id from IdentifiableEntity
         """Get an entity by its ID"""
         # Implementation needed
         return None
