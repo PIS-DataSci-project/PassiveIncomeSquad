@@ -164,7 +164,7 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
             g.add((subj, RDF.type, Journal))
             g.add((subj, title, Literal(row["Journal title"])))
             # Combine ISSN and EISSN
-            issn = row["Journal ISSN (print version)"].strip()
+            issn = row["Journal ISSN (print version)"].strip() # 
             eissn = row["Journal EISSN (online version)"].strip()
             issn_and_eissn = "; ".join(filter(None, [issn, eissn]))
             if issn_and_eissn:
