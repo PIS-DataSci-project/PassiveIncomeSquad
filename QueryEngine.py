@@ -3,7 +3,6 @@
 #QueryEngine
 #------------------------------------------------
 import pandas as pd 
-from Entities import *
 from impl import Journal, Category, Area
 from impl import JournalQueryHandler, CategoryQueryHandler
 
@@ -14,6 +13,7 @@ class BasicQueryEngine: #Fahmida
         self.journalQuery = []     # list of JournalQueryHandler --> journalQuery is an attribute that represents data, not classes! -> i'm storing objects created from that class
         self.categoryQuery = []    # list of CategoryQueryHandler --> # empty list of CategoryQueryHandler objects
 
+#METHODSSS
     def cleanJournalHandlers(self) -> bool: #Claudia
         """Clear all Journal Query Handlers"""
         self.journalQuery.clear() # remove all elements from the list
@@ -21,12 +21,12 @@ class BasicQueryEngine: #Fahmida
     
     def cleanCategoryHandlers(self) -> bool: #Claudia
         """Clear all Category Query Handlers"""
-        self.categoryQuery.clear() 
+        self.categoryQuery.clear()
         return True
     
     def addJournalHandler(self, handler) -> bool: #River
-        self.journalQuery.append(handler) # 
-        return True 
+        self.journalQuery.append(handler)
+        return True
     
     def addCategoryHandler(self, handler) -> bool: #River
         """Add a Category Query Handler to the list"""
@@ -82,13 +82,21 @@ class BasicQueryEngine: #Fahmida
         return None
        
 
-    #Polina methods from here    
-    def getAllJournals(self) -> list:
-        """Get all journals from all journal handlers"""
-        journals = []
-        for handler in self.journalQuery:
-            journals.extend(handler.getAllJournals())
-        return journals
+    #Polina methods from here
+    def getJournalsWithTitle(self, partialTitle: str) -> List[Journal]:
+        """Get journals with matching title"""
+        journal_map: Dict[str, Journal] = {}
+        
+        try:
+            for handler in self._journalQuery:
+                df = handler.getJournalsWithTitle(partialTitle)
+                self._collect_journals(df, journal_map)
+        
+                return list(journal_map.values())
+        
+        except Exception as e:
+             print(f"Error while fetching journals with title '{partialTitle}': {e}")
+             return []
     
     def getJournalsWithTitle(self, partialTitle: str) -> list:
         """Get journals matching the partial title"""
