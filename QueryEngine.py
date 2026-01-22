@@ -3,45 +3,53 @@
 #QueryEngine
 #------------------------------------------------
 import pandas as pd 
-from impl import Journal, Category, Area, JournalQueryHandler, CategoryQueryHandler, IdentifiableEntity
-
+from typing import List, Dict
 #Superclass --> BasicQueryEngine(object)
 class BasicQueryEngine: #Fahmida
     def __init__(self):
         self.journalQuery = []     # list of JournalQueryHandler --> journalQuery is an attribute that represents data, not classes! -> i'm storing objects created from that class
         self.categoryQuery = []    # list of CategoryQueryHandler --> # empty list of CategoryQueryHandler objects
 
+#METHODSSS
     def cleanJournalHandlers(self) -> bool: #Claudia
         """Clear all Journal Query Handlers"""
         self.journalQuery.clear() # remove all elements from the list
         return True # indicate success
     
-    def cleanCategoryHandlers(self) -> bool: #Claudia
+    def cleanCategoryHandlers(self) -> bool: #River
         """Clear all Category Query Handlers"""
-        self.categoryQuery.clear() 
+        self.categoryQuery.clear()
         return True
     
-    def addJournalHandler(self, handler) -> bool: #River
-        self.journalQuery.append(handler) # 
-        return True 
+    def addJournalHandler(self, handler) -> bool: #Claudia
+        self.journalQuery.append(handler)
+        return True
     
     def addCategoryHandler(self, handler) -> bool: #River
         """Add a Category Query Handler to the list"""
         self.categoryQuery.append(handler)
         return True
     
-    def getEntityById(self, id: str): #Claudia # it's the id from IdentifiableEntity
+    def getEntityById(self, id: str): #Claudia
         """Get an entity by its ID"""
         # Implementation needed
         return None
 
     #Polina methods from here
-    def getAllJournals(self) -> list:
-        """Get all journals from all journal handlers"""
-        journals = []
-        for handler in self.journalQuery:
-            journals.extend(handler.getAllJournals())
-        return journals
+    def getJournalsWithTitle(self, partialTitle: str) -> List[Journal]:
+        """Get journals with matching title"""
+        journal_map: Dict[str, Journal] = {}
+        
+        try:
+            for handler in self._journalQuery:
+                df = handler.getJournalsWithTitle(partialTitle)
+                self._collect_journals(df, journal_map)
+        
+                return list(journal_map.values())
+        
+        except Exception as e:
+             print(f"Error while fetching journals with title '{partialTitle}': {e}")
+             return []
     
     def getJournalsWithTitle(self, partialTitle: str) -> list:
         """Get journals matching the partial title"""
