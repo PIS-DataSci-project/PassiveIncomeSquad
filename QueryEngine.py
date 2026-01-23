@@ -109,7 +109,7 @@ class BasicQueryEngine: #Fahmida
             return
 
         for _, row in df.iterrows():
-            journal_id = row.get("journal")
+            journal_id = row("journal")
             if journal_id and journal_id not in journal_map:
                 journal_map[journal_id] = Journal(
                     identifiers=[journal_id.strip() for journal_id in row['identifiers'].split(',') if journal_id.strip()], # splitting the identifiers string into a list and 

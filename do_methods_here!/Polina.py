@@ -6,189 +6,100 @@ import pandas as pd
 from typing import List, Dict
 from Entities import Journal
 from impl import JournalQueryHandler, CategoryQueryHandler
-#Superclass --> BasicQueryEngine(object)
+
+# Superclass --> BasicQueryEngine(object)
 class BasicQueryEngine:
     """
-    This class corresponds to the UML class BasicQueryEngine.
-    It coordinates multiple QueryHandler objects and combines their results.
+    UML class: BasicQueryEngine
+    Coordinates multiple QueryHandler objects and combines their results.
     """
 
     def __init__(self):
         # UML: journalQuery : JournalQueryHandler [0..*]
-        # In Python, [0..*] is represented by a list
-        # This list will store OBJECTS of type JournalQueryHandler
         self.journalQuery = []
 
         # UML: categoryQuery : CategoryQueryHandler [0..*]
-        # This list will store OBJECTS of type CategoryQueryHandler
         self.categoryQuery = []
 
-    # ---------------------------------------------------------
-    # CATEGORY-RELATED METHODS (assigned to Fahmida)
-    # ---------------------------------------------------------
-
-    def getAllCategories(self) -> list:
-        """
-        UML: getAllCategories() : list[Category]
-
-        Returns all categories from Scimago Journal Rank,
-        with no repetitions.
-        """
-
-        # This list will collect DataFrames returned by each handler
-        dfs = []
-
-        # Call the same method on ALL CategoryQueryHandler objects
-        for handler in self.categoryQuery:
-            # Each handler queries its own data source
-            df = handler.getAllCategories()
-
-            # We only keep non-empty results
-            if df is not None and not df.empty:
-                dfs.append(df)
-
-        # If no handler returned data, return an empty list
-        if not dfs:
-            return []
-
-        # Merge all DataFrames into one
-        # ignore_index=True avoids duplicated indexes
-        merged = pd.concat(dfs, ignore_index=True)
-
-        # Remove duplicate categories (as required by UML)
-        merged = merged.drop_duplicates()
-
-        # Convert each row into a Category object
-        return [
-            Category(
-                id=row["categoryId"],        # category identifier
-                name=row["categoryName"]     # category name
-            )
-            for _, row in merged.iterrows()
-        ]
-
-    # ---------------------------------------------------------
-
-    def getAllAreas(self) -> list:
-        """
-        UML: getAllAreas() : list[Area]
-
-        Returns all areas from Scimago,
-        with no repetitions.
-        """
-
-        dfs = []
-
-        # Call getAllAreas on every CategoryQueryHandler
-        for handler in self.categoryQuery:
-            df = handler.getAllAreas()
-
-            if df is not None and not df.empty:
-                dfs.append(df)
-
-        if not dfs:
-            return []
-
-        # Merge and remove duplicates
-        merged = pd.concat(dfs, ignore_index=True).drop_duplicates()
-
-        # Convert rows into Area objects
-        return [
-            Area(
-                id=row["areaId"],          # area identifier
-                name=row["areaName"]       # area name
-            )
-            for _, row in merged.iterrows()
-        ]
-
-    # ---------------------------------------------------------
-
-    def getCategoriesWithQuartile(self, quartiles: set) -> list:
-        """
-        UML: getCategoriesWithQuartile(quartiles : set[string]) : list[Category]
-
-        Returns categories belonging to the specified quartiles.
-        If the input set is empty, all quartiles are considered.
-        """
-
-        dfs = []
-
-        # Delegate the filtering logic to the handlers
-        for handler in self.categoryQuery:
-            df = handler.getCategoriesWithQuartile(quartiles)
-
-            if df is not None and not df.empty:
-                dfs.append(df)
-
-        if not dfs:
-            return []
-
-#METHODSSS
-    def cleanJournalHandlers(self) -> bool: #Claudia
-        """Clear all Journal Query Handlers"""
-        self.journalQuery.clear()
-        return True
-    
-    def cleanCategoryHandlers(self) -> bool: #River
-        """Clear all Category Query Handlers"""
-        self.categoryQuery.clear()
-        return True
-    
-    def addJournalHandler(self, handler) -> bool: #Claudia
-        self.journalQuery.append(handler)
-        return True
-    
-    def addCategoryHandler(self, handler) -> bool: #River
-        """Add a Category Query Handler to the list"""
-        self.categoryQuery.append(handler)
-        return True
-    
-    def getEntityById(self, id: str): #Claudia
-        """Get an entity by its ID"""
-        # Implementation needed
-        return None
-
     #Polina methods from here
-    def getAllJournals(self) -> List[Journal]:
-        journal_map: Dict[str, Journal] = {}
+
+    def _add_journals_from_df(
+            self,
+            df: pd.DataFrame,
+            journal_map: dict[str, Journal]
+    ) -> None:
+        if df is None or df.empty:
+            return
+
+        for _, row in df.iterrows():
+            journal_id = row("journal")
+            if journal_id and journal_id not in journal_map:
+                journal_map[journal_id] = Journal(
+                    identifiers=[journal_id],
+                    title=row("title", ""),
+                    language=row("language", ""),
+                    seal=row("seal", False),
+                    license=row("license", ""),
+                    apc=row("apc", False),
+                    publisher=row("publisher", None)
+                    )
+
+    def getAllJournals(self) -> list[Journal]:
+        journal_map: dict[str, Journal] = {}
+
         for handler in self.journalQuery:
             df = handler.getAllJournals()
-            self._collect_journals(df, journal_map)
-        return list(journal_map.values())
+            self._add_journals_from_df(df, journal_map)
 
-    def getJournalsWithTitle(self, partialTitle: str) -> List[Journal]:
-        journal_map: Dict[str, Journal] = {}
+        return list(journal_map.values())
+    
+    def getJournalsWithTitle(self, partialTitle: str) -> list[Journal]:
+        journal_map: dict[str, Journal] = {}
+
         for handler in self.journalQuery:
             df = handler.getJournalsWithTitle(partialTitle)
-            self._collect_journals(df, journal_map)
+            self._add_journals_from_df(df, journal_map)
+
         return list(journal_map.values())
 
-    def getJournalsPublishedBy(self, partialName: str) -> List[Journal]:
-        journal_map: Dict[str, Journal] = {}
+    
+    def getJournalsPublishedBy(self, partialName: str) -> list[Journal]:
+        journal_map: dict[str, Journal] = {}
+
         for handler in self.journalQuery:
             df = handler.getJournalsPublishedBy(partialName)
-            self._collect_journals(df, journal_map)
+            self._add_journals_from_df(df, journal_map)
+
         return list(journal_map.values())
 
-    def getJournalsWithLicense(self, licenses: set) -> List[Journal]:
-        journal_map: Dict[str, Journal] = {}
+    
+    def getJournalsWithLicense(self, licenses: set[str]) -> list[Journal]:
+        journal_map: dict[str, Journal] = {}
+
         for handler in self.journalQuery:
             df = handler.getJournalsWithLicense(licenses)
-            self._collect_journals(df, journal_map)
+        self._add_journals_from_df(df, journal_map)
+
         return list(journal_map.values())
 
-    def getJournalsWithAPC(self) -> List[Journal]:
-        journal_map: Dict[str, Journal] = {}
-        for handler in self.journalQuery:
+    
+    def getJournalsWithAPC(self) -> list[Journal]:
+        journal_map: dict[str, Journal] = {}
+
+        for handler in self.journalQuery: 
             df = handler.getJournalsWithAPC()
-            self._collect_journals(df, journal_map)
+            self._add_journals_from_df(df, journal_map)
+
         return list(journal_map.values())
 
-    def getJournalsWithDOAJSeal(self) -> List[Journal]:
-        journal_map: Dict[str, Journal] = {}
+    
+    def getJournalsWithDOAJSeal(self) -> list[Journal]:
+        journal_map: dict[str, Journal] = {}
+
         for handler in self.journalQuery:
             df = handler.getJournalsWithDOAJSeal()
-            self._collect_journals(df, journal_map)
+            self._add_journals_from_df(df, journal_map)
+
         return list(journal_map.values())
         
     #Fahmida methods from heree
@@ -228,3 +139,29 @@ class BasicQueryEngine:
         return areas
 
 #Subclass --> FullQueryEngine(BasicQueryEngine) 
+
+#testing 
+def test_get_all_journals_returns_journal_list():
+    handler = MagicMock()
+
+    handler.getAllJournals.return_value = pd.DataFrame([
+        {
+            "journal": "j1",
+            "title": "Test Journal",
+            "language": "en",
+            "seal": True,
+            "license": "CC-BY",
+            "apc": True,
+            "publisher": "Test Publisher"
+        }
+    ])
+
+    engine = BasicQueryEngine()
+    engine.journalQuery = [handler]
+
+    result = engine.getAllJournals()
+
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert isinstance(result[0], Journal)
+    assert result[0].title == "Test Journal"
