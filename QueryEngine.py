@@ -8,9 +8,6 @@ from impl import Journal, Category, Area
 from impl import JournalQueryHandler, CategoryQueryHandler
 import sqlite3
 
-# type hints
-from typing import List, Set
-
 #Superclass --> BasicQueryEngine(object)
 class BasicQueryEngine: #Fahmida
     """
@@ -47,176 +44,237 @@ class BasicQueryEngine: #Fahmida
         self.categoryQuery.append(handler)
         return True
     
-    def getEntityById(self, id: str): #Claudia 
-        """Get an entity (Journal or Category) by its ID"""
-        # First, search through all journal handlers
-        journal_dfs = list() # creating a list to store dataframes from journal handlers
-        for handler in self.journalQuery: # iterating through each JournalQueryHandler object in the journalQuery list
-            df = handler.getById(id) # calling getById method on each handler to get a dataframe for the given id
-            if df is not None and len(df) > 0: # checking if the dataframe is valid and not empty
-                journal_dfs.append(df) # adding the valid dataframe to the list
+    def getEntityById(self, entity_id: str):
+        """
+        Search for entity by ID in all databases.
+        Returns: Journal or Category, or None
+        """
+        if not entity_id:
+            return None
+            
+        # 1. Search in journal handlers (Blazegraph)
+        journal_dfs = []
+        for handler in self.journalQuery:
+            try:
+                result_df = handler.getById(entity_id)
+                if result_df is not None and not result_df.empty:
+                    journal_dfs.append(result_df)
+            except Exception as e:
+                print(f"Error in journal handler: {e}")
+                continue
         
         # Merge and remove duplicates from journal results
-        if journal_dfs: 
-            merged = pd.concat(journal_dfs, ignore_index=True).drop_duplicates() # concatenating all dataframes in the list into a single dataframe and removing duplicates
-            if len(merged) > 0: # checking if the merged dataframe is not empty
-                # Take the first row and construct a Journal object
-                row = merged.iloc[0] # getting the first row of the merged dataframe
+        if journal_dfs:
+            merged = pd.concat(journal_dfs, ignore_index=True).drop_duplicates()
+            if not merged.empty:
+                row = merged.iloc[0]
                 
-                # Extract identifier - try different column names
-                if 'identifier' in row:
-                    id_list = [row['identifier']]
-                elif 'identifiers' in row:
-                    id_list = [row['identifiers']]
-                else:
-                    id_list = [id]
+                # Parse identifiers from the identifier field (may contain multiple IDs separated by "; ")
+                identifiers = []
+                if 'identifier' in row and pd.notna(row['identifier']):
+                    id_str = str(row['identifier'])
+                    identifiers = [id.strip() for id in id_str.split(';') if id.strip()]
                 
-                # Extract language
-                lang_str = row.get('language', '')
-                if lang_str and isinstance(lang_str, str):
-                    lang_list = [lang.strip() for lang in lang_str.split(';') if lang.strip()]
-                else:
-                    lang_list = []
+                # Parse languages from the language field (may contain multiple languages)
+                languages = []
+                if 'language' in row and pd.notna(row['language']):
+                    lang_str = str(row['language'])
+                    languages = [lang.strip() for lang in lang_str.split(',') if lang.strip()]
                 
-                journal = Journal( 
-                    identifiers=id_list,
-                    title=row.get('title', ''),
-                    language=lang_list,
-                    seal=row.get('seal', False),
-                    license=row.get('license', ''), 
-                    apc=row.get('apc', False),
-                    publisher=row.get('publisher', None),
+                # Get categories for this journal from category handlers
+                categories = []
+                areas = []
+                for handler in self.categoryQuery:
+                    try:
+                        # Query by each identifier
+                        for identifier in identifiers:
+                            cat_df = handler.getById(identifier)
+                            if cat_df is not None and not cat_df.empty:
+                                if 'category_id' in cat_df.columns:
+                                    cats = [str(cat_id).strip() for cat_id in cat_df['category_id'].dropna() if str(cat_id).strip()]
+                                    categories.extend(cats)
+                                
+                                if 'areas' in cat_df.columns:
+                                    for area_str in cat_df['areas'].dropna():
+                                        if pd.notna(area_str):
+                                            area_list = [a.strip() for a in str(area_str).split(',') if a.strip()]
+                                            areas.extend(area_list)
+                    except Exception as e:
+                        print(f"Error getting categories: {e}")
+                        continue
+                
+                # Remove duplicates
+                categories = list(set(categories))
+                areas = list(set(areas))
+                
+                # Convert boolean strings to actual booleans
+                seal = False
+                if 'seal' in row:
+                    if isinstance(row['seal'], str):
+                        seal = row['seal'].lower() == 'true'
+                    else:
+                        seal = bool(row['seal'])
+                
+                apc = False
+                if 'apc' in row:
+                    if isinstance(row['apc'], str):
+                        apc = row['apc'].lower() == 'true'
+                    else:
+                        apc = bool(row['apc'])
+                
+                return Journal(
+                    identifiers=identifiers,
+                    title=str(row.get('title', '')),
+                    language=languages,
+                    seal=seal,
+                    license=str(row.get('license', '')),
+                    apc=apc,
+                    publisher=str(row.get('publisher', '')),
+                    categories=categories,
+                    areas=areas
                 )
-                return journal
         
-        # If not found in journals, search through category handlers
-        category_dfs = list() # creating a list to store dataframes from category handlers
-        for handler in self.categoryQuery: # iterating through each CategoryQueryHandler object in the categoryQuery list
-            df = handler.getById(id) # calling getById method on each handler to get a dataframe for the given id
-            if df is not None and len(df) > 0: # checking if the dataframe is valid and not empty
-                category_dfs.append(df) # adding the valid dataframe to the list
+        # 2. Search in category handlers (SQLite)
+        category_dfs = []
+        for handler in self.categoryQuery:
+            try:
+                result_df = handler.getById(entity_id)
+                if result_df is not None and not result_df.empty:
+                    category_dfs.append(result_df)
+            except Exception as e:
+                print(f"Error in category handler: {e}")
+                continue
         
         # Merge and remove duplicates from category results
         if category_dfs:
-            merged = pd.concat(category_dfs, ignore_index=True).drop_duplicates() # concatenating all dataframes in the list into a single dataframe and removing duplicates
-            if len(merged) > 0: # checking if the merged dataframe is not empty
-                # Take the first row and determine entity type
+            merged = pd.concat(category_dfs, ignore_index=True).drop_duplicates()
+            if not merged.empty:
                 row = merged.iloc[0]
                 
-                # Check if it's a Category (has quartile column with data) or Area (no quartile)
-                if 'quartile' in row and pd.notna(row['quartile']) and row['quartile']:
-                    # Create and return Category object
-                    # Extract identifier from correct column
-                    if 'category_id' in row:
-                        id_list = [row['category_id']]
-                    elif 'identifiers' in row:
-                        id_list = [row['identifiers']]
-                    else:
-                        id_list = [id]
-                    
-                    category = Category(
-                        identifiers=id_list,
-                        quartile=str(row['quartile'])
-                    )
-                    return category
-                else:
-                    # Create and return Area object
-                    if 'areas' in row:
-                        id_list = [row['areas']]
-                    elif 'identifiers' in row:
-                        id_list = [row['identifiers']]
-                    else:
-                        id_list = [id]
-                    
-                    area = Area(
-                        identifiers=id_list
-                    )
-                    return area
+                # Return Category
+                identifiers = []
+                if 'category_id' in row:
+                    identifiers.append(str(row['category_id']))
+                if 'identifiers' in row and pd.notna(row['identifiers']):
+                    identifiers.append(str(row['identifiers']))
+                
+                return Category(
+                    identifiers=list(set(identifiers)) if identifiers else [entity_id],
+                    quartile=str(row.get('quartile', ''))
+                )
         
-        # No entity found with this ID
+        # 3. Not found in any database
         return None
        
 
     #Polina methods from here
+    def getAllJournals(self) -> list:
+        """Получить все журналы"""
+        all_dfs = [handler.getAllJournals() for handler in self.journalQuery]
+        merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
+        
+        return [
+            Journal(
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                title=row.get('title', ''),
+                language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
+                seal=str(row.get('seal', 'false')).lower() == 'true',
+                license=row.get('license', ''),
+                apc=str(row.get('apc', 'false')).lower() == 'true',
+                publisher=row.get('publisher', '')
+            )
+            for _, row in merged.iterrows()
+        ]
 
-    def _add_journals_from_df(
-            self,
-            df: pd.DataFrame,
-            journal_map: dict[str, Journal]
-    ) -> None:
-        if df is None or df.empty:
-            return
+    def getJournalsWithTitle(self, partialTitle: str) -> list:
+        """Найти журналы по названию"""
+        all_dfs = [handler.getJournalsWithTitle(partialTitle) for handler in self.journalQuery]
+        merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
+        
+        return [
+            Journal(
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                title=row.get('title', ''),
+                language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
+                seal=str(row.get('seal', 'false')).lower() == 'true',
+                license=row.get('license', ''),
+                apc=str(row.get('apc', 'false')).lower() == 'true',
+                publisher=row.get('publisher', '')
+            )
+            for _, row in merged.iterrows()
+        ]
 
-        for _, row in df.iterrows():
-            journal_id = row["journal"]
-            if journal_id and journal_id not in journal_map:
-                journal_map[journal_id] = Journal(
-                    identifiers=[journal_id.strip() for journal_id in row['identifiers'].split(',') if journal_id.strip()], # splitting the identifiers string into a list and 
-                    title=row['title'], # getting the title from the row
-                    language=[lang.strip() for lang in row['language'].split(',') if lang.strip()], # splitting the language string into a list # could add .strip() to remove extra spaces
-                    seal=row['seal'] if 'seal' in row else False,
-                    license=row['license'], 
-                    apc=row['apc'] if 'apc' in row else False,
-                    publisher=row['publisher'] if 'publisher' in row else None,
-                    )
+    def getJournalsPublishedBy(self, partialName: str) -> list:
+        """Найти журналы по издателю"""
+        all_dfs = [handler.getJournalsPublishedBy(partialName) for handler in self.journalQuery]
+        merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
+        
+        return [
+            Journal(
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                title=row.get('title', ''),
+                language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
+                seal=str(row.get('seal', 'false')).lower() == 'true',
+                license=row.get('license', ''),
+                apc=str(row.get('apc', 'false')).lower() == 'true',
+                publisher=row.get('publisher', '')
+            )
+            for _, row in merged.iterrows()
+        ]
 
-    def getAllJournals(self) -> list[Journal]:
-        journal_map: dict[str, Journal] = {}
+    def getJournalsWithLicense(self, licenses: set) -> list:
+        """Найти журналы с лицензиями"""
+        all_dfs = [handler.getJournalsWithLicense(licenses) for handler in self.journalQuery]
+        merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
 
-        for handler in self.journalQuery:
-            df = handler.getAllJournals()
-            self._add_journals_from_df(df, journal_map)
+        return [
+            Journal(
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                title=row.get('title', ''),
+                language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
+                seal=str(row.get('seal', 'false')).lower() == 'true',
+                license=row.get('license', ''),
+                apc=str(row.get('apc', 'false')).lower() == 'true',
+                publisher=row.get('publisher', '')
+            )
+            for _, row in merged.iterrows()
+        ]
 
-        return list(journal_map.values())
+    def getJournalsWithAPC(self) -> list:
+        """Найти журналы с APC"""
+        all_dfs = [handler.getJournalsWithAPC() for handler in self.journalQuery]
+        merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
+        
+        return [
+            Journal(
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                title=row.get('title', ''),
+                language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
+                seal=str(row.get('seal', 'false')).lower() == 'true',
+                license=row.get('license', ''),
+                apc=str(row.get('apc', 'false')).lower() == 'true',
+                publisher=row.get('publisher', '')
+            )
+            for _, row in merged.iterrows()
+        ]
+
+    def getJournalsWithDOAJSeal(self) -> list:
+        """Найти журналы с DOAJ Seal"""
+        all_dfs = [handler.getJournalsWithDOAJSeal() for handler in self.journalQuery]
+        merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
     
-    def getJournalsWithTitle(self, partialTitle: str) -> list[Journal]:
-        journal_map: dict[str, Journal] = {}
-
-        for handler in self.journalQuery:
-            df = handler.getJournalsWithTitle(partialTitle)
-            self._add_journals_from_df(df, journal_map)
-
-        return list(journal_map.values())
-
-    
-    def getJournalsPublishedBy(self, partialName: str) -> list[Journal]:
-        journal_map: dict[str, Journal] = {}
-
-        for handler in self.journalQuery:
-            df = handler.getJournalsPublishedBy(partialName)
-            self._add_journals_from_df(df, journal_map)
-
-        return list(journal_map.values())
-
-    
-    def getJournalsWithLicense(self, licenses: set[str]) -> list[Journal]:
-        journal_map: dict[str, Journal] = {}
-
-        for handler in self.journalQuery:
-            df = handler.getJournalsWithLicense(licenses)
-            self._add_journals_from_df(df, journal_map)
-
-        return list(journal_map.values())
-
-    
-    def getJournalsWithAPC(self) -> list[Journal]:
-        journal_map: dict[str, Journal] = {}
-
-        for handler in self.journalQuery: 
-            df = handler.getJournalsWithAPC()
-            self._add_journals_from_df(df, journal_map)
-
-        return list(journal_map.values())
-
-    
-    def getJournalsWithDOAJSeal(self) -> list[Journal]:
-        journal_map: dict[str, Journal] = {}
-
-        for handler in self.journalQuery:
-            df = handler.getJournalsWithDOAJSeal()
-            self._add_journals_from_df(df, journal_map)
-
-        return list(journal_map.values())
+        return [
+            Journal(
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                title=row.get('title', ''),
+                language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
+                seal=str(row.get('seal', 'false')).lower() == 'true',
+                license=row.get('license', ''),
+                apc=str(row.get('apc', 'false')).lower() == 'true',
+                publisher=row.get('publisher', '')
+            )
+            for _, row in merged.iterrows()
+        ]
         
     # ---------------------------------------------------------
     # CATEGORY-RELATED METHODS (Fahmida)
