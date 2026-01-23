@@ -2,7 +2,6 @@ import pandas as pd
 from typing import List, Dict
 from impl import IdentifiableEntity, Journal, Category, Area
 from impl import JournalQueryHandler, CategoryQueryHandler  
-from QueryEngine import *
 
 #------------------------------------------------
 #Subclass of BasicQueryEngine
