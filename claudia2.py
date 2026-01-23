@@ -1,37 +1,29 @@
 import pandas as pd
-from typing import List, Dict
-from impl import IdentifiableEntity, Journal, Category, Area
-from impl import JournalQueryHandler, CategoryQueryHandler  
+from Entities import Journal, Category, Area
 
-#------------------------------------------------
-#Subclass of BasicQueryEngine
 
-class BasicQueryEngine: #Fahmida
-    
+class FullQueryEngine:
     def __init__(self):
-        self.journalQuery = []     # list of JournalQueryHandler --> journalQuery is an attribute that represents data, not classes! -> i'm storing objects created from that class
-        self.categoryQuery = []    # list of CategoryQueryHandler --> # empty list of CategoryQueryHandler objects
-
-#METHODSSS
-    def cleanJournalHandlers(self) -> bool: #Claudia
-        """Clear all Journal Query Handlers"""
-        self.journalQuery.clear() # remove all elements from the list
-        return True # indicate success
+        self.journalQuery = []    # List of JournalQueryHandler objects
+        self.categoryQuery = []   # List of CategoryQueryHandler objects
     
-    def cleanCategoryHandlers(self) -> bool: #Claudia
-        """Clear all Category Query Handlers"""
-        self.categoryQuery.clear()
-        return True
-    
-    def addJournalHandler(self, handler: JournalQueryHandler) -> bool:  # River
+    def addJournalHandler(self, handler) -> bool:
         self.journalQuery.append(handler)
         return True
-
-    def addCategoryHandler(self, handler: CategoryQueryHandler) -> bool:  # River
+    
+    def addCategoryHandler(self, handler) -> bool:
         self.categoryQuery.append(handler)
         return True
     
-   def getEntityById(self, entity_id: str):
+    def cleanJournalHandlers(self) -> bool:
+        self.journalQuery = []
+        return True
+    
+    def cleanCategoryHandlers(self) -> bool:
+        self.categoryQuery = []
+        return True
+    
+    def getEntityById(self, entity_id: str):
         """
         Search for entity by ID in all databases.
         Returns: Journal, Category, Area, or None
@@ -52,7 +44,7 @@ class BasicQueryEngine: #Fahmida
                 # Get categories for this journal from category handlers
                 category_dfs = []
                 for handler in self.categoryQuery:
-                    cat_df = handler.getById(entity_id)
+                    cat_df = handler.getCategoriesForJournal(entity_id)
                     if cat_df is not None and not cat_df.empty:
                         category_dfs.append(cat_df)
                 
@@ -133,28 +125,3 @@ class BasicQueryEngine: #Fahmida
         
         # 3. Not found in any database
         return None
-    
-    
-    
-# --------------------------------
-
-rel_path = "relational.db"
-grp_endpoint = "http://127.0.0.1:9999/blazegraph/sparql"
-
-cat_qh = CategoryQueryHandler()
-cat_qh.setDbPathOrUrl(rel_path)
-
-jou_qh = JournalQueryHandler()
-jou_qh.setDbPathOrUrl(grp_endpoint)
-
-# Finally, create a advanced mashup object for asking
-# about data
-que = BasicQueryEngine()
-que.addCategoryHandler(cat_qh)
-que.addJournalHandler(jou_qh)
-
-result_q3 = que.getEntityById("Prolíngua")
-result_q4 = que.getEntityById("2532-8816")
-
-print(result_q3)
-print(result_q4)
