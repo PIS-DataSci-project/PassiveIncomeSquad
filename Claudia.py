@@ -213,7 +213,7 @@ print("-" * 50)
 
 result_q3 = que.getEntityById("Artificial Intelligence")
 print(result_q3)
-result_q4 = que.getEntityById("2532-8816")
+result_q4 = que.getEntityById("2224-9281")
 print_journal(result_q4)
 
 if result_q3 and result_q4: 
