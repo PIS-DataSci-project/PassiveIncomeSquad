@@ -11,7 +11,7 @@ import sqlite3
 from typing import List, Set
 
 #Superclass --> BasicQueryEngine(object)
-class BasicQueryEngine:
+class BasicQueryEngine: #Fahmida
     """
     UML class: BasicQueryEngine
     Coordinates multiple QueryHandler objects and combines their results.
