@@ -46,8 +46,8 @@ class BasicQueryEngine: #Fahmida
                     license=row['license'], 
                     apc=row['apc'] if 'apc' in row else False,
                     publisher=row['publisher'] if 'publisher' in row else None,
-                    categories=[cat.strip() for cat in row['categories'].split(',') if cat.strip()] if 'categories' in row and row['categories'] else [],
-                    areas=[area.strip() for area in row['areas'].split(',') if area.strip()] if 'areas' in row and row['areas'] else []
+                    categories=
+                    areas=
                 )
                 return journal_map # could have not created the variable and return the Journal object directly
         

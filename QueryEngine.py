@@ -62,14 +62,16 @@ class BasicQueryEngine: #Fahmida
             if not merged.empty:
                 # Take the first row and construct a Journal object
                 row = merged.iloc[0]
-                journal = Journal(
-                    identifiers=[id],
-                    title=row.get('title', ''),
-                    language=row.get('language', ''),
-                    seal=row.get('seal', False),
-                    license=row.get('license', ''),
-                    apc=row.get('apc', False),
-                    publisher=row.get('publisher', None)
+                journal_map = Journal( 
+                    identifiers=[journal_id.strip() for journal_id in row['identifiers'].split(',') if journal_id.strip()], # splitting the identifiers string into a list and 
+                    title=row['title'], # getting the title from the row
+                    language=[lang.strip() for lang in row['language'].split(',') if lang.strip()], # splitting the language string into a list # could add .strip() to remove extra spaces
+                    seal=row['seal'] if 'seal' in row else False,
+                    license=row['license'], 
+                    apc=row['apc'] if 'apc' in row else False,
+                    publisher=row['publisher'] if 'publisher' in row else None,
+                    categories=#,
+                    areas=#
                 )
                 return journal
         
