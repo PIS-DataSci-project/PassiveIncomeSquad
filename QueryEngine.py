@@ -34,17 +34,16 @@ class BasicQueryEngine: #Fahmida
         self.journalQuery.clear() # remove all elements from the list
         return True # indicate success
     
-    def cleanCategoryHandlers(self) -> bool: #River
+    def cleanCategoryHandlers(self) -> bool: #Claudia
         """Clear all Category Query Handlers"""
         self.categoryQuery.clear()
         return True
     
-    def addJournalHandler(self, handler) -> bool: #River
+    def addJournalHandler(self, handler: JournalQueryHandler) -> bool:  # River
         self.journalQuery.append(handler)
         return True
-    
-    def addCategoryHandler(self, handler) -> bool: #Claudia
-        """Add a Category Query Handler to the list"""
+
+    def addCategoryHandler(self, handler: CategoryQueryHandler) -> bool:  # River
         self.categoryQuery.append(handler)
         return True
     
