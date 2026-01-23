@@ -138,85 +138,113 @@ class BasicQueryEngine: #Fahmida
        
 
     #Polina methods from here
+    def getAllJournals(self) -> list:
+        """Получить все журналы"""
+        all_dfs = [handler.getAllJournals() for handler in self.journalQuery]
+        merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
+        
+        return [
+            Journal(
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                title=row.get('title', ''),
+                language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
+                seal=str(row.get('seal', 'false')).lower() == 'true',
+                license=row.get('license', ''),
+                apc=str(row.get('apc', 'false')).lower() == 'true',
+                publisher=row.get('publisher', '')
+            )
+            for _, row in merged.iterrows()
+        ]
 
-    def _add_journals_from_df(
-            self,
-            df: pd.DataFrame,
-            journal_map: dict[str, Journal]
-    ) -> None:
-        if df is None or df.empty:
-            return
+    def getJournalsWithTitle(self, partialTitle: str) -> list:
+        """Найти журналы по названию"""
+        all_dfs = [handler.getJournalsWithTitle(partialTitle) for handler in self.journalQuery]
+        merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
+        
+        return [
+            Journal(
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                title=row.get('title', ''),
+                language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
+                seal=str(row.get('seal', 'false')).lower() == 'true',
+                license=row.get('license', ''),
+                apc=str(row.get('apc', 'false')).lower() == 'true',
+                publisher=row.get('publisher', '')
+            )
+            for _, row in merged.iterrows()
+        ]
 
-        for _, row in df.iterrows():
-            journal_id = row["journal"]
-            if journal_id and journal_id not in journal_map:
-                journal_map[journal_id] = Journal(
-                    identifiers=[journal_id.strip() for journal_id in row['identifiers'].split(',') if journal_id.strip()], # splitting the identifiers string into a list and 
-                    title=row['title'], # getting the title from the row
-                    language=[lang.strip() for lang in row['language'].split(',') if lang.strip()], # splitting the language string into a list # could add .strip() to remove extra spaces
-                    seal=row['seal'] if 'seal' in row else False,
-                    license=row['license'], 
-                    apc=row['apc'] if 'apc' in row else False,
-                    publisher=row['publisher'] if 'publisher' in row else None,
-                    )
+    def getJournalsPublishedBy(self, partialName: str) -> list:
+        """Найти журналы по издателю"""
+        all_dfs = [handler.getJournalsPublishedBy(partialName) for handler in self.journalQuery]
+        merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
+        
+        return [
+            Journal(
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                title=row.get('title', ''),
+                language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
+                seal=str(row.get('seal', 'false')).lower() == 'true',
+                license=row.get('license', ''),
+                apc=str(row.get('apc', 'false')).lower() == 'true',
+                publisher=row.get('publisher', '')
+            )
+            for _, row in merged.iterrows()
+        ]
 
-    def getAllJournals(self) -> list[Journal]:
-        journal_map: dict[str, Journal] = {}
+    def getJournalsWithLicense(self, licenses: set) -> list:
+        """Найти журналы с лицензиями"""
+        all_dfs = [handler.getJournalsWithLicense(licenses) for handler in self.journalQuery]
+        merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
 
-        for handler in self.journalQuery:
-            df = handler.getAllJournals()
-            self._add_journals_from_df(df, journal_map)
+        return [
+            Journal(
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                title=row.get('title', ''),
+                language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
+                seal=str(row.get('seal', 'false')).lower() == 'true',
+                license=row.get('license', ''),
+                apc=str(row.get('apc', 'false')).lower() == 'true',
+                publisher=row.get('publisher', '')
+            )
+            for _, row in merged.iterrows()
+        ]
 
-        return list(journal_map.values())
+    def getJournalsWithAPC(self) -> list:
+        """Найти журналы с APC"""
+        all_dfs = [handler.getJournalsWithAPC() for handler in self.journalQuery]
+        merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
+        
+        return [
+            Journal(
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                title=row.get('title', ''),
+                language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
+                seal=str(row.get('seal', 'false')).lower() == 'true',
+                license=row.get('license', ''),
+                apc=str(row.get('apc', 'false')).lower() == 'true',
+                publisher=row.get('publisher', '')
+            )
+            for _, row in merged.iterrows()
+        ]
+
+    def getJournalsWithDOAJSeal(self) -> list:
+        """Найти журналы с DOAJ Seal"""
+        all_dfs = [handler.getJournalsWithDOAJSeal() for handler in self.journalQuery]
+        merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
     
-    def getJournalsWithTitle(self, partialTitle: str) -> list[Journal]:
-        journal_map: dict[str, Journal] = {}
-
-        for handler in self.journalQuery:
-            df = handler.getJournalsWithTitle(partialTitle)
-            self._add_journals_from_df(df, journal_map)
-
-        return list(journal_map.values())
-
-    
-    def getJournalsPublishedBy(self, partialName: str) -> list[Journal]:
-        journal_map: dict[str, Journal] = {}
-
-        for handler in self.journalQuery:
-            df = handler.getJournalsPublishedBy(partialName)
-            self._add_journals_from_df(df, journal_map)
-
-        return list(journal_map.values())
-
-    
-    def getJournalsWithLicense(self, licenses: set[str]) -> list[Journal]:
-        journal_map: dict[str, Journal] = {}
-
-        for handler in self.journalQuery:
-            df = handler.getJournalsWithLicense(licenses)
-            self._add_journals_from_df(df, journal_map)
-
-        return list(journal_map.values())
-
-    
-    def getJournalsWithAPC(self) -> list[Journal]:
-        journal_map: dict[str, Journal] = {}
-
-        for handler in self.journalQuery: 
-            df = handler.getJournalsWithAPC()
-            self._add_journals_from_df(df, journal_map)
-
-        return list(journal_map.values())
-
-    
-    def getJournalsWithDOAJSeal(self) -> list[Journal]:
-        journal_map: dict[str, Journal] = {}
-
-        for handler in self.journalQuery:
-            df = handler.getJournalsWithDOAJSeal()
-            self._add_journals_from_df(df, journal_map)
-
-        return list(journal_map.values())
+        return [
+            Journal(
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                title=row.get('title', ''),
+                language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
+                seal=str(row.get('seal', 'false')).lower() == 'true',
+                license=row.get('license', ''),
+                apc=str(row.get('apc', 'false')).lower() == 'true',
+                publisher=row.get('publisher', '')
+            )
+            for _, row in merged.iterrows()
+        ]
         
     # ---------------------------------------------------------
     # CATEGORY-RELATED METHODS (Fahmida)
