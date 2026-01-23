@@ -3,19 +3,19 @@ from impl import JournalQueryHandler
 handler = JournalQueryHandler("data/doaj-csv.csv")
 
 # ============================================
-# НАСТРОЙКИ - замени на свой URL Blazegraph
+# URL Blazegraph
 # ============================================
-BLAZEGRAPH_URL = "http://172.20.10.2:9999/blazegraph/namespace/kb/sparql"  # Твой endpoint
+BLAZEGRAPH_URL = "http://172.20.10.2:9999/blazegraph/namespace/kb/sparql"  # endpoint
 
 # ============================================
-# ТЕСТЫ
+# TESTS
 # ============================================
 
 print("=" * 60)
 print("TESTING BasicQueryEngine with Blazegraph")
 print("=" * 60)
 
-# Создаем engine и добавляем handler
+# creating engine and adding handler
 engine = BasicQueryEngine()
 handler = JournalQueryHandler(BLAZEGRAPH_URL)
 engine.addJournalHandler(handler)
