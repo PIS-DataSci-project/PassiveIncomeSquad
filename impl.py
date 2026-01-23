@@ -1,6 +1,5 @@
 #ALL IMPORTS AT THE TOP OF THE FILE
 #General imports
-from Entities import *
 import pandas as pd 
 
 #For Graph Database
@@ -19,17 +18,17 @@ import sqlite3
 
 class IdentifiableEntity(object): # CLAUDIA 
     def __init__(self, identifiers): 
-        self.id = list()
-        for id in identifiers:
-            self.id.append(id)
+        self.identifiers = list()
+        for identifier in identifiers:
+            self.identifiers.append(identifier)
              
     def getIds(self):
-        listIds = list()
-        for id in self.id:
-            listIds.append(id)
-        listIds.sort() # sort the list of IDs
-        return listIds
-
+        list_ids = list()
+        for identifier in self.identifiers:
+            list_ids.append(identifier)
+        list_ids.sort() # sort the list of IDs
+        return list_ids
+    
 #subclass1 of IdentifiableEntity    
 class Journal(IdentifiableEntity): # CLAUDIA 
     def __init__(self, identifiers, title, language, seal, license, apc, publisher=None, categories=None, areas=None):
@@ -55,12 +54,11 @@ class Journal(IdentifiableEntity): # CLAUDIA
         return False
     
     def getLanguage(self):
-        listLangs = list()
+        list_langs = list()
         for lang in self.language:
-            listLangs.append(lang)
-        listLangs.sort() # sort the list of languages
-        return listLangs
-
+            list_langs.append(lang)
+        list_langs.sort() # sort the list of languages
+        return list_langs
     def hasDOAJSeal(self): # boolean
         return self.seal
     
@@ -145,7 +143,7 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
     def createGraph(self, path):
         #Create RDF graph from CSV file
         # URI Definitions
-        baseUrl = "https://github.com/PassiveIncomeSquad/PIS-DataSci-project"
+        base_url = "https://github.com/PassiveIncomeSquad/PIS-DataSci-project"
         # Journal type and properties
         Journal = URIRef("https://schema.org/Periodical") 
         title = URIRef("https://schema.org/title")
@@ -159,8 +157,8 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         g = Graph()
         journals = pd.read_csv(path, keep_default_na=False) # Read CSV into DataFrame
         for idx, row in journals.iterrows():
-            localId = "journal-" + str(idx) 
-            subj = URIRef(baseUrl + "/" + localId)
+            local_id = "journal-" + str(idx) 
+            subj = URIRef(base_url + "/" + local_id)
             g.add((subj, RDF.type, Journal))
             g.add((subj, title, Literal(row["Journal title"])))
             # Combine ISSN and EISSN

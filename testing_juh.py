@@ -103,3 +103,67 @@ except ConnectionError as e:
 except Exception as e:
     print(f"✗ Error pushing data: {e}")    
     
+# ================================
+
+    # DEBUG: Test the query directly
+print("\n=== DEBUGGING ===")
+print("Testing direct SPARQL query...")
+
+from SPARQLWrapper import SPARQLWrapper, JSON
+
+endpoint = "http://127.0.0.1:9999/blazegraph/sparql"
+sparql = SPARQLWrapper(endpoint)
+
+# Test query for 1983-9979
+test_query = """
+PREFIX schema: <https://schema.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+WHERE {
+    ?journal rdf:type schema:Periodical .
+    OPTIONAL { ?journal schema:title ?title }
+    ?journal schema:identifier ?identifier .
+    FILTER(CONTAINS(STR(?identifier), "1983-9979"))
+    OPTIONAL { ?journal schema:inLanguage ?language }
+    OPTIONAL { ?journal schema:publishedBy ?publisher }
+    OPTIONAL { ?journal schema:award ?seal }
+    OPTIONAL { ?journal schema:license ?license }
+    OPTIONAL { ?journal schema:processingFee ?apc }
+}
+"""
+
+sparql.setQuery(test_query)
+sparql.setReturnFormat(JSON)
+
+try:
+    results = sparql.query().convert()
+    print(f"Query returned {len(results['results']['bindings'])} results")
+    
+    if results['results']['bindings']:
+        print("\nFirst result:")
+        for key, value in results['results']['bindings'][0].items():
+            print(f"  {key}: {value.get('value', 'N/A')}")
+    else:
+        print("No results found!")
+        
+        # Try a simpler query to see what identifiers actually look like
+        print("\nChecking what identifiers are stored...")
+        check_query = """
+        PREFIX schema: <https://schema.org/>
+        SELECT ?identifier
+        WHERE {
+            ?journal schema:identifier ?identifier .
+        }
+        LIMIT 10
+        """
+        sparql.setQuery(check_query)
+        results2 = sparql.query().convert()
+        print("Sample identifiers in database:")
+        for binding in results2['results']['bindings']:
+            print(f"  - {binding['identifier']['value']}")
+            
+except Exception as e:
+    print(f"Error: {e}")
+
+print("=== END DEBUG ===\n")
