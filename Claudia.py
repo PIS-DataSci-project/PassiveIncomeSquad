@@ -131,10 +131,37 @@ que = BasicQueryEngine()
 que.addCategoryHandler(cat_qh)
 que.addJournalHandler(jou_qh)
 
-result_q3 = que.getEntityById("Artificial Intelligence")
-result_q4 = que.getEntityById("2224-9281")
-result_q5 = que.getEntityById("NonExistentID")  # Testing with a non-existent ID
-result_q6 = que.getEntityById("1234-5678")  # Testing with an ID that could belong to multiple entities
-result_q7 = que.getEntityById("Medicine")  # Testing with a category ID
+# First let's test what the handlers return directly
+print("Testing handler.getById() directly:")
+test_id = "Medicine"
+print(f"\nTesting with ID: {test_id}")
 
-print(result_q7)
+# Test journal handler directly
+jou_result = jou_qh.getById(test_id)
+print(f"Journal handler result: {type(jou_result)}, len={len(jou_result) if jou_result is not None else 'None'}")
+if jou_result is not None and len(jou_result) > 0:
+    print(f"Columns: {jou_result.columns.tolist()}")
+    print(f"Data:\n{jou_result}")
+
+# Test category handler with a category ID
+cat_test_id = "Medicine"  # Try a numeric category ID
+print(f"\nTesting category with ID: {cat_test_id}")
+cat_result = cat_qh.getById(cat_test_id)
+print(f"Category handler result: {type(cat_result)}, len={len(cat_result) if cat_result is not None else 'None'}")
+if cat_result is not None and len(cat_result) > 0:
+    print(f"Columns: {cat_result.columns.tolist()}")
+    print(f"Data:\n{cat_result}")
+
+print("\n" + "="*60)
+print("Now testing getEntityById method:")
+print("="*60)
+
+result_q4 = que.getEntityById(test_id)
+print(f"Result for {test_id}: {result_q4}")
+if result_q4:
+    print(f"Type: {type(result_q4).__name__}")
+
+result_cat = que.getEntityById(cat_test_id)
+print(f"\nResult for {cat_test_id}: {result_cat}")
+if result_cat:
+    print(f"Type: {type(result_cat).__name__}")

@@ -50,47 +50,88 @@ class BasicQueryEngine: #Fahmida
     def getEntityById(self, id: str): #Claudia 
         """Get an entity (Journal or Category) by its ID"""
         # First, search through all journal handlers
-        journal_dfs = [] 
-        for handler in self.journalQuery:
-            df = handler.getById(id)  
-            if df is not None and not df.empty:
-                journal_dfs.append(df)
+        journal_dfs = list() # creating a list to store dataframes from journal handlers
+        for handler in self.journalQuery: # iterating through each JournalQueryHandler object in the journalQuery list
+            df = handler.getById(id) # calling getById method on each handler to get a dataframe for the given id
+            if df is not None and len(df) > 0: # checking if the dataframe is valid and not empty
+                journal_dfs.append(df) # adding the valid dataframe to the list
         
         # Merge and remove duplicates from journal results
-        if journal_dfs:
-            merged = pd.concat(journal_dfs, ignore_index=True).sort_values(by=list(pd.concat(journal_dfs).columns)).drop_duplicates()
-            if not merged.empty:
+        if journal_dfs: 
+            merged = pd.concat(journal_dfs, ignore_index=True).drop_duplicates() # concatenating all dataframes in the list into a single dataframe and removing duplicates
+            if len(merged) > 0: # checking if the merged dataframe is not empty
                 # Take the first row and construct a Journal object
-                row = merged.iloc[0]
-                journal_map = Journal( 
-                    identifiers=[journal_id.strip() for journal_id in row['identifiers'].split(',') if journal_id.strip()], # splitting the identifiers string into a list and 
-                    title=row['title'], # getting the title from the row
-                    language=[lang.strip() for lang in row['language'].split(',') if lang.strip()], # splitting the language string into a list # could add .strip() to remove extra spaces
-                    seal=row['seal'] if 'seal' in row else False,
-                    license=row['license'], 
-                    apc=row['apc'] if 'apc' in row else False,
-                    publisher=row['publisher'] if 'publisher' in row else None,
+                row = merged.iloc[0] # getting the first row of the merged dataframe
+                
+                # Extract identifier - try different column names
+                if 'identifier' in row:
+                    id_list = [row['identifier']]
+                elif 'identifiers' in row:
+                    id_list = [row['identifiers']]
+                else:
+                    id_list = [id]
+                
+                # Extract language
+                lang_str = row.get('language', '')
+                if lang_str and isinstance(lang_str, str):
+                    lang_list = [lang.strip() for lang in lang_str.split(';') if lang.strip()]
+                else:
+                    lang_list = []
+                
+                journal = Journal( 
+                    identifiers=id_list,
+                    title=row.get('title', ''),
+                    language=lang_list,
+                    seal=row.get('seal', False),
+                    license=row.get('license', ''), 
+                    apc=row.get('apc', False),
+                    publisher=row.get('publisher', None),
                 )
                 return journal
         
         # If not found in journals, search through category handlers
-        category_dfs = []
-        for handler in self.categoryQuery:
-            df = handler.getById(id)
-            if df is not None and not df.empty:
-                category_dfs.append(df)
+        category_dfs = list() # creating a list to store dataframes from category handlers
+        for handler in self.categoryQuery: # iterating through each CategoryQueryHandler object in the categoryQuery list
+            df = handler.getById(id) # calling getById method on each handler to get a dataframe for the given id
+            if df is not None and len(df) > 0: # checking if the dataframe is valid and not empty
+                category_dfs.append(df) # adding the valid dataframe to the list
         
         # Merge and remove duplicates from category results
         if category_dfs:
-            merged = pd.concat(category_dfs, ignore_index=True).sort_values(by=list(pd.concat(category_dfs).columns)).drop_duplicates()
-            if not merged.empty:
-                # Take the first row and construct a Category object
+            merged = pd.concat(category_dfs, ignore_index=True).drop_duplicates() # concatenating all dataframes in the list into a single dataframe and removing duplicates
+            if len(merged) > 0: # checking if the merged dataframe is not empty
+                # Take the first row and determine entity type
                 row = merged.iloc[0]
-                category = Category(
-                    identifiers=[id],
-                    quartile=row.get('quartile', '')
-                )
-                return category
+                
+                # Check if it's a Category (has quartile column with data) or Area (no quartile)
+                if 'quartile' in row and pd.notna(row['quartile']) and row['quartile']:
+                    # Create and return Category object
+                    # Extract identifier from correct column
+                    if 'category_id' in row:
+                        id_list = [row['category_id']]
+                    elif 'identifiers' in row:
+                        id_list = [row['identifiers']]
+                    else:
+                        id_list = [id]
+                    
+                    category = Category(
+                        identifiers=id_list,
+                        quartile=str(row['quartile'])
+                    )
+                    return category
+                else:
+                    # Create and return Area object
+                    if 'areas' in row:
+                        id_list = [row['areas']]
+                    elif 'identifiers' in row:
+                        id_list = [row['identifiers']]
+                    else:
+                        id_list = [id]
+                    
+                    area = Area(
+                        identifiers=id_list
+                    )
+                    return area
         
         # No entity found with this ID
         return None
