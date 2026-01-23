@@ -4,91 +4,68 @@ import pandas as pd
 # Optional but good practice: type hints
 from typing import List, Set
 
-#for tests
+#for tests (the tests will work only if this file is in the root)
 from impl import Journal, Category, Area
 from impl import JournalQueryHandler, CategoryQueryHandler
+import sqlite3
 
 
 # Superclass --> BasicQueryEngine(object)
 class BasicQueryEngine:
     """
-    This class corresponds to the UML class BasicQueryEngine.
-    It coordinates multiple QueryHandler objects and combines their results.
+    UML class: BasicQueryEngine
+    Coordinates multiple QueryHandler objects and combines their results.
     """
 
     def __init__(self):
         # UML: journalQuery : JournalQueryHandler [0..*]
-        # In Python, [0..*] is represented by a list
-        # This list will store OBJECTS of type JournalQueryHandler
         self.journalQuery = []
 
         # UML: categoryQuery : CategoryQueryHandler [0..*]
-        # This list will store OBJECTS of type CategoryQueryHandler
         self.categoryQuery = []
 
-
     # ---------------------------------------------------------
-    # CATEGORY-RELATED METHODS (assigned to Fahmida)
+    # CATEGORY-RELATED METHODS (Fahmida)
     # ---------------------------------------------------------
 
-    
     def getAllCategories(self) -> list:
         """
         UML: getAllCategories() : list[Category]
-
-        Returns all categories from Scimago Journal Rank,
-        with no repetitions.
+        Returns all categories with no repetitions.
         """
 
-        # This list will collect DataFrames returned by each handler
         dfs = []
 
-        # Call the same method on ALL CategoryQueryHandler objects
         for handler in self.categoryQuery:
-            # Each handler queries its own data source
             df = handler.getAllCategories()
-
-            # We only keep non-empty results
             if df is not None and not df.empty:
                 dfs.append(df)
 
-        # If no handler returned data, return an empty list
         if not dfs:
             return []
 
-        # Merge all DataFrames into one
-        # ignore_index=True avoids duplicated indexes
-        merged = pd.concat(dfs, ignore_index=True)
+        merged = pd.concat(dfs, ignore_index=True).drop_duplicates()
 
-        # Remove duplicate categories (as required by UML)
-        merged = merged.drop_duplicates()
-
-        # Convert each row into a Category object
         return [
             Category(
-                id=row["categoryId"],        # category identifier
-                name=row["categoryName"]     # category name
+                identifiers={row["category_id"]},
+                quartile=row["quartile"]
             )
             for _, row in merged.iterrows()
         ]
-
 
     # ---------------------------------------------------------
 
     def getAllAreas(self) -> list:
         """
-        UML: getAllAreas() : list[Area]
-
-        Returns all areas from Scimago,
-        with no repetitions.
+        Returns all areas from Scimago, with no repetitions.
         """
 
         dfs = []
 
         # Call getAllAreas on every CategoryQueryHandler
         for handler in self.categoryQuery:
-            df = handler.getAllAreas()
-
+            df = handler.getAllAreas()  # returns column 'area'
             if df is not None and not df.empty:
                 dfs.append(df)
 
@@ -101,30 +78,23 @@ class BasicQueryEngine:
         # Convert rows into Area objects
         return [
             Area(
-                id=row["areaId"],          # area identifier
-                name=row["areaName"]       # area name
+                identifiers={row["area"]}  # <- this is the correct column
             )
             for _, row in merged.iterrows()
         ]
 
-    # ---------------------------------------------------------
 
     # ---------------------------------------------------------
 
     def getCategoriesWithQuartile(self, quartiles: set) -> list:
         """
         UML: getCategoriesWithQuartile(quartiles : set[string]) : list[Category]
-
-        Returns categories belonging to the specified quartiles.
-        If the input set is empty, all quartiles are considered.
         """
 
         dfs = []
 
-        # Delegate the filtering logic to the handlers
         for handler in self.categoryQuery:
             df = handler.getCategoriesWithQuartile(quartiles)
-
             if df is not None and not df.empty:
                 dfs.append(df)
 
@@ -135,29 +105,23 @@ class BasicQueryEngine:
 
         return [
             Category(
-                id=row["categoryId"],
-                name=row["categoryName"]
+                identifiers={row["category_id"]},
+                quartile=row["quartile"]
             )
             for _, row in merged.iterrows()
         ]
-
-
 
     # ---------------------------------------------------------
 
     def getCategoriesAssignedToAreas(self, area_ids: set) -> list:
         """
         UML: getCategoriesAssignedToAreas(area_ids : set[string]) : list[Category]
-
-        Returns categories assigned to the specified areas.
-        If the input set is empty, all areas are considered.
         """
 
         dfs = []
 
         for handler in self.categoryQuery:
             df = handler.getCategoriesAssignedToAreas(area_ids)
-
             if df is not None and not df.empty:
                 dfs.append(df)
 
@@ -168,8 +132,8 @@ class BasicQueryEngine:
 
         return [
             Category(
-                id=row["categoryId"],
-                name=row["categoryName"]
+                identifiers={row["category_id"]},
+                quartile=row["quartile"]
             )
             for _, row in merged.iterrows()
         ]
@@ -179,16 +143,12 @@ class BasicQueryEngine:
     def getAreasAssignedToCategories(self, category_ids: set) -> list:
         """
         UML: getAreasAssignedToCategories(category_ids : set[string]) : list[Area]
-
-        Returns areas assigned to the specified categories.
-        If the input set is empty, all categories are considered.
         """
 
         dfs = []
 
         for handler in self.categoryQuery:
             df = handler.getAreasAssignedToCategories(category_ids)
-
             if df is not None and not df.empty:
                 dfs.append(df)
 
@@ -199,16 +159,16 @@ class BasicQueryEngine:
 
         return [
             Area(
-                id=row["areaId"],
-                name=row["areaName"]
+                identifiers={row["area"]}
             )
             for _, row in merged.iterrows()
         ]
 
-#test1 (runs correctly!!! = constructor is correct!):
+
+#test0 (runs correctly!!! = constructor is correct!):
 engine = BasicQueryEngine()
 
-#test2 (correct output!! = [] is correct!)
+#test1 (correct output!! = [] is correct!)
 print(engine.getAllCategories())
 #Why?
 #self.categoryQuery is empty
@@ -216,34 +176,100 @@ print(engine.getAllCategories())
 #method returns []
 #If you get [] → logic is correct for empty case, which is required by UML.
 
-#test3 (creates a fake handler - simulates scimago data - and adds it to the engine --> should return small dataframe)
-class FakeCategoryQueryHandler:
-    def getAllCategories(self):
-        return pd.DataFrame([
-            {"categoryId": "C1", "categoryName": "Computer Science"},
-            {"categoryId": "C2", "categoryName": "Mathematics"}
-        ])
-
-    def getAllAreas(self):
-        return pd.DataFrame([
-            {"areaId": "A1", "areaName": "Engineering"}
-        ])
-
-    def getCategoriesWithQuartile(self, quartiles):
-        return self.getAllCategories()
-
-    def getCategoriesAssignedToAreas(self, area_ids):
-        return self.getAllCategories()
-
-    def getAreasAssignedToCategories(self, category_ids):
-        return self.getAllAreas()
-#plugging into the engine
+#test2 (passed testing engine logic: created the objects and called the method correctly):
 engine = BasicQueryEngine()
-engine.categoryQuery.append(FakeCategoryQueryHandler())
-#testing each method
-categories = engine.getAllCategories()
+
+handler = CategoryQueryHandler("relational.db") 
+engine.categoryQuery.append(handler)
+
+cats = engine.getAllCategories()
+print(cats[0], type(cats[0]), cats[0].getQuartile())
+
 areas = engine.getAllAreas()
+print(areas[0], type(areas[0]))
 
-print(categories)
-print(areas)
+print(cats[0], cats[0].getQuartile())
+print(vars(areas[0]))  # shows all attributes of Area
+# Expected: set with one area identifier
 
+#test3 (testing engine without db --> worksssss):
+import pandas as pd
+
+# Mock classes for testing
+class MockCategoryQueryHandler:
+    """
+    This mock simulates a CategoryQueryHandler without a database.
+    Each method returns a small DataFrame to test BasicQueryEngine.
+    """
+    
+    def getAllCategories(self):
+        # Example DataFrame simulating categories
+        return pd.DataFrame({
+            "category_id": ["C1", "C2"],
+            "quartile": ["Q1", "Q2"],
+            "identifiers": ["C1", "C2"],        # instead of list
+            "areas": ["Medicine", "Biology"]    # instead of list
+        })
+    
+    def getAllAreas(self):
+        # Example DataFrame simulating areas
+        return pd.DataFrame({
+            "area": ["Medicine", "Biology"]
+        })
+    
+    def getCategoriesWithQuartile(self, quartiles):
+        df = self.getAllCategories()
+        if not quartiles:
+            return df
+        return df[df["quartile"].isin(quartiles)]
+    
+    def getCategoriesAssignedToAreas(self, area_ids):
+        df = self.getAllCategories()
+        if not area_ids:
+            return df
+        # Only keep categories where any area matches
+        mask = df["areas"].apply(lambda x: any(area in area_ids for area in x))
+        return df[mask]
+    
+    def getAreasAssignedToCategories(self, category_ids):
+        df = self.getAllCategories()
+        if not category_ids:
+            return pd.DataFrame({"area": ["Medicine", "Biology"]})
+        # Only keep areas for matching categories
+        df = df[df["category_id"].isin(category_ids)]
+        areas = [area for sublist in df["areas"] for area in sublist]
+        return pd.DataFrame({"area": areas})
+
+# Now test BasicQueryEngine with the mock
+if __name__ == "__main__":
+    engine = BasicQueryEngine()
+    
+    # Use the mock instead of a real handler
+    mock_handler = MockCategoryQueryHandler()
+    engine.categoryQuery.append(mock_handler)
+    
+    # Test all methods
+    cats = engine.getAllCategories()
+    print("All Categories:")
+    for c in cats:
+        print(c, type(c), c.getQuartile())
+    
+    areas = engine.getAllAreas()
+    print("\nAll Areas:")
+    for a in areas:
+        print(a, type(a))
+    
+    q1_cats = engine.getCategoriesWithQuartile({"Q1"})
+    print("\nCategories in Q1:")
+    for c in q1_cats:
+        print(c, c.getQuartile())
+    
+    medicine_cats = engine.getCategoriesAssignedToAreas({"Medicine"})
+    print("\nCategories assigned to Medicine area:")
+    for c in medicine_cats:
+        print(c, c.getQuartile())
+    
+    cat_areas = engine.getAreasAssignedToCategories({"C1"})
+    print("\nAreas assigned to category C1:")
+    for a in cat_areas:
+        print(a)

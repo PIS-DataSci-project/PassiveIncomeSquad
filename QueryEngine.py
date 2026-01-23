@@ -5,15 +5,29 @@
 import pandas as pd 
 from impl import Journal, Category, Area
 from impl import JournalQueryHandler, CategoryQueryHandler
+import sqlite3
+
+# type hints
+from typing import List, Set
 
 #Superclass --> BasicQueryEngine(object)
-class BasicQueryEngine: #Fahmida
-    
-    def __init__(self):
-        self.journalQuery = []     # list of JournalQueryHandler --> journalQuery is an attribute that represents data, not classes! -> i'm storing objects created from that class
-        self.categoryQuery = []    # list of CategoryQueryHandler --> # empty list of CategoryQueryHandler objects
+class BasicQueryEngine:
+    """
+    UML class: BasicQueryEngine
+    Coordinates multiple QueryHandler objects and combines their results.
+    """
 
-#METHODSSS
+    def __init__(self):
+        # UML: journalQuery : JournalQueryHandler [0..*]
+        self.journalQuery = []
+
+        # UML: categoryQuery : CategoryQueryHandler [0..*]
+        self.categoryQuery = []
+
+    # ---------------------------------------------------------
+    #  METHODS
+    # ---------------------------------------------------------
+
     def cleanJournalHandlers(self) -> bool: #Claudia
         """Clear all Journal Query Handlers"""
         self.journalQuery.clear() # remove all elements from the list
@@ -133,40 +147,144 @@ class BasicQueryEngine: #Fahmida
             journals.extend(handler.getJournalsWithDOAJSeal())
         return journals
         
-    #Fahmida methods from here
+    # ---------------------------------------------------------
+    # CATEGORY-RELATED METHODS (Fahmida)
+    # ---------------------------------------------------------
+
     def getAllCategories(self) -> list:
-        """Get all categories from all category handlers"""
-        categories = []
+        """
+        UML: getAllCategories() : list[Category]
+        Returns all categories with no repetitions.
+        """
+
+        dfs = []
+
         for handler in self.categoryQuery:
-            categories.extend(handler.getAllCategories())
-        return categories
-    
+            df = handler.getAllCategories()
+            if df is not None and not df.empty:
+                dfs.append(df)
+
+        if not dfs:
+            return []
+
+        merged = pd.concat(dfs, ignore_index=True).drop_duplicates()
+
+        return [
+            Category(
+                identifiers={row["category_id"]},
+                quartile=row["quartile"]
+            )
+            for _, row in merged.iterrows()
+        ]
+
+    # ---------------------------------------------------------
+
     def getAllAreas(self) -> list:
-        """Get all areas from all category handlers"""
-        areas = []
+        """
+        Returns all areas from Scimago, with no repetitions.
+        """
+
+        dfs = []
+
+        # Call getAllAreas on every CategoryQueryHandler
         for handler in self.categoryQuery:
-            areas.extend(handler.getAllAreas())
-        return areas
-    
+            df = handler.getAllAreas()  # returns column 'area'
+            if df is not None and not df.empty:
+                dfs.append(df)
+
+        if not dfs:
+            return []
+
+        # Merge and remove duplicates
+        merged = pd.concat(dfs, ignore_index=True).drop_duplicates()
+
+        # Convert rows into Area objects
+        return [
+            Area(
+                identifiers={row["area"]}  # <- this is the correct column
+            )
+            for _, row in merged.iterrows()
+        ]
+
+
+    # ---------------------------------------------------------
+
     def getCategoriesWithQuartile(self, quartiles: set) -> list:
-        """Get categories with specified quartiles"""
-        categories = []
+        """
+        UML: getCategoriesWithQuartile(quartiles : set[string]) : list[Category]
+        """
+
+        dfs = []
+
         for handler in self.categoryQuery:
-            categories.extend(handler.getCategoriesWithQuartile(quartiles))
-        return categories
-    
+            df = handler.getCategoriesWithQuartile(quartiles)
+            if df is not None and not df.empty:
+                dfs.append(df)
+
+        if not dfs:
+            return []
+
+        merged = pd.concat(dfs, ignore_index=True).drop_duplicates()
+
+        return [
+            Category(
+                identifiers={row["category_id"]},
+                quartile=row["quartile"]
+            )
+            for _, row in merged.iterrows()
+        ]
+
+    # ---------------------------------------------------------
+
     def getCategoriesAssignedToAreas(self, area_ids: set) -> list:
-        """Get categories assigned to specified areas"""
-        categories = []
+        """
+        UML: getCategoriesAssignedToAreas(area_ids : set[string]) : list[Category]
+        """
+
+        dfs = []
+
         for handler in self.categoryQuery:
-            categories.extend(handler.getCategoriesAssignedToAreas(area_ids))
-        return categories
-    
+            df = handler.getCategoriesAssignedToAreas(area_ids)
+            if df is not None and not df.empty:
+                dfs.append(df)
+
+        if not dfs:
+            return []
+
+        merged = pd.concat(dfs, ignore_index=True).drop_duplicates()
+
+        return [
+            Category(
+                identifiers={row["category_id"]},
+                quartile=row["quartile"]
+            )
+            for _, row in merged.iterrows()
+        ]
+
+    # ---------------------------------------------------------
+
     def getAreasAssignedToCategories(self, category_ids: set) -> list:
-        """Get areas assigned to specified categories"""
-        areas = []
+        """
+        UML: getAreasAssignedToCategories(category_ids : set[string]) : list[Area]
+        """
+
+        dfs = []
+
         for handler in self.categoryQuery:
-            areas.extend(handler.getAreasAssignedToCategories(category_ids))
-        return areas
+            df = handler.getAreasAssignedToCategories(category_ids)
+            if df is not None and not df.empty:
+                dfs.append(df)
+
+        if not dfs:
+            return []
+
+        merged = pd.concat(dfs, ignore_index=True).drop_duplicates()
+
+        return [
+            Area(
+                identifiers={row["area"]}
+            )
+            for _, row in merged.iterrows()
+        ]
 
 #Subclass --> FullQueryEngine(BasicQueryEngine) 
