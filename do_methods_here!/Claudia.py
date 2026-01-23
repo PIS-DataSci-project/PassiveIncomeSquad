@@ -1,7 +1,8 @@
 import pandas as pd
 from typing import List, Dict
-from impl import Journal, Category, Area
+from impl import IdentifiableEntity, Journal, Category, Area
 from impl import JournalQueryHandler, CategoryQueryHandler  
+from QueryEngine import *
 
 #------------------------------------------------
 #Subclass of BasicQueryEngine
@@ -46,19 +47,15 @@ class BasicQueryEngine: #Fahmida
                     license=row['license'], 
                     apc=row['apc'] if 'apc' in row else False,
                     publisher=row['publisher'] if 'publisher' in row else None,
-                    categories=
-                    areas=
                 )
                 return journal_map # could have not created the variable and return the Journal object directly
         
         # If not found in journals, search through category handlers
         category_dfs = list() # creating a list to store dataframes from category handlers
-        area_dfs = list()     # creating a list to store dataframes from area handlers
         for handler in self.categoryQuery: # iterating through each CategoryQueryHandler object in the categoryQuery list
             df = handler.getById(id) # calling getById method on each handler to get a dataframe for the given id
             if df is not None and len(df) > 0: # checking if the dataframe is valid and not empty
                 category_dfs.append(df) # adding the valid dataframe to the list
-                area_dfs.append(df)
         
         # Merge and remove duplicates from category results
         if category_dfs:
@@ -67,10 +64,17 @@ class BasicQueryEngine: #Fahmida
                 # Take the first row and construct a Category object
                 row = merged.iloc[0]
                 category = Category(
-                    identifiers=[category_id.strip() for category_id in row['category_id'].split(',') if category_id.strip()],
+                    identifiers=[category_id.strip() for category_id in row['identifiers'].split(',') if category_id.strip()],
                     quartile=row['quartile']
                 )
                 return category
+        
+        # If not found in categories, search for areas in category handlers
+        area_dfs = list() # creating a list to store dataframes from area handlers
+        for handler in self.categoryQuery: # iterating through each CategoryQueryHandler object (areas are handled by category handlers)
+            df = handler.getById(id) # calling getById method on each handler to get a dataframe for the given id
+            if df is not None and len(df) > 0: # checking if the dataframe is valid and not empty
+                area_dfs.append(df) # adding the valid dataframe to the list
         
         # Merge and remove duplicates from area results
         if area_dfs:
@@ -79,7 +83,7 @@ class BasicQueryEngine: #Fahmida
                 # Take the first row and construct an Area object
                 row = merged.iloc[0]
                 area = Area(
-                    identifiers=[area_id.strip() for area_id in row['area'].split(',') if area_id.strip()]
+                    identifiers=[area_id.strip() for area_id in row['identifiers'].split(',') if area_id.strip()]
                 )
                 return area
         
