@@ -46,16 +46,32 @@ class BasicQueryEngine: #Fahmida
             if len(merged) > 0: # checking if the merged dataframe is not empty
                 # Take the first row and construct a Journal object
                 row = merged.iloc[0] # getting the first row of the merged dataframe
+                
+                # Extract identifier - try different column names
+                if 'identifier' in row:
+                    id_list = [row['identifier']]
+                elif 'identifiers' in row:
+                    id_list = [row['identifiers']]
+                else:
+                    id_list = [id]
+                
+                # Extract language
+                lang_str = row.get('language', '')
+                if lang_str and isinstance(lang_str, str):
+                    lang_list = [lang.strip() for lang in lang_str.split(';') if lang.strip()]
+                else:
+                    lang_list = []
+                
                 journal = Journal( 
-                    identifiers=[journal_id.strip() for journal_id in row['identifiers'].split(',') if journal_id.strip()], # splitting the identifiers string into a list and 
-                    title=row['title'], # getting the title from the row
-                    language=[lang.strip() for lang in row['language'].split(',') if lang.strip()], # splitting the language string into a list # could add .strip() to remove extra spaces
-                    seal=row['seal'] if 'seal' in row else False,
-                    license=row['license'], 
-                    apc=row['apc'] if 'apc' in row else False,
-                    publisher=row['publisher'] if 'publisher' in row else None,
+                    identifiers=id_list,
+                    title=row.get('title', ''),
+                    language=lang_list,
+                    seal=row.get('seal', False),
+                    license=row.get('license', ''), 
+                    apc=row.get('apc', False),
+                    publisher=row.get('publisher', None),
                 )
-                return journal # could have not created the variable and return the Journal object directly
+                return journal
         
         # If not found in journals, search through category handlers
         category_dfs = list() # creating a list to store dataframes from category handlers
@@ -69,20 +85,35 @@ class BasicQueryEngine: #Fahmida
             merged = pd.concat(category_dfs, ignore_index=True).drop_duplicates() # concatenating all dataframes in the list into a single dataframe and removing duplicates
             if len(merged) > 0: # checking if the merged dataframe is not empty
                 # Take the first row and determine entity type
-                row = merged.iloc[0] # getting the first row of the merged dataframe
+                row = merged.iloc[0]
                 
                 # Check if it's a Category (has quartile column with data) or Area (no quartile)
-                if 'quartile' in row and row['quartile']:
+                if 'quartile' in row and pd.notna(row['quartile']) and row['quartile']:
                     # Create and return Category object
+                    # Extract identifier from correct column
+                    if 'category_id' in row:
+                        id_list = [row['category_id']]
+                    elif 'identifiers' in row:
+                        id_list = [row['identifiers']]
+                    else:
+                        id_list = [id]
+                    
                     category = Category(
-                        identifiers=[cat_id.strip() for cat_id in row['id'].split(',') if cat_id.strip()],
-                        quartile=row.get('quartile', '')
+                        identifiers=id_list,
+                        quartile=str(row['quartile'])
                     )
                     return category
                 else:
                     # Create and return Area object
+                    if 'areas' in row:
+                        id_list = [row['areas']]
+                    elif 'identifiers' in row:
+                        id_list = [row['identifiers']]
+                    else:
+                        id_list = [id]
+                    
                     area = Area(
-                        identifiers=[area_id.strip() for area_id in row['identifiers'].split(',') if area_id.strip()]
+                        identifiers=id_list
                     )
                     return area
         
@@ -90,8 +121,15 @@ class BasicQueryEngine: #Fahmida
         return None
     
 # --------------------------------
-que = BasicQueryEngine()
+cat_qh = CategoryQueryHandler()
+cat_qh.setDbPathOrUrl("relational.db")
 
+jou_qh = JournalQueryHandler()
+jou_qh.setDbPathOrUrl("http://127.0.0.1:9999/blazegraph/sparql")
+
+que = BasicQueryEngine()
+que.addCategoryHandler(cat_qh)
+que.addJournalHandler(jou_qh)
 
 result_q3 = que.getEntityById("Artificial Intelligence")
 result_q4 = que.getEntityById("2224-9281")
@@ -99,4 +137,4 @@ result_q5 = que.getEntityById("NonExistentID")  # Testing with a non-existent ID
 result_q6 = que.getEntityById("1234-5678")  # Testing with an ID that could belong to multiple entities
 result_q7 = que.getEntityById("Medicine")  # Testing with a category ID
 
-print(result_q4)
+print(result_q7)
