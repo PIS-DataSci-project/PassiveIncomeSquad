@@ -1,16 +1,18 @@
+from __future__ import annotations
+
 #ALL IMPORTS AT THE TOP OF THE FILE
 #General imports
 from Entities import *
-import pandas as pd 
-
-#For Graph Database
-from rdflib import Graph, URIRef, RDF, Literal, XSD
-from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
-import requests
 
 #For Relational Database
 import json
 import sqlite3 
+
+
+def _pd():
+    import pandas as pd
+
+    return pd
 
 
 #----------------------------------------------------------------------
@@ -143,6 +145,9 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         return bool(value)
     
     def createGraph(self, path):
+        from rdflib import Graph, URIRef, RDF, Literal, XSD
+
+        pd = _pd()
         #Create RDF graph from CSV file
         # URI Definitions
         baseUrl = "https://github.com/PassiveIncomeSquad/PIS-DataSci-project"
@@ -180,6 +185,8 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         return g
     
     def pushDataToDb(self, path):
+        from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
+
         if not self.dbPathOrUrl:
             return False
         g = self.createGraph(path)
@@ -282,6 +289,7 @@ class CategoryUploadHandler(UploadHandler):  # River
         conn.close()
 
         # ⭐ 真正生成 DataFrame
+        pd = _pd()
         df = pd.DataFrame(rows)
         return df
 
@@ -315,6 +323,9 @@ class JournalQueryHandler(QueryHandler):
         return value.replace("\\", "\\\\").replace('"', '\\"')
  
     def _execute_sparql_query(self, sparql_query: str) -> pd.DataFrame:
+        import requests
+
+        pd = _pd()
         try:
             response = requests.get(
                 self.getDbPathOrUrl(),
@@ -346,6 +357,7 @@ class JournalQueryHandler(QueryHandler):
     
     def getById(self, entity_id: str) -> pd.DataFrame:
         #Get journal by ISSN or EISSN identifier
+        pd = _pd()
         if not entity_id:
             return pd.DataFrame()
         
@@ -373,6 +385,7 @@ class JournalQueryHandler(QueryHandler):
 
     def getAllJournals(self) -> pd.DataFrame:
         #Get all journals from the database
+        pd = _pd()
         sparql_query = '''
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -395,6 +408,7 @@ class JournalQueryHandler(QueryHandler):
     
     def getJournalsWithTitle(self, partial_title: str) -> pd.DataFrame:
         #Get journals matching title
+        pd = _pd()
         if not partial_title:
             return pd.DataFrame()
         
@@ -423,6 +437,7 @@ class JournalQueryHandler(QueryHandler):
  
     def getJournalsPublishedBy(self, partial_publisher: str) -> pd.DataFrame:
         #Get journals matching publisher (partial match, case-insensitive)
+        pd = _pd()
         if not partial_publisher:
             return pd.DataFrame()
         
@@ -451,6 +466,7 @@ class JournalQueryHandler(QueryHandler):
     
     def getJournalsWithLicense(self, licenses: str) -> pd.DataFrame:
         #Get journals with exact license match
+        pd = _pd()
         if not licenses:
             return self.getAllJournals()
         
@@ -489,6 +505,7 @@ class JournalQueryHandler(QueryHandler):
  
     def getJournalsWithAPC(self) -> pd.DataFrame:
         #Get journals that have an Article Processing Charge
+        pd = _pd()
         sparql_query = '''
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -512,6 +529,7 @@ class JournalQueryHandler(QueryHandler):
  
     def getJournalsWithDOAJSeal(self) -> pd.DataFrame:
         #Get journals that have a DOAJ Seal
+        pd = _pd()
         sparql_query = '''
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -554,6 +572,7 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
     # Get by category_id
     # -----------------------------
     def getById(self, category_id) -> pd.DataFrame:
+        pd = _pd()
         query = """
         SELECT category_id, quartile, identifiers, areas
         FROM categories
@@ -568,6 +587,7 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
     # Get all categories
     # -----------------------------
     def getAllCategories(self) -> pd.DataFrame:
+        pd = _pd()
         query = """
         SELECT DISTINCT category_id, quartile, identifiers, areas
         FROM categories
@@ -581,6 +601,7 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
     # Get all distinct areas
     # -----------------------------
     def getAllAreas(self) -> pd.DataFrame:
+        pd = _pd()
         query = """
         SELECT DISTINCT areas
         FROM categories
@@ -600,6 +621,7 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
     # Get categories filtered by quartile(s)
     # -----------------------------
     def getCategoriesWithQuartile(self, quartiles) -> pd.DataFrame:
+        pd = _pd()
         if not quartiles:
             return pd.DataFrame()
         placeholders = ",".join(["?"] * len(quartiles))
@@ -617,6 +639,7 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
     # Get categories assigned to specific areas
     # -----------------------------
     def getCategoriesAssignedToAreas(self, area_ids) -> pd.DataFrame:
+        pd = _pd()
         if not area_ids:
             return pd.DataFrame()
         conditions = " OR ".join(["areas LIKE ?"] * len(area_ids))
@@ -635,6 +658,7 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
     # Get areas assigned to specific categories
     # -----------------------------
     def getAreasAssignedToCategories(self, category_ids) -> pd.DataFrame:
+        pd = _pd()
         if not category_ids:
             return pd.DataFrame()
         placeholders = ",".join(["?"] * len(category_ids))
@@ -685,6 +709,7 @@ class BasicQueryEngine: #Fahmida
         return False
 
     def _split_values(self, value):
+        pd = _pd()
         if value is None or (isinstance(value, float) and pd.isna(value)):
             return []
         if isinstance(value, list):
@@ -695,6 +720,7 @@ class BasicQueryEngine: #Fahmida
         return [item.strip() for item in normalized.split(",") if item.strip()]
 
     def _parse_bool(self, value) -> bool:
+        pd = _pd()
         if isinstance(value, bool):
             return value
         if value is None or (isinstance(value, float) and pd.isna(value)):
@@ -704,6 +730,7 @@ class BasicQueryEngine: #Fahmida
         return bool(value)
 
     def _journals_from_df(self, df: pd.DataFrame) -> list:
+        pd = _pd()
         journals = []
         if df is None or df.empty:
             return journals
@@ -729,6 +756,7 @@ class BasicQueryEngine: #Fahmida
         return journals
 
     def _categories_from_df(self, df: pd.DataFrame) -> list:
+        pd = _pd()
         categories = []
         if df is None or df.empty:
             return categories
@@ -742,6 +770,7 @@ class BasicQueryEngine: #Fahmida
         return categories
 
     def _areas_from_df(self, df: pd.DataFrame) -> list:
+        pd = _pd()
         areas = []
         if df is None or df.empty:
             return areas
@@ -865,6 +894,7 @@ class FullQueryEngine(BasicQueryEngine):
         super().__init__()
 
     def _collect_identifiers_from_categories(self, df: pd.DataFrame, category_ids=None, quartiles=None) -> set:
+        pd = _pd()
         if df is None or df.empty:
             return set()
         filtered = df
@@ -879,6 +909,7 @@ class FullQueryEngine(BasicQueryEngine):
         return identifiers
 
     def _filter_journals_by_identifiers(self, df: pd.DataFrame, identifiers: set) -> pd.DataFrame:
+        pd = _pd()
         if df is None or df.empty or not identifiers or "identifier" not in df.columns:
             return pd.DataFrame()
         def matches_identifier(value):
