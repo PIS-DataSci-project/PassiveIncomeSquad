@@ -33,7 +33,7 @@ class BasicQueryEngine:
         self.journalQuery.clear() # remove all elements from the list
         return True # indicate success
     
-    def cleanCategoryHandlers(self) -> bool: #Claudia
+    def cleanCategoryHandlers(self) -> bool: #River
         """Clear all Category Query Handlers"""
         self.categoryQuery.clear()
         return True
@@ -42,7 +42,7 @@ class BasicQueryEngine:
         self.journalQuery.append(handler)
         return True
     
-    def addCategoryHandler(self, handler) -> bool: #River
+    def addCategoryHandler(self, handler) -> bool: #Claudia
         """Add a Category Query Handler to the list"""
         self.categoryQuery.append(handler)
         return True
@@ -50,9 +50,9 @@ class BasicQueryEngine:
     def getEntityById(self, id: str): #Claudia 
         """Get an entity (Journal or Category) by its ID"""
         # First, search through all journal handlers
-        journal_dfs = []
+        journal_dfs = [] 
         for handler in self.journalQuery:
-            df = handler.getById(id)
+            df = handler.getById(id)  
             if df is not None and not df.empty:
                 journal_dfs.append(df)
         

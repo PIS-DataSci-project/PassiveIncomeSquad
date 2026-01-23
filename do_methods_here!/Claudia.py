@@ -26,21 +26,21 @@ class BasicQueryEngine: #Fahmida
     def getEntityById(self, id: str): #Claudia 
         """Get an entity (Journal or Category) by its ID"""
         # First, search through all journal handlers
-        journal_dfs = list()
-        for handler in self.journalQuery:
-            df = handler.getById(id)
-            if df is not None and not df.empty:
-                journal_dfs.append(df)
+        journal_dfs = list() # creating a list to store dataframes from journal handlers
+        for handler in self.journalQuery: # iterating through each JournalQueryHandler object in the journalQuery list
+            df = handler.getById(id) # calling getById method on each handler to get a dataframe for the given id
+            if df is not None and len(df) > 0: # checking if the dataframe is valid and not empty
+                journal_dfs.append(df) # adding the valid dataframe to the list
         
         # Merge and remove duplicates from journal results
-        if journal_dfs:
-            merged = pd.concat(journal_dfs, ignore_index=True).drop_duplicates()
-            if not merged.empty:
+        if journal_dfs: 
+            merged = pd.concat(journal_dfs, ignore_index=True).drop_duplicates() # concatenating all dataframes in the list into a single dataframe and removing duplicates
+            if len(merged) > 0: # checking if the merged dataframe is not empty
                 # Take the first row and construct a Journal object
-                row = merged.iloc[0]
-                journal = Journal(
-                    identifiers=[id],
-                    title=row.get('title', ''),
+                row = merged.iloc[0] # getting the first row of the merged dataframe
+                journal = Journal( 
+                    identifiers=[id], # creating a list with the id
+                    title=row.get('title', ''), # 
                     language=row.get('language', ''),
                     seal=row.get('seal', False),
                     license=row.get('license', ''),
@@ -50,16 +50,16 @@ class BasicQueryEngine: #Fahmida
                 return journal
         
         # If not found in journals, search through category handlers
-        category_dfs = list()
-        for handler in self.categoryQuery:
-            df = handler.getById(id)
-            if df is not None and not df.empty:
-                category_dfs.append(df)
+        category_dfs = list() # creating a list to store dataframes from category handlers
+        for handler in self.categoryQuery: # iterating through each CategoryQueryHandler object in the categoryQuery list
+            df = handler.getById(id) # calling getById method on each handler to get a dataframe for the given id
+            if df is not None and len(df) > 0: # checking if the dataframe is valid and not empty
+                category_dfs.append(df) # adding the valid dataframe to the list
         
         # Merge and remove duplicates from category results
         if category_dfs:
-            merged = pd.concat(category_dfs, ignore_index=True).drop_duplicates()
-            if not merged.empty:
+            merged = pd.concat(category_dfs, ignore_index=True).drop_duplicates() # concatenating all dataframes in the list into a single dataframe and removing duplicates
+            if len(merged) > 0: # checking if the merged dataframe is not empty
                 # Take the first row and construct a Category object
                 row = merged.iloc[0]
                 category = Category(
