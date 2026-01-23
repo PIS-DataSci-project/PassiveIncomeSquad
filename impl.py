@@ -652,3 +652,278 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
         df = df.explode("area")
         df = df[["area"]].dropna().drop_duplicates().reset_index(drop=True)
         return df
+
+
+#---------------------------------------------------------------------------------------------
+# Query Engines
+
+class BasicQueryEngine: #Fahmida
+    def __init__(self):
+        self.journalQuery = []
+        self.categoryQuery = []
+
+    def cleanJournalHandlers(self) -> bool: #Claudia
+        had_handlers = bool(self.journalQuery)
+        self.journalQuery = []
+        return had_handlers
+
+    def cleanCategoryHandlers(self) -> bool: #River
+        had_handlers = bool(self.categoryQuery)
+        self.categoryQuery = []
+        return had_handlers
+
+    def addJournalHandler(self, handler) -> bool: #Claudia
+        if isinstance(handler, JournalQueryHandler):
+            self.journalQuery.append(handler)
+            return True
+        return False
+
+    def addCategoryHandler(self, handler) -> bool: #River
+        if isinstance(handler, CategoryQueryHandler):
+            self.categoryQuery.append(handler)
+            return True
+        return False
+
+    def _split_values(self, value):
+        if value is None or (isinstance(value, float) and pd.isna(value)):
+            return []
+        if isinstance(value, list):
+            return [item for item in value if item]
+        if not isinstance(value, str):
+            return [str(value)]
+        normalized = value.replace(";", ",")
+        return [item.strip() for item in normalized.split(",") if item.strip()]
+
+    def _parse_bool(self, value) -> bool:
+        if isinstance(value, bool):
+            return value
+        if value is None or (isinstance(value, float) and pd.isna(value)):
+            return False
+        if isinstance(value, str):
+            return value.strip().lower() in {"true", "yes", "1"}
+        return bool(value)
+
+    def _journals_from_df(self, df: pd.DataFrame) -> list:
+        journals = []
+        if df is None or df.empty:
+            return journals
+        for _, row in df.iterrows():
+            identifiers = self._split_values(row.get("identifier"))
+            title = row.get("title", "")
+            language = self._split_values(row.get("language"))
+            publisher = row.get("publisher", "")
+            seal = self._parse_bool(row.get("seal"))
+            license_value = row.get("license", "")
+            apc = self._parse_bool(row.get("apc"))
+            journals.append(
+                Journal(
+                    identifiers=identifiers,
+                    title=title,
+                    language=language,
+                    seal=seal,
+                    license=license_value,
+                    apc=apc,
+                    publisher=publisher,
+                )
+            )
+        return journals
+
+    def _categories_from_df(self, df: pd.DataFrame) -> list:
+        categories = []
+        if df is None or df.empty:
+            return categories
+        for _, row in df.iterrows():
+            identifiers = self._split_values(row.get("identifiers"))
+            category_id = row.get("category_id")
+            quartile = row.get("quartile")
+            if category_id:
+                identifiers.append(category_id)
+            categories.append(Category(identifiers=identifiers, quartile=quartile))
+        return categories
+
+    def _areas_from_df(self, df: pd.DataFrame) -> list:
+        areas = []
+        if df is None or df.empty:
+            return areas
+        for _, row in df.iterrows():
+            area_id = row.get("area")
+            if area_id is None or (isinstance(area_id, float) and pd.isna(area_id)):
+                continue
+            areas.append(Area([str(area_id)]))
+        return areas
+
+    def _dedupe_journals(self, journals: list) -> list:
+        seen = set()
+        unique = []
+        for journal in journals:
+            ids = tuple(journal.getIds())
+            if ids in seen:
+                continue
+            seen.add(ids)
+            unique.append(journal)
+        return unique
+
+    def _dedupe_entities(self, entities: list) -> list:
+        seen = set()
+        unique = []
+        for entity in entities:
+            ids = tuple(entity.getIds())
+            if ids in seen:
+                continue
+            seen.add(ids)
+            unique.append(entity)
+        return unique
+
+    def getEntityById(self, entity_id: str): #Claudia
+        if not entity_id:
+            return None
+        for handler in self.journalQuery:
+            df = handler.getById(entity_id)
+            journals = self._journals_from_df(df)
+            if journals:
+                return journals[0]
+        for handler in self.categoryQuery:
+            df = handler.getById(entity_id)
+            categories = self._categories_from_df(df)
+            if categories:
+                return categories[0]
+        for handler in self.categoryQuery:
+            df = handler.getAllAreas()
+            if not df.empty and "area" in df.columns and entity_id in df["area"].values:
+                return Area([entity_id])
+        return None
+
+    def getAllJournals(self) -> list: #Polina
+        journals = []
+        for handler in self.journalQuery:
+            journals.extend(self._journals_from_df(handler.getAllJournals()))
+        return self._dedupe_journals(journals)
+
+    def getJournalsWithTitle(self, partialTitle: str) -> list: #Polina
+        journals = []
+        for handler in self.journalQuery:
+            journals.extend(self._journals_from_df(handler.getJournalsWithTitle(partialTitle)))
+        return self._dedupe_journals(journals)
+
+    def getJournalsPublishedBy(self, partialName: str) -> list: #Polina
+        journals = []
+        for handler in self.journalQuery:
+            journals.extend(self._journals_from_df(handler.getJournalsPublishedBy(partialName)))
+        return self._dedupe_journals(journals)
+
+    def getJournalsWithLicense(self, licenses) -> list: #Polina
+        journals = []
+        for handler in self.journalQuery:
+            journals.extend(self._journals_from_df(handler.getJournalsWithLicense(licenses)))
+        return self._dedupe_journals(journals)
+
+    def getJournalsWithAPC(self) -> list: #Polina
+        journals = []
+        for handler in self.journalQuery:
+            journals.extend(self._journals_from_df(handler.getJournalsWithAPC()))
+        return self._dedupe_journals(journals)
+
+    def getJournalsWithDOAJSeal(self) -> list: #Polina
+        journals = []
+        for handler in self.journalQuery:
+            journals.extend(self._journals_from_df(handler.getJournalsWithDOAJSeal()))
+        return self._dedupe_journals(journals)
+
+    def getAllCategories(self) -> list: #Fahmida
+        categories = []
+        for handler in self.categoryQuery:
+            categories.extend(self._categories_from_df(handler.getAllCategories()))
+        return self._dedupe_entities(categories)
+
+    def getAllAreas(self) -> list: #Fahmida
+        areas = []
+        for handler in self.categoryQuery:
+            areas.extend(self._areas_from_df(handler.getAllAreas()))
+        return self._dedupe_entities(areas)
+
+    def getCategoriesWithQuartile(self, quartiles) -> list: #Fahmida
+        categories = []
+        for handler in self.categoryQuery:
+            categories.extend(self._categories_from_df(handler.getCategoriesWithQuartile(quartiles)))
+        return self._dedupe_entities(categories)
+
+    def getCategoriesAssignedToAreas(self, area_ids) -> list: #Fahmida
+        categories = []
+        for handler in self.categoryQuery:
+            categories.extend(self._categories_from_df(handler.getCategoriesAssignedToAreas(area_ids)))
+        return self._dedupe_entities(categories)
+
+    def getAreasAssignedToCategories(self, category_ids) -> list: #Fahmida
+        areas = []
+        for handler in self.categoryQuery:
+            areas.extend(self._areas_from_df(handler.getAreasAssignedToCategories(category_ids)))
+        return self._dedupe_entities(areas)
+
+
+class FullQueryEngine(BasicQueryEngine):
+    def __init__(self):
+        super().__init__()
+
+    def _collect_identifiers_from_categories(self, df: pd.DataFrame, category_ids=None, quartiles=None) -> set:
+        if df is None or df.empty:
+            return set()
+        filtered = df
+        if category_ids:
+            filtered = filtered[filtered["category_id"].isin(category_ids)]
+        if quartiles:
+            filtered = filtered[filtered["quartile"].isin(quartiles)]
+        identifiers = set()
+        for _, row in filtered.iterrows():
+            for identifier in self._split_values(row.get("identifiers")):
+                identifiers.add(identifier)
+        return identifiers
+
+    def _filter_journals_by_identifiers(self, df: pd.DataFrame, identifiers: set) -> pd.DataFrame:
+        if df is None or df.empty or not identifiers or "identifier" not in df.columns:
+            return pd.DataFrame()
+        def matches_identifier(value):
+            values = self._split_values(value)
+            return any(identifier in values for identifier in identifiers)
+        mask = df["identifier"].apply(matches_identifier)
+        return df[mask]
+
+    def getJournalsInCategoriesWithQuartile(self, category_ids, quartiles) -> list:
+        identifiers = set()
+        for handler in self.categoryQuery:
+            df = handler.getCategoriesWithQuartile(quartiles)
+            identifiers.update(self._collect_identifiers_from_categories(df, category_ids=category_ids))
+        journals = []
+        for handler in self.journalQuery:
+            df = handler.getAllJournals()
+            df = self._filter_journals_by_identifiers(df, identifiers)
+            journals.extend(self._journals_from_df(df))
+        return self._dedupe_journals(journals)
+
+    def getJournalsInAreasWithLicense(self, area_ids, licenses) -> list:
+        identifiers = set()
+        for handler in self.categoryQuery:
+            df = handler.getCategoriesAssignedToAreas(area_ids)
+            identifiers.update(self._collect_identifiers_from_categories(df))
+        journals = []
+        for handler in self.journalQuery:
+            df = handler.getJournalsWithLicense(licenses)
+            df = self._filter_journals_by_identifiers(df, identifiers)
+            journals.extend(self._journals_from_df(df))
+        return self._dedupe_journals(journals)
+
+    def getDiamondJournalsInAreasAndCategoriesWithQuartile(self, area_ids, category_ids, quartiles) -> list:
+        identifiers = set()
+        for handler in self.categoryQuery:
+            df = handler.getCategoriesAssignedToAreas(area_ids)
+            identifiers.update(
+                self._collect_identifiers_from_categories(
+                    df, category_ids=category_ids, quartiles=quartiles
+                )
+            )
+        journals = []
+        for handler in self.journalQuery:
+            df = handler.getAllJournals()
+            df = self._filter_journals_by_identifiers(df, identifiers)
+            df = df[df["apc"].apply(lambda value: not self._parse_bool(value))]
+            journals.extend(self._journals_from_df(df))
+        return self._dedupe_journals(journals)
