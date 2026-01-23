@@ -70,8 +70,6 @@ class BasicQueryEngine: #Fahmida
                     license=row['license'], 
                     apc=row['apc'] if 'apc' in row else False,
                     publisher=row['publisher'] if 'publisher' in row else None,
-                    categories=#,
-                    areas=#
                 )
                 return journal
         
