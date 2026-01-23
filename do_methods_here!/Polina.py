@@ -32,16 +32,16 @@ class BasicQueryEngine:
             return
 
         for _, row in df.iterrows():
-            journal_id = row("journal")
+            journal_id = row["journal"]
             if journal_id and journal_id not in journal_map:
                 journal_map[journal_id] = Journal(
-                    identifiers=[journal_id],
-                    title=row("title", ""),
-                    language=row("language", ""),
-                    seal=row("seal", False),
-                    license=row("license", ""),
-                    apc=row("apc", False),
-                    publisher=row("publisher", None)
+                    identifiers=[journal_id.strip() for journal_id in row['identifiers'].split(',') if journal_id.strip()], # splitting the identifiers string into a list and 
+                    title=row['title'], # getting the title from the row
+                    language=[lang.strip() for lang in row['language'].split(',') if lang.strip()], # splitting the language string into a list # could add .strip() to remove extra spaces
+                    seal=row['seal'] if 'seal' in row else False,
+                    license=row['license'], 
+                    apc=row['apc'] if 'apc' in row else False,
+                    publisher=row['publisher'] if 'publisher' in row else None,
                     )
 
     def getAllJournals(self) -> list[Journal]:
@@ -78,7 +78,7 @@ class BasicQueryEngine:
 
         for handler in self.journalQuery:
             df = handler.getJournalsWithLicense(licenses)
-        self._add_journals_from_df(df, journal_map)
+            self._add_journals_from_df(df, journal_map)
 
         return list(journal_map.values())
 
@@ -101,42 +101,8 @@ class BasicQueryEngine:
             self._add_journals_from_df(df, journal_map)
 
         return list(journal_map.values())
-        
-    #Fahmida methods from heree
-    def getAllCategories(self) -> list:
-        """Get all categories from all category handlers"""
-        categories = []
-        for handler in self.categoryQuery:
-            categories.extend(handler.getAllCategories())
-        return categories
-    
-    def getAllAreas(self) -> list:
-        """Get all areas from all category handlers"""
-        areas = []
-        for handler in self.categoryQuery:
-            areas.extend(handler.getAllAreas())
-        return areas
-    
-    def getCategoriesWithQuartile(self, quartiles: set) -> list:
-        """Get categories with specified quartiles"""
-        categories = []
-        for handler in self.categoryQuery:
-            categories.extend(handler.getCategoriesWithQuartile(quartiles))
-        return categories
-    
-    def getCategoriesAssignedToAreas(self, area_ids: set) -> list:
-        """Get categories assigned to specified areas"""
-        categories = []
-        for handler in self.categoryQuery:
-            categories.extend(handler.getCategoriesAssignedToAreas(area_ids))
-        return categories
-    
-    def getAreasAssignedToCategories(self, category_ids: set) -> list:
-        """Get areas assigned to specified categories"""
-        areas = []
-        for handler in self.categoryQuery:
-            areas.extend(handler.getAreasAssignedToCategories(category_ids))
-        return areas
+
+
 
 #Subclass --> FullQueryEngine(BasicQueryEngine) 
 

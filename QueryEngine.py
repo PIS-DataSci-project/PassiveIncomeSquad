@@ -109,7 +109,7 @@ class BasicQueryEngine: #Fahmida
             return
 
         for _, row in df.iterrows():
-            journal_id = row("journal")
+            journal_id = row["journal"]
             if journal_id and journal_id not in journal_map:
                 journal_map[journal_id] = Journal(
                     identifiers=[journal_id.strip() for journal_id in row['identifiers'].split(',') if journal_id.strip()], # splitting the identifiers string into a list and 
@@ -155,7 +155,7 @@ class BasicQueryEngine: #Fahmida
 
         for handler in self.journalQuery:
             df = handler.getJournalsWithLicense(licenses)
-        self._add_journals_from_df(df, journal_map)
+            self._add_journals_from_df(df, journal_map)
 
         return list(journal_map.values())
 
@@ -178,7 +178,6 @@ class BasicQueryEngine: #Fahmida
             self._add_journals_from_df(df, journal_map)
 
         return list(journal_map.values())
-
         
     # ---------------------------------------------------------
     # CATEGORY-RELATED METHODS (Fahmida)
