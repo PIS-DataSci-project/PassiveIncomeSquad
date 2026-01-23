@@ -2,6 +2,7 @@ import pandas as pd
 from typing import List, Dict
 from impl import IdentifiableEntity, Journal, Category, Area
 from impl import JournalQueryHandler, CategoryQueryHandler  
+from QueryEngine import BasicQueryEngine
 
 #------------------------------------------------
 #Subclass of BasicQueryEngine
@@ -47,13 +48,15 @@ class BasicQueryEngine: #Fahmida
                 # Take the first row and construct a Journal object
                 row = merged.iloc[0] # getting the first row of the merged dataframe
                 
-                # Extract identifier - try different column names
-                if 'identifier' in row:
-                    id_list = [row['identifier']]
-                elif 'identifiers' in row:
-                    id_list = [row['identifiers']]
-                else:
-                    id_list = [id]
+                # Extract identifier - try different column names and validate
+                id_value = None
+                if 'identifier' in row and pd.notna(row['identifier']) and str(row['identifier']).strip():
+                    id_value = str(row['identifier']).strip()
+                elif 'identifiers' in row and pd.notna(row['identifiers']) and str(row['identifiers']).strip():
+                    id_value = str(row['identifiers']).strip()
+                
+                # Use validated ID or fallback to search ID
+                id_list = [id_value] if id_value else [str(id)]
                 
                 # Extract language
                 lang_str = row.get('language', '')
@@ -87,81 +90,49 @@ class BasicQueryEngine: #Fahmida
                 # Take the first row and determine entity type
                 row = merged.iloc[0]
                 
-                # Check if it's a Category (has quartile column with data) or Area (no quartile)
-                if 'quartile' in row and pd.notna(row['quartile']) and row['quartile']:
+                # Check if it's a Category (has quartile column with data)
+                # Note: CategoryQueryHandler searches the categories table which only has categories
+                # Areas cannot be found by ID in the current schema
+                if 'quartile' in row and pd.notna(row['quartile']) and str(row['quartile']).strip():
                     # Create and return Category object
-                    # Extract identifier from correct column
-                    if 'category_id' in row:
-                        id_list = [row['category_id']]
-                    elif 'identifiers' in row:
-                        id_list = [row['identifiers']]
-                    else:
-                        id_list = [id]
+                    # Extract identifier from correct column - ensure it's a valid string
+                    id_value = None
+                    if 'category_id' in row and pd.notna(row['category_id']) and str(row['category_id']).strip():
+                        id_value = str(row['category_id']).strip()
+                    elif 'identifiers' in row and pd.notna(row['identifiers']) and str(row['identifiers']).strip():
+                        id_value = str(row['identifiers']).strip()
+                    
+                    # Use validated ID or fallback to search ID
+                    id_list = [id_value] if id_value else [str(id)]
                     
                     category = Category(
                         identifiers=id_list,
-                        quartile=str(row['quartile'])
+                        quartile=str(row['quartile']).strip()
                     )
                     return category
-                else:
-                    # Create and return Area object
-                    if 'areas' in row:
-                        id_list = [row['areas']]
-                    elif 'identifiers' in row:
-                        id_list = [row['identifiers']]
-                    else:
-                        id_list = [id]
-                    
-                    area = Area(
-                        identifiers=id_list
-                    )
-                    return area
         
         # No entity found with this ID
         return None
     
 # --------------------------------
+
+rel_path = "relational.db"
+grp_endpoint = "http://127.0.0.1:9999/blazegraph/sparql"
+
 cat_qh = CategoryQueryHandler()
-cat_qh.setDbPathOrUrl("relational.db")
+cat_qh.setDbPathOrUrl(rel_path)
 
 jou_qh = JournalQueryHandler()
-jou_qh.setDbPathOrUrl("http://127.0.0.1:9999/blazegraph/sparql")
+jou_qh.setDbPathOrUrl(grp_endpoint)
 
+# Finally, create a advanced mashup object for asking
+# about data
 que = BasicQueryEngine()
 que.addCategoryHandler(cat_qh)
 que.addJournalHandler(jou_qh)
 
-# First let's test what the handlers return directly
-print("Testing handler.getById() directly:")
-test_id = "Medicine"
-print(f"\nTesting with ID: {test_id}")
+result_q3 = que.getEntityById("Medicine")
+result_q4 = que.getEntityById("2532-8816")
 
-# Test journal handler directly
-jou_result = jou_qh.getById(test_id)
-print(f"Journal handler result: {type(jou_result)}, len={len(jou_result) if jou_result is not None else 'None'}")
-if jou_result is not None and len(jou_result) > 0:
-    print(f"Columns: {jou_result.columns.tolist()}")
-    print(f"Data:\n{jou_result}")
-
-# Test category handler with a category ID
-cat_test_id = "Medicine"  # Try a numeric category ID
-print(f"\nTesting category with ID: {cat_test_id}")
-cat_result = cat_qh.getById(cat_test_id)
-print(f"Category handler result: {type(cat_result)}, len={len(cat_result) if cat_result is not None else 'None'}")
-if cat_result is not None and len(cat_result) > 0:
-    print(f"Columns: {cat_result.columns.tolist()}")
-    print(f"Data:\n{cat_result}")
-
-print("\n" + "="*60)
-print("Now testing getEntityById method:")
-print("="*60)
-
-result_q4 = que.getEntityById(test_id)
-print(f"Result for {test_id}: {result_q4}")
-if result_q4:
-    print(f"Type: {type(result_q4).__name__}")
-
-result_cat = que.getEntityById(cat_test_id)
-print(f"\nResult for {cat_test_id}: {result_cat}")
-if result_cat:
-    print(f"Type: {type(result_cat).__name__}")
+print(result_q3)
+print(result_q4)
