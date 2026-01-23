@@ -4,6 +4,11 @@ import pandas as pd
 # Optional but good practice: type hints
 from typing import List, Set
 
+#for tests
+from impl import Journal, Category, Area
+from impl import JournalQueryHandler, CategoryQueryHandler
+
+
 # Superclass --> BasicQueryEngine(object)
 class BasicQueryEngine:
     """
@@ -199,3 +204,46 @@ class BasicQueryEngine:
             )
             for _, row in merged.iterrows()
         ]
+
+#test1 (runs correctly!!! = constructor is correct!):
+engine = BasicQueryEngine()
+
+#test2 (correct output!! = [] is correct!)
+print(engine.getAllCategories())
+#Why?
+#self.categoryQuery is empty
+#dfs stays empty
+#method returns []
+#If you get [] → logic is correct for empty case, which is required by UML.
+
+#test3 (creates a fake handler - simulates scimago data - and adds it to the engine --> should return small dataframe)
+class FakeCategoryQueryHandler:
+    def getAllCategories(self):
+        return pd.DataFrame([
+            {"categoryId": "C1", "categoryName": "Computer Science"},
+            {"categoryId": "C2", "categoryName": "Mathematics"}
+        ])
+
+    def getAllAreas(self):
+        return pd.DataFrame([
+            {"areaId": "A1", "areaName": "Engineering"}
+        ])
+
+    def getCategoriesWithQuartile(self, quartiles):
+        return self.getAllCategories()
+
+    def getCategoriesAssignedToAreas(self, area_ids):
+        return self.getAllCategories()
+
+    def getAreasAssignedToCategories(self, category_ids):
+        return self.getAllAreas()
+#plugging into the engine
+engine = BasicQueryEngine()
+engine.categoryQuery.append(FakeCategoryQueryHandler())
+#testing each method
+categories = engine.getAllCategories()
+areas = engine.getAllAreas()
+
+print(categories)
+print(areas)
+
