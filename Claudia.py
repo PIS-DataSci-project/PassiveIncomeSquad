@@ -43,13 +43,9 @@ class BasicQueryEngine: #Fahmida
         # 1. Search in journal handlers (Blazegraph)
         journal_dfs = []
         for handler in self.journalQuery:
-            try:
-                result_df = handler.getById(entity_id)
-                if result_df is not None and not result_df.empty:
-                    journal_dfs.append(result_df)
-            except Exception as e:
-                print(f"Error in journal handler: {e}")
-                continue
+            result_df = handler.getById(entity_id)
+            if result_df is not None and not result_df.empty:
+                journal_dfs.append(result_df)
         
         # Merge and remove duplicates from journal results
         if journal_dfs:
@@ -69,31 +65,9 @@ class BasicQueryEngine: #Fahmida
                     lang_str = str(row['language'])
                     languages = [lang.strip() for lang in lang_str.split(',') if lang.strip()]
                 
-                # Get categories for this journal from category handlers
-                categories = []
-                areas = []
-                for handler in self.categoryQuery:
-                    try:
-                        # Query by each identifier
-                        for identifier in identifiers:
-                            cat_df = handler.getById(identifier)
-                            if cat_df is not None and not cat_df.empty:
-                                if 'category_id' in cat_df.columns:
-                                    cats = [str(cat_id).strip() for cat_id in cat_df['category_id'].dropna() if str(cat_id).strip()]
-                                    categories.extend(cats)
-                                
-                                if 'areas' in cat_df.columns:
-                                    for area_str in cat_df['areas'].dropna():
-                                        if pd.notna(area_str):
-                                            area_list = [a.strip() for a in str(area_str).split(',') if a.strip()]
-                                            areas.extend(area_list)
-                    except Exception as e:
-                        print(f"Error getting categories: {e}")
-                        continue
-                
-                # Remove duplicates
-                categories = list(set(categories))
-                areas = list(set(areas))
+                # Get categories and areas using helper methods
+                categories = GetCategoriesByJournalId(self, identifiers)
+                areas = GetAreasByJournalId(self, identifiers)
                 
                 # Convert boolean strings to actual booleans
                 seal = False
@@ -125,13 +99,9 @@ class BasicQueryEngine: #Fahmida
         # 2. Search in category handlers (SQLite)
         category_dfs = []
         for handler in self.categoryQuery:
-            try:
-                result_df = handler.getById(entity_id)
-                if result_df is not None and not result_df.empty:
-                    category_dfs.append(result_df)
-            except Exception as e:
-                print(f"Error in category handler: {e}")
-                continue
+            result_df = handler.getById(entity_id)
+            if result_df is not None and not result_df.empty:
+                category_dfs.append(result_df)
         
         # Merge and remove duplicates from category results
         if category_dfs:
@@ -170,8 +140,53 @@ def print_journal(journal):
     print(f"Has APC: {journal.hasAPC()}")
     print(f"Categories: {journal.getCategories()}")
     print(f"Areas: {journal.getAreas()}")
+
+def GetCategoriesByJournalId(engine, journal_ids):
+    """Get all Category objects for a journal. Prints category details."""
+    if isinstance(journal_ids, str):
+        journal_ids = [journal_ids]
     
+    categories = []
+    for handler in engine.categoryQuery:
+        for journal_id in journal_ids:
+            cat_df = handler.getById(journal_id)
+            if cat_df is not None and not cat_df.empty:
+                for _, row in cat_df.iterrows():
+                    cat = Category(
+                        identifiers=[str(row['category_id'])],
+                        quartile=str(row.get('quartile', ''))
+                    )
+                    categories.append(cat)
+                    # Print category details
+                    if cat:
+                        print(f"Category IDs: {cat.getIds()}")
+                        print(f"Quartile: {cat.getQuartile()}")
+    return categories
+
+def GetAreasByJournalId(engine, journal_ids):
+    """Get all Area objects for a journal. Prints area details."""
+    if isinstance(journal_ids, str):
+        journal_ids = [journal_ids]
     
+    areas = []
+    for handler in engine.categoryQuery:
+        for journal_id in journal_ids:
+            cat_df = handler.getById(journal_id)
+            if cat_df is not None and not cat_df.empty:
+                for _, row in cat_df.iterrows():
+                    if 'areas' in row and pd.notna(row['areas']):
+                        area_names = [a.strip() for a in str(row['areas']).split(',') if a.strip()]
+                        for area_name in area_names:
+                            area = Area(identifiers=[area_name])
+                            areas.append(area)
+                            # Print area details
+                            if area:
+                                print(f"Area IDs: {area.getIds()}")
+    
+    # Remove duplicates
+    unique_areas = list({a.getIds()[0]: a for a in areas}.values())
+    return unique_areas
+
 # --------------------------------
 journal = "data" + sep + "doaj.csv"
 category = "data" + sep + "scimago.json"
@@ -217,4 +232,4 @@ result_q4 = que.getEntityById("2224-9281")
 print_journal(result_q4)
 
 if result_q3 and result_q4: 
-    print("Both entities found successfully! ⭐") 
+    print("Both entities found successfully! ⭐")

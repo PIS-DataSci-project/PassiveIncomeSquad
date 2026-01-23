@@ -134,12 +134,6 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         if dbPathOrUrl:
             self.setDbPathOrUrl(dbPathOrUrl)
     
-    def _normalize_bool(self, value):
-        #Convert Yes/No text values to boolean (case-insensitive)
-        if isinstance(value, str):
-            return value.strip().lower() == "yes"
-        return bool(value)
-    
     def createGraph(self, path):
         #Create RDF graph from CSV file
         # URI Definitions
@@ -153,28 +147,36 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         seal = URIRef("https://schema.org/award")
         license = URIRef("https://schema.org/license")
         apc = URIRef("https://schema.org/processingFee")
+        
         # Create RDF graph
         g = Graph()
-        journals = pd.read_csv(path, keep_default_na=False) # Read CSV into DataFrame
+        journals = pd.read_csv(path, keep_default_na=False)
+        
+        # Clean and convert data types
+        journals["Publisher"] = journals["Publisher"].fillna("").astype(str).str.strip()
+        journals["Journal ISSN (print version)"] = journals["Journal ISSN (print version)"].astype(str).str.strip()
+        journals["Journal EISSN (online version)"] = journals["Journal EISSN (online version)"].astype(str).str.strip()
+        journals['DOAJ Seal'] = journals['DOAJ Seal'].str.lower().replace({'yes': '1', 'no': '0'}).astype(bool)
+        journals['APC'] = journals['APC'].str.lower().replace({'yes': '1', 'no': '0'}).astype(bool)
+        
         for idx, row in journals.iterrows():
             local_id = "journal-" + str(idx) 
             subj = URIRef(base_url + "/" + local_id)
             g.add((subj, RDF.type, Journal))
             g.add((subj, title, Literal(row["Journal title"])))
+            
             # Combine ISSN and EISSN
-            issn = row["Journal ISSN (print version)"].strip() # 
-            eissn = row["Journal EISSN (online version)"].strip()
+            issn = row["Journal ISSN (print version)"]
+            eissn = row["Journal EISSN (online version)"]
             issn_and_eissn = "; ".join(filter(None, [issn, eissn]))
             if issn_and_eissn:
-                g.add((subj, identifier, Literal(issn_and_eissn)))
+                g.add((subj, identifier, Literal(issn_and_eissn)))    
+            
             g.add((subj, language, Literal(row["Languages in which the journal accepts manuscripts"])))
             g.add((subj, publisher, Literal(row["Publisher"])))
             g.add((subj, license, Literal(row["Journal license"])))
-            # Normalize boolean values
-            seal_bool = self._normalize_bool(row["DOAJ Seal"])
-            apc_bool = self._normalize_bool(row["APC"])
-            g.add((subj, seal, Literal(seal_bool, datatype=XSD.boolean)))
-            g.add((subj, apc, Literal(apc_bool, datatype=XSD.boolean)))
+            g.add((subj, seal, Literal(row["DOAJ Seal"], datatype=XSD.boolean)))
+            g.add((subj, apc, Literal(row["APC"], datatype=XSD.boolean)))
         return g
     
     def pushDataToDb(self, path):
@@ -650,4 +652,3 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
         df = df.explode("area")
         df = df[["area"]].dropna().drop_duplicates().reset_index(drop=True)
         return df
-    
