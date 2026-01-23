@@ -215,3 +215,6 @@ result_q3 = que.getEntityById("Artificial Intelligence")
 print(result_q3)
 result_q4 = que.getEntityById("2532-8816")
 print_journal(result_q4)
+
+if result_q3 and result_q4: 
+    print("Both entities found successfully! ⭐") 
