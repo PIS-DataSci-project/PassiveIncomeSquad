@@ -2,7 +2,7 @@ import pandas as pd
 from impl import JournalQueryHandler
 
 # ================================
-# CONFIG
+# CONFIG 
 # ================================
 ENDPOINT = "http://172.20.10.2:9999/blazegraph/namespace/kb/sparql" 
 print("=" * 60)
@@ -29,7 +29,7 @@ else:
 assert isinstance(df_all, pd.DataFrame), "Should return DataFrame"
 
 # ================================
-# 2. TEST: getById (Known IDs)
+# 2. TEST: getById (Known IDs) 
 # ================================
 print("\n[TEST 2] getById() - Known Identifiers")
 print("-" * 60)
