@@ -23,6 +23,14 @@ class BasicQueryEngine: #Fahmida
         self.categoryQuery.clear()
         return True
     
+    def addJournalHandler(self, handler: JournalQueryHandler) -> bool:  # River
+        self.journalQuery.append(handler)
+        return True
+
+    def addCategoryHandler(self, handler: CategoryQueryHandler) -> bool:  # River
+        self.categoryQuery.append(handler)
+        return True
+    
     def getEntityById(self, id: str): #Claudia 
         """Get an entity (Journal or Category) by its ID"""
         # First, search through all journal handlers
@@ -67,7 +75,7 @@ class BasicQueryEngine: #Fahmida
                 if 'quartile' in row and row['quartile']:
                     # Create and return Category object
                     category = Category(
-                        identifiers=[cat_id.strip() for cat_id in row['identifiers'].split(',') if cat_id.strip()],
+                        identifiers=[cat_id.strip() for cat_id in row['id'].split(',') if cat_id.strip()],
                         quartile=row.get('quartile', '')
                     )
                     return category
@@ -86,7 +94,9 @@ que = BasicQueryEngine()
 
 
 result_q3 = que.getEntityById("Artificial Intelligence")
-result_q4 = que.getEntityById("2532-8816")
+result_q4 = que.getEntityById("2224-9281")
 result_q5 = que.getEntityById("NonExistentID")  # Testing with a non-existent ID
 result_q6 = que.getEntityById("1234-5678")  # Testing with an ID that could belong to multiple entities
 result_q7 = que.getEntityById("Medicine")  # Testing with a category ID
+
+print(result_q4)
