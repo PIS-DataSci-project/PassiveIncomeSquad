@@ -3,6 +3,7 @@
 #QueryEngine
 #------------------------------------------------
 import pandas as pd 
+from typing import List, Dict
 from impl import Journal, Category, Area
 from impl import JournalQueryHandler, CategoryQueryHandler
 import sqlite3
@@ -97,55 +98,86 @@ class BasicQueryEngine: #Fahmida
        
 
     #Polina methods from here
-    def getJournalsWithTitle(self, partialTitle: str) -> List[Journal]:
-        """Get journals with matching title"""
-        journal_map: Dict[str, Journal] = {}
-        
-        try:
-            for handler in self._journalQuery:
-                df = handler.getJournalsWithTitle(partialTitle)
-                self._collect_journals(df, journal_map)
-        
-                return list(journal_map.values())
-        
-        except Exception as e:
-             print(f"Error while fetching journals with title '{partialTitle}': {e}")
-             return []
-    
-    def getJournalsWithTitle(self, partialTitle: str) -> list:
-        """Get journals matching the partial title"""
-        journals = []
+
+    def _add_journals_from_df(
+            self,
+            df: pd.DataFrame,
+            journal_map: dict[str, Journal]
+    ) -> None:
+        if df is None or df.empty:
+            return
+
+        for _, row in df.iterrows():
+            journal_id = row.get("journal")
+            if journal_id and journal_id not in journal_map:
+                journal_map[journal_id] = Journal(
+                    identifiers=[journal_id],
+                    title=row.get("title", ""),
+                    language=row.get("language", ""),
+                    seal=row.get("seal", False),
+                    license=row.get("license", ""),
+                    apc=row.get("apc", False),
+                    publisher=row.get("publisher", None)
+                    )
+
+    def getAllJournals(self) -> list[Journal]:
+        journal_map: dict[str, Journal] = {}
+
         for handler in self.journalQuery:
-            journals.extend(handler.getJournalsWithTitle(partialTitle))
-        return journals
+            df = handler.getAllJournals()
+            self._add_journals_from_df(df, journal_map)
+
+        return list(journal_map.values())
     
-    def getJournalsPublishedBy(self, partialName: str) -> list:
-        """Get journals published by a specific publisher"""
-        journals = []
+    def getJournalsWithTitle(self, partialTitle: str) -> list[Journal]:
+        journal_map: dict[str, Journal] = {}
+
         for handler in self.journalQuery:
-            journals.extend(handler.getJournalsPublishedBy(partialName))
-        return journals
+            df = handler.getJournalsWithTitle(partialTitle)
+            self._add_journals_from_df(df, journal_map)
+
+        return list(journal_map.values())
+
     
-    def getJournalsWithLicense(self, licenses: set) -> list:
-        """Get journals with specified licenses"""
-        journals = []
+    def getJournalsPublishedBy(self, partialName: str) -> list[Journal]:
+        journal_map: dict[str, Journal] = {}
+
         for handler in self.journalQuery:
-            journals.extend(handler.getJournalsWithLicense(licenses))
-        return journals
+            df = handler.getJournalsPublishedBy(partialName)
+            self._add_journals_from_df(df, journal_map)
+
+        return list(journal_map.values())
+
     
-    def getJournalsWithAPC(self) -> list:
-        """Get journals with Article Processing Charges"""
-        journals = []
+    def getJournalsWithLicense(self, licenses: set[str]) -> list[Journal]:
+        journal_map: dict[str, Journal] = {}
+
         for handler in self.journalQuery:
-            journals.extend(handler.getJournalsWithAPC())
-        return journals
+            df = handler.getJournalsWithLicense(licenses)
+        self._add_journals_from_df(df, journal_map)
+
+        return list(journal_map.values())
+
     
-    def getJournalsWithDOAJSeal(self) -> list:
-        """Get journals with DOAJ seal"""
-        journals = []
+    def getJournalsWithAPC(self) -> list[Journal]:
+        journal_map: dict[str, Journal] = {}
+
+        for handler in self.journalQuery: 
+            df = handler.getJournalsWithAPC()
+            self._add_journals_from_df(df, journal_map)
+
+        return list(journal_map.values())
+
+    
+    def getJournalsWithDOAJSeal(self) -> list[Journal]:
+        journal_map: dict[str, Journal] = {}
+
         for handler in self.journalQuery:
-            journals.extend(handler.getJournalsWithDOAJSeal())
-        return journals
+            df = handler.getJournalsWithDOAJSeal()
+            self._add_journals_from_df(df, journal_map)
+
+        return list(journal_map.values())
+
         
     # ---------------------------------------------------------
     # CATEGORY-RELATED METHODS (Fahmida)
