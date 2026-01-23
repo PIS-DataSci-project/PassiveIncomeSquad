@@ -38,7 +38,7 @@ class BasicQueryEngine: #Fahmida
             if len(merged) > 0: # checking if the merged dataframe is not empty
                 # Take the first row and construct a Journal object
                 row = merged.iloc[0] # getting the first row of the merged dataframe
-                journal_map = Journal( 
+                journal = Journal( 
                     identifiers=[journal_id.strip() for journal_id in row['identifiers'].split(',') if journal_id.strip()], # splitting the identifiers string into a list and 
                     title=row['title'], # getting the title from the row
                     language=[lang.strip() for lang in row['language'].split(',') if lang.strip()], # splitting the language string into a list # could add .strip() to remove extra spaces
@@ -47,7 +47,7 @@ class BasicQueryEngine: #Fahmida
                     apc=row['apc'] if 'apc' in row else False,
                     publisher=row['publisher'] if 'publisher' in row else None,
                 )
-                return journal_map # could have not created the variable and return the Journal object directly
+                return journal # could have not created the variable and return the Journal object directly
         
         # If not found in journals, search through category handlers
         category_dfs = list() # creating a list to store dataframes from category handlers
@@ -60,31 +60,33 @@ class BasicQueryEngine: #Fahmida
         if category_dfs:
             merged = pd.concat(category_dfs, ignore_index=True).drop_duplicates() # concatenating all dataframes in the list into a single dataframe and removing duplicates
             if len(merged) > 0: # checking if the merged dataframe is not empty
-                # Take the first row and construct a Category object
-                row = merged.iloc[0]
-                category = Category(
-                    identifiers=[category_id.strip() for category_id in row['identifiers'].split(',') if category_id.strip()],
-                    quartile=row['quartile']
-                )
-                return category
-        
-        # If not found in categories, search for areas in category handlers
-        area_dfs = list() # creating a list to store dataframes from area handlers
-        for handler in self.categoryQuery: # iterating through each CategoryQueryHandler object (areas are handled by category handlers)
-            df = handler.getById(id) # calling getById method on each handler to get a dataframe for the given id
-            if df is not None and len(df) > 0: # checking if the dataframe is valid and not empty
-                area_dfs.append(df) # adding the valid dataframe to the list
-        
-        # Merge and remove duplicates from area results
-        if area_dfs:
-            merged = pd.concat(area_dfs, ignore_index=True).drop_duplicates() # concatenating all dataframes in the list into a single dataframe and removing duplicates
-            if len(merged) > 0: # checking if the merged dataframe is not empty
-                # Take the first row and construct an Area object
-                row = merged.iloc[0]
-                area = Area(
-                    identifiers=[area_id.strip() for area_id in row['identifiers'].split(',') if area_id.strip()]
-                )
-                return area
+                # Take the first row and determine entity type
+                row = merged.iloc[0] # getting the first row of the merged dataframe
+                
+                # Check if it's a Category (has quartile column with data) or Area (no quartile)
+                if 'quartile' in row and row['quartile']:
+                    # Create and return Category object
+                    category = Category(
+                        identifiers=[cat_id.strip() for cat_id in row['identifiers'].split(',') if cat_id.strip()],
+                        quartile=row.get('quartile', '')
+                    )
+                    return category
+                else:
+                    # Create and return Area object
+                    area = Area(
+                        identifiers=[area_id.strip() for area_id in row['identifiers'].split(',') if area_id.strip()]
+                    )
+                    return area
         
         # No entity found with this ID
         return None
+    
+# --------------------------------
+que = BasicQueryEngine()
+
+
+result_q3 = que.getEntityById("Artificial Intelligence")
+result_q4 = que.getEntityById("2532-8816")
+result_q5 = que.getEntityById("NonExistentID")  # Testing with a non-existent ID
+result_q6 = que.getEntityById("1234-5678")  # Testing with an ID that could belong to multiple entities
+result_q7 = que.getEntityById("Medicine")  # Testing with a category ID
