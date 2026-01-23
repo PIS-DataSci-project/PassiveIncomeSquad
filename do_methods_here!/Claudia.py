@@ -38,23 +38,27 @@ class BasicQueryEngine: #Fahmida
             if len(merged) > 0: # checking if the merged dataframe is not empty
                 # Take the first row and construct a Journal object
                 row = merged.iloc[0] # getting the first row of the merged dataframe
-                journal = Journal( 
-                    identifiers=[id], # creating a list with the id
-                    title=row.get('title', ''), # 
-                    language=row.get('language', ''),
-                    seal=row.get('seal', False),
-                    license=row.get('license', ''),
-                    apc=row.get('apc', False),
-                    publisher=row.get('publisher', None)
+                journal_map = Journal( 
+                    identifiers=[journal_id.strip() for journal_id in row['identifiers'].split(',') if journal_id.strip()], # splitting the identifiers string into a list and 
+                    title=row['title'], # getting the title from the row
+                    language=[lang.strip() for lang in row['language'].split(',') if lang.strip()], # splitting the language string into a list # could add .strip() to remove extra spaces
+                    seal=row['seal'] if 'seal' in row else False,
+                    license=row['license'], 
+                    apc=row['apc'] if 'apc' in row else False,
+                    publisher=row['publisher'] if 'publisher' in row else None,
+                    categories=[cat.strip() for cat in row['categories'].split(',') if cat.strip()] if 'categories' in row and row['categories'] else [],
+                    areas=[area.strip() for area in row['areas'].split(',') if area.strip()] if 'areas' in row and row['areas'] else []
                 )
-                return journal
+                return journal_map # could have not created the variable and return the Journal object directly
         
         # If not found in journals, search through category handlers
         category_dfs = list() # creating a list to store dataframes from category handlers
+        area_dfs = list()     # creating a list to store dataframes from area handlers
         for handler in self.categoryQuery: # iterating through each CategoryQueryHandler object in the categoryQuery list
             df = handler.getById(id) # calling getById method on each handler to get a dataframe for the given id
             if df is not None and len(df) > 0: # checking if the dataframe is valid and not empty
                 category_dfs.append(df) # adding the valid dataframe to the list
+                area_dfs.append(df)
         
         # Merge and remove duplicates from category results
         if category_dfs:
@@ -63,10 +67,21 @@ class BasicQueryEngine: #Fahmida
                 # Take the first row and construct a Category object
                 row = merged.iloc[0]
                 category = Category(
-                    identifiers=[id],
-                    quartile=row.get('quartile', '')
+                    identifiers=[category_id.strip() for category_id in row['category_id'].split(',') if category_id.strip()],
+                    quartile=row['quartile']
                 )
                 return category
+        
+        # Merge and remove duplicates from area results
+        if area_dfs:
+            merged = pd.concat(area_dfs, ignore_index=True).drop_duplicates() # concatenating all dataframes in the list into a single dataframe and removing duplicates
+            if len(merged) > 0: # checking if the merged dataframe is not empty
+                # Take the first row and construct an Area object
+                row = merged.iloc[0]
+                area = Area(
+                    identifiers=[area_id.strip() for area_id in row['area'].split(',') if area_id.strip()]
+                )
+                return area
         
         # No entity found with this ID
         return None
