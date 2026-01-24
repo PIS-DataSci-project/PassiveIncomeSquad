@@ -55,13 +55,9 @@ class BasicQueryEngine: #Fahmida
         # 1. Search in journal handlers (Blazegraph)
         journal_dfs = []
         for handler in self.journalQuery:
-            try:
-                result_df = handler.getById(entity_id)
-                if result_df is not None and not result_df.empty:
-                    journal_dfs.append(result_df)
-            except Exception as e:
-                print(f"Error in journal handler: {e}")
-                continue
+            result_df = handler.getById(entity_id)
+            if result_df is not None and not result_df.empty:
+                journal_dfs.append(result_df)
         
         # Merge and remove duplicates from journal results
         if journal_dfs:
@@ -81,31 +77,9 @@ class BasicQueryEngine: #Fahmida
                     lang_str = str(row['language'])
                     languages = [lang.strip() for lang in lang_str.split(',') if lang.strip()]
                 
-                # Get categories for this journal from category handlers
-                categories = []
-                areas = []
-                for handler in self.categoryQuery:
-                    try:
-                        # Query by each identifier
-                        for identifier in identifiers:
-                            cat_df = handler.getById(identifier)
-                            if cat_df is not None and not cat_df.empty:
-                                if 'category_id' in cat_df.columns:
-                                    cats = [str(cat_id).strip() for cat_id in cat_df['category_id'].dropna() if str(cat_id).strip()]
-                                    categories.extend(cats)
-                                
-                                if 'areas' in cat_df.columns:
-                                    for area_str in cat_df['areas'].dropna():
-                                        if pd.notna(area_str):
-                                            area_list = [a.strip() for a in str(area_str).split(',') if a.strip()]
-                                            areas.extend(area_list)
-                    except Exception as e:
-                        print(f"Error getting categories: {e}")
-                        continue
-                
-                # Remove duplicates
-                categories = list(set(categories))
-                areas = list(set(areas))
+                # Get categories and areas using helper methods
+                categories = GetCategoriesByJournalId(self, identifiers)
+                areas = GetAreasByJournalId(self, identifiers)
                 
                 # Convert boolean strings to actual booleans
                 seal = False
@@ -137,13 +111,9 @@ class BasicQueryEngine: #Fahmida
         # 2. Search in category handlers (SQLite)
         category_dfs = []
         for handler in self.categoryQuery:
-            try:
-                result_df = handler.getById(entity_id)
-                if result_df is not None and not result_df.empty:
-                    category_dfs.append(result_df)
-            except Exception as e:
-                print(f"Error in category handler: {e}")
-                continue
+            result_df = handler.getById(entity_id)
+            if result_df is not None and not result_df.empty:
+                category_dfs.append(result_df)
         
         # Merge and remove duplicates from category results
         if category_dfs:
@@ -416,4 +386,4 @@ class BasicQueryEngine: #Fahmida
             for _, row in merged.iterrows()
         ]
 
-#Subclass --> FullQueryEngine(BasicQueryEngine) 
+#Subclass --> FullQueryEngine(BasicQueryEngine)
