@@ -20,54 +20,6 @@ print("=" * 80)
 
 engine = BasicQueryEngine()
 
-# Add Journal Handler (Blazegraph)
-journal_handler = JournalQueryHandler()
-journal_handler.setDbPathOrUrl(BLAZEGRAPH_URL)
-engine.addJournalHandler(journal_handler)
-
-# Add Category Handler (SQLite)
-category_handler = CategoryQueryHandler()
-category_handler.setDbPathOrUrl(RELATIONAL_DB)
-engine.addCategoryHandler(category_handler)
-
-print(f"\n✓ Engine initialized")
-print(f"✓ Journal Handler: {BLAZEGRAPH_URL}")
-print(f"✓ Category Handler: {RELATIONAL_DB}")
-print()
-
-# ============================================
-# HANDLER MANAGEMENT METHODS
-# ============================================
-print("=" * 80)
-print("1. HANDLER MANAGEMENT METHODS")
-print("=" * 80)
-
-# Test: addJournalHandler (already done above)
-print("\n[addJournalHandler]")
-print(f"  ✓ Journal handlers count: {len(engine.journalQuery)}")
-
-# Test: addCategoryHandler (already done above)
-print("\n[addCategoryHandler]")
-print(f"  ✓ Category handlers count: {len(engine.categoryQuery)}")
-
-# Test: cleanJournalHandlers (demonstrate, then re-add)
-print("\n[cleanJournalHandlers]")
-original_count = len(engine.journalQuery)
-engine.cleanJournalHandlers()
-print(f"  ✓ Before clean: {original_count}, After clean: {len(engine.journalQuery)}")
-# Re-add handler
-engine.addJournalHandler(journal_handler)
-print(f"  ✓ Re-added: {len(engine.journalQuery)}")
-
-# Test: cleanCategoryHandlers (demonstrate, then re-add)
-print("\n[cleanCategoryHandlers]")
-original_count = len(engine.categoryQuery)
-engine.cleanCategoryHandlers()
-print(f"  ✓ Before clean: {original_count}, After clean: {len(engine.categoryQuery)}")
-# Re-add handler
-engine.addCategoryHandler(category_handler)
-print(f"  ✓ Re-added: {len(engine.categoryQuery)}")
-
 # ============================================
 # JOURNAL-RELATED METHODS
 # ============================================

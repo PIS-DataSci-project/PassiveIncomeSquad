@@ -7,7 +7,7 @@ from rdflib import Graph, URIRef, RDF
 handler = JournalUploadHandler()
 
 # Verify CSV exists
-csv_path = "data/doaj-csv.csv"
+csv_path = "data/doaj.csv"
 if not os.path.exists(csv_path):
     print(f"✗ CSV file not found: {csv_path}")
     exit(1)

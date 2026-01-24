@@ -128,6 +128,9 @@ class BasicQueryEngine: #Fahmida
                     id_str = str(row['identifier'])
                     identifiers = [id.strip() for id in id_str.split(';') if id.strip()]
                 
+                if not identifiers: 
+                    identifiers = [entity_id]
+                
                 # Parse languages from the language field (may contain multiple languages)
                 languages = []
                 if 'language' in row and pd.notna(row['language']):
@@ -209,45 +212,7 @@ class BasicQueryEngine: #Fahmida
         # 4. Not found in any database
         return None
 
-# --------------------------------------------------------
-# Helper function to print Journal details
-def print_journal(journal):
-    if journal is None:
-        print("None")
-        return
-    
-    try:
-        print(f"Title: {journal.getTitle()}")
-    except UnicodeEncodeError:
-        print(f"Title: [Unicode encoding error - cannot display]")
-    print(f"IDs: {journal.getIds()}")
-    print(f"Publisher: {journal.getPublisher()}")
-    print(f"Languages: {journal.getLanguage()}")
-    print(f"DOAJ Seal: {journal.hasDOAJSeal()}")
-    print(f"License: {journal.getLicense()}")
-    print(f"Has APC: {journal.hasAPC()}")
-    
-    # Print categories with their details
-    categories = journal.getCategories()
-    if categories:
-        print(f"Categories ({len(categories)}):")
-        for cat in categories:
-            cat_ids = cat.getIds()
-            quartile = cat.getQuartile()
-            print(f"  - {cat_ids[0] if cat_ids else 'N/A'} (Quartile: {quartile})")
-    else:
-        print("Categories: []")
-    
-    # Print areas with their details
-    areas = journal.getAreas()
-    if areas:
-        print(f"Areas ({len(areas)}):")
-        for area in areas:
-            area_ids = area.getIds()
-            print(f"  - {area_ids[0] if area_ids else 'N/A'}")
-    else:
-        print("Areas: []")
-
+# -------------------------------------------------------
 # --------------------------------
 # Helper function to print Journal details
 def print_journal(journal):
@@ -322,9 +287,10 @@ que = BasicQueryEngine()
 que.addCategoryHandler(cat_qh)
 que.addJournalHandler(jou_qh)
 
-print("\nSearching for journal with ID: 1471-0072")
+search_id = "2096-6652"
+print("\nSearching for journal with ID:", search_id)
 print("=" * 60)
-result_q4 = que.getEntityById("0007-9235")
+result_q4 = que.getEntityById(search_id)
 
 if result_q4 is None:
     print("Result is None - journal not found in any database")

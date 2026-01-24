@@ -825,15 +825,14 @@ class BasicQueryEngine: #Fahmida
             if not merged.empty:
                 row = merged.iloc[0]
                 
-                # Parse identifiers from the identifiers field (may contain multiple IDs separated by "; ")
+                # Parse identifiers from the identifier field (may contain multiple IDs separated by "; ")
                 identifiers = []
-                if 'identifiers' in row and pd.notna(row['identifiers']):
-                    id_str = str(row['identifiers'])
+                if 'identifier' in row and pd.notna(row['identifier']):
+                    id_str = str(row['identifier'])
                     identifiers = [id.strip() for id in id_str.split(';') if id.strip()]
                 
-                # Ensure the searched entity_id is in the identifiers list
-                if entity_id not in identifiers:
-                    identifiers.append(entity_id)
+                if not identifiers: 
+                    identifiers = [entity_id]
                 
                 # Parse languages from the language field (may contain multiple languages)
                 languages = []
