@@ -1,7 +1,6 @@
 #ALL IMPORTS AT THE TOP OF THE FILE
 #General imports
 import pandas as pd 
-from typing import List, Dict, Set
 
 #For Graph Database
 from rdflib import Graph, URIRef, RDF, Literal, XSD
@@ -18,21 +17,21 @@ import sqlite3
 #----------------------------------------------------------------------
 
 class IdentifiableEntity(object): # CLAUDIA 
-    def __init__(self, identifier): 
-        self.identifier = list()
-        for identifier in identifier:
-            self.identifier.append(identifier)
+    def __init__(self, identifiers): 
+        self.identifiers = list()
+        for identifier in identifiers:
+            self.identifiers.append(identifier)
              
     def getIds(self):
         list_ids = list()
-        for identifier in self.identifier:
+        for identifier in self.identifiers:
             list_ids.append(identifier)
         list_ids.sort() # sort the list of IDs
         return list_ids
     
 #subclass1 of IdentifiableEntity    
 class Journal(IdentifiableEntity): # CLAUDIA 
-    def __init__(self, identifier, title, language, seal, license, apc, publisher=None, categories=None, areas=None):
+    def __init__(self, identifiers, title, language, seal, license, apc, publisher=None, categories=None, areas=None):
         self.title = title
         self.publisher = publisher if publisher else ""
         self.language = language
@@ -41,7 +40,7 @@ class Journal(IdentifiableEntity): # CLAUDIA
         self.apc = True if apc else False
         self.categories = categories if categories is not None else []
         self.areas = areas if areas is not None else []
-        super().__init__(identifier)
+        super().__init__(identifiers)
         
     def getTitle(self):
         return self.title
@@ -83,9 +82,9 @@ class Journal(IdentifiableEntity): # CLAUDIA
 
 #subclass2 of IdentifiableEntity    
 class Category(IdentifiableEntity): # FAHMIDA
-    def __init__(self, identifier, quartile):
+    def __init__(self, identifiers, quartile):
         self.quartile = quartile
-        super().__init__(identifier)
+        super().__init__(identifiers)
 
 
 #method to get quartile
@@ -151,10 +150,9 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         
         # Create RDF graph
         g = Graph()
-        journals = pd.read_csv(path, keep_default_na=False)
+        journals = pd.read_csv(path)
         
         # Clean and convert data types
-        journals["Publisher"] = journals["Publisher"].fillna("").astype(str).str.strip()
         journals["Journal ISSN (print version)"] = journals["Journal ISSN (print version)"].astype(str).str.strip()
         journals["Journal EISSN (online version)"] = journals["Journal EISSN (online version)"].astype(str).str.strip()
         journals['DOAJ Seal'] = journals['DOAJ Seal'].str.lower() == 'yes'
@@ -224,9 +222,9 @@ class CategoryUploadHandler(UploadHandler):  # River
         CREATE TABLE IF NOT EXISTS categories (
             category_id TEXT,
             quartile TEXT,
-            identifier TEXT,
+            identifiers TEXT,
             areas TEXT,
-            PRIMARY KEY (category_id, quartile, identifier, areas)
+            PRIMARY KEY (category_id, quartile, identifiers, areas)
         )
         """)
 
@@ -234,13 +232,13 @@ class CategoryUploadHandler(UploadHandler):  # River
         rows = []
 
         for record in data:
-            identifier = record.get("identifier", [])
+            identifiers = record.get("identifiers", [])
             categories = record.get("categories", [])
 
-            if identifier is None:
-                identifier = []
-            elif not isinstance(identifier, list):
-                identifier = [identifier]
+            if identifiers is None:
+                identifiers = []
+            elif not isinstance(identifiers, list):
+                identifiers = [identifiers]
 
             for category in categories:
                 if not isinstance(category, dict):
@@ -260,14 +258,14 @@ class CategoryUploadHandler(UploadHandler):  # River
                 else:
                     areas_text = str(areas)
 
-                for identifier in identifier:
+                for identifier in identifiers:
                     if identifier is None:
                         continue
                     identifier = str(identifier)
 
                     # 写数据库
                     cur.execute(
-                        "INSERT OR IGNORE INTO categories (category_id, quartile, identifier, areas) VALUES (?, ?, ?, ?)",
+                        "INSERT OR IGNORE INTO categories (category_id, quartile, identifiers, areas) VALUES (?, ?, ?, ?)",
                         (category_id, quartile, identifier, areas_text),
                     )
 
@@ -356,12 +354,12 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
         WHERE {{
             ?journal rdf:type schema:Periodical .
             OPTIONAL {{ ?journal schema:title ?title }}
-            ?journal schema:identifier ?identifier .
-            FILTER(CONTAINS(STR(?identifier), "{escaped_id}"))
+            ?journal schema:identifier ?identifiers .
+            FILTER(CONTAINS(STR(?identifiers), "{escaped_id}"))
             OPTIONAL {{ ?journal schema:inLanguage ?language }}
             OPTIONAL {{ ?journal schema:publishedBy ?publisher }}
             OPTIONAL {{ ?journal schema:award ?seal }}
@@ -378,11 +376,11 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
         WHERE {
             ?journal rdf:type schema:Periodical .
             OPTIONAL { ?journal schema:title ?title }
-            OPTIONAL { ?journal schema:identifier ?identifier }
+            OPTIONAL { ?journal schema:identifier ?identifiers }
             OPTIONAL { ?journal schema:inLanguage ?language }
             OPTIONAL { ?journal schema:publishedBy ?publisher }
             OPTIONAL { ?journal schema:award ?seal }
@@ -405,12 +403,12 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
         WHERE {{
             ?journal rdf:type schema:Periodical .
             ?journal schema:title ?title .
             FILTER(CONTAINS(LCASE(?title), LCASE("{escaped_title}")))
-            OPTIONAL {{ ?journal schema:identifier ?identifier }}
+            OPTIONAL {{ ?journal schema:identifier ?identifiers }}
             OPTIONAL {{ ?journal schema:inLanguage ?language }}
             OPTIONAL {{ ?journal schema:publishedBy ?publisher }}
             OPTIONAL {{ ?journal schema:award ?seal }}
@@ -433,13 +431,13 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
         WHERE {{
             ?journal rdf:type schema:Periodical .
             OPTIONAL {{ ?journal schema:title ?title }}
             ?journal schema:publishedBy ?publisher .
             FILTER(CONTAINS(LCASE(?publisher), LCASE("{escaped_publisher}")))
-            OPTIONAL {{ ?journal schema:identifier ?identifier }}
+            OPTIONAL {{ ?journal schema:identifier ?identifiers }}
             OPTIONAL {{ ?journal schema:inLanguage ?language }}
             OPTIONAL {{ ?journal schema:award ?seal }}
             OPTIONAL {{ ?journal schema:license ?license }}
@@ -471,13 +469,13 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
         WHERE {{
             ?journal rdf:type schema:Periodical .
             OPTIONAL {{ ?journal schema:title ?title }}
             ?journal schema:license ?license .
             FILTER({license_filter})
-            OPTIONAL {{ ?journal schema:identifier ?identifier }}
+            OPTIONAL {{ ?journal schema:identifier ?identifiers }}
             OPTIONAL {{ ?journal schema:inLanguage ?language }}
             OPTIONAL {{ ?journal schema:publishedBy ?publisher }}
             OPTIONAL {{ ?journal schema:award ?seal }}
@@ -494,13 +492,13 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
         WHERE {
             ?journal rdf:type schema:Periodical .
             OPTIONAL { ?journal schema:title ?title }
             ?journal schema:processingFee ?apc .
             FILTER(?apc = true)
-            OPTIONAL { ?journal schema:identifier ?identifier }
+            OPTIONAL { ?journal schema:identifier ?identifiers }
             OPTIONAL { ?journal schema:inLanguage ?language }
             OPTIONAL { ?journal schema:publishedBy ?publisher }
             OPTIONAL { ?journal schema:award ?seal }
@@ -517,13 +515,13 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
         WHERE {
             ?journal rdf:type schema:Periodical .
             OPTIONAL { ?journal schema:title ?title }
             ?journal schema:award ?seal .
             FILTER(?seal = true)
-            OPTIONAL { ?journal schema:identifier ?identifier }
+            OPTIONAL { ?journal schema:identifier ?identifiers }
             OPTIONAL { ?journal schema:inLanguage ?language }
             OPTIONAL { ?journal schema:publishedBy ?publisher }
             OPTIONAL { ?journal schema:license ?license }
@@ -542,7 +540,7 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
     Returns pandas DataFrames with:
     - category_id
     - quartile
-    - identifier
+    - identifiers
     - areas
     """
 
@@ -556,7 +554,7 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
     # -----------------------------
     def getById(self, category_id) -> pd.DataFrame:
         query = """
-        SELECT category_id, quartile, identifier, areas
+        SELECT category_id, quartile, identifiers, areas
         FROM categories
         WHERE category_id = ?
         """
@@ -570,7 +568,7 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
     # -----------------------------
     def getAllCategories(self) -> pd.DataFrame:
         query = """
-        SELECT DISTINCT category_id, quartile, identifier, areas
+        SELECT DISTINCT category_id, quartile, identifiers, areas
         FROM categories
         """
         conn = sqlite3.connect(self.getDbPathOrUrl())
@@ -605,7 +603,7 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
             return pd.DataFrame()
         placeholders = ",".join(["?"] * len(quartiles))
         query = f"""
-        SELECT category_id, quartile, identifier, areas
+        SELECT category_id, quartile, identifiers, areas
         FROM categories
         WHERE quartile IN ({placeholders})
         """
@@ -623,7 +621,7 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
         conditions = " OR ".join(["areas LIKE ?"] * len(area_ids))
         params = [f"%{area}%" for area in area_ids]
         query = f"""
-        SELECT DISTINCT category_id, quartile, identifier, areas
+        SELECT DISTINCT category_id, quartile, identifiers, areas
         FROM categories
         WHERE {conditions}
         """
@@ -662,9 +660,9 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
         Returns categories associated with a specific journal identifier.
         """
         query = """
-        SELECT category_id, quartile, identifier, areas
+        SELECT category_id, quartile, identifiers, areas
         FROM categories
-        WHERE identifier = ?
+        WHERE identifiers = ?
         """
         conn = sqlite3.connect(self.getDbPathOrUrl())
         df = pd.read_sql_query(query, conn, params=(journal_id,))
@@ -681,7 +679,7 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
         query = """
         SELECT DISTINCT areas
         FROM categories
-        WHERE identifier = ?
+        WHERE identifiers = ?
           AND areas IS NOT NULL
         """
         conn = sqlite3.connect(self.getDbPathOrUrl())
@@ -739,7 +737,7 @@ class BasicQueryEngine: #Fahmida
     
     def getCategoriesByJournalId(self, journal_id) -> list: # Claudia # additional
         """
-        Get all Category objects for journal identifier.
+        Get all Category objects for journal identifiers.
         Transforms DataFrames from CategoryQueryHandler into Category objects.
         """
         if isinstance(journal_id, str):
@@ -754,7 +752,7 @@ class BasicQueryEngine: #Fahmida
                 if cat_df is not None and not cat_df.empty:
                     for _, row in cat_df.iterrows():
                         cat = Category(
-                            identifier=[str(row['category_id'])],
+                            identifiers=[str(row['category_id'])],
                             quartile=str(row.get('quartile', ''))
                         )
                         categories.append(cat)
@@ -774,7 +772,7 @@ class BasicQueryEngine: #Fahmida
 
     def getAreasByJournalId(self, journal_id) -> list: # Claudia # additional
         """
-        Get all Area objects for journal identifier.
+        Get all Area objects for journal identifiers.
         Transforms DataFrames from CategoryQueryHandler into Area objects.
         """
         if isinstance(journal_id, str):
@@ -791,7 +789,7 @@ class BasicQueryEngine: #Fahmida
                         if 'area' in row and pd.notna(row['area']):
                             area_name = str(row['area']).strip()
                             if area_name:
-                                area = Area(identifier=[area_name])
+                                area = Area(identifiers=[area_name])
                                 areas.append(area)
         
         # Remove duplicates based on area identifier
@@ -826,14 +824,14 @@ class BasicQueryEngine: #Fahmida
             if not merged.empty:
                 row = merged.iloc[0]
                 
-                # Parse identifier from the identifier field (may contain multiple IDs separated by "; ")
-                identifier = []
+                # Parse identifiers from the identifier field (may contain multiple IDs separated by "; ")
+                identifiers = []
                 if 'identifier' in row and pd.notna(row['identifier']):
                     id_str = str(row['identifier'])
-                    identifier = [id.strip() for id in id_str.split(';') if id.strip()]
+                    identifiers = [id.strip() for id in id_str.split(';') if id.strip()]
                 
-                if not identifier: 
-                    identifier = [entity_id]
+                if not identifiers: 
+                    identifiers = [entity_id]
                 
                 # Parse languages from the language field (may contain multiple languages)
                 languages = []
@@ -842,8 +840,8 @@ class BasicQueryEngine: #Fahmida
                     languages = [lang.strip() for lang in lang_str.split(',') if lang.strip()]
                 
                 # Get categories and areas using helper methods
-                categories = self.getCategoriesByJournalId(identifier)
-                areas = self.getAreasByJournalId(identifier)
+                categories = self.getCategoriesByJournalId(identifiers)
+                areas = self.getAreasByJournalId(identifiers)
                 
                 # Convert boolean strings to actual booleans
                 seal = False
@@ -861,7 +859,7 @@ class BasicQueryEngine: #Fahmida
                         apc = bool(row['apc'])
                 
                 return Journal(
-                    identifier=identifier,
+                    identifiers=identifiers,
                     title=str(row.get('title', '')),
                     language=languages,
                     seal=seal,
@@ -886,12 +884,12 @@ class BasicQueryEngine: #Fahmida
                 row = merged.iloc[0]
                 
                 # Return Category
-                identifier = []
-                if 'identifier' in row and pd.notna(row['identifier']):
-                    identifier.append(str(row['identifier']))
+                identifiers = []
+                if 'identifiers' in row and pd.notna(row['identifiers']):
+                    identifiers.append(str(row['identifiers']))
                 
                 return Category(
-                    identifier=list(set(identifier)) if identifier else [entity_id],
+                    identifiers=list(set(identifiers)) if identifiers else [entity_id],
                     quartile=str(row.get('quartile', ''))
                 )
         
@@ -902,7 +900,7 @@ class BasicQueryEngine: #Fahmida
         if categories or areas:
             # Found category/area data, return minimal Journal object
             return Journal(
-                identifier=[entity_id],
+                identifiers=[entity_id],
                 title="",
                 language=[],
                 seal=False,
@@ -927,7 +925,7 @@ class BasicQueryEngine: #Fahmida
         
         return [
             Journal(
-                identifier=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
                 title=row.get('title', ''),
                 language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
                 seal=str(row.get('seal', 'false')).lower() == 'true',
@@ -947,7 +945,7 @@ class BasicQueryEngine: #Fahmida
         
         return [
             Journal(
-                identifier=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
                 title=row.get('title', ''),
                 language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
                 seal=str(row.get('seal', 'false')).lower() == 'true',
@@ -967,7 +965,7 @@ class BasicQueryEngine: #Fahmida
         
         return [
             Journal(
-                identifier=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
                 title=row.get('title', ''),
                 language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
                 seal=str(row.get('seal', 'false')).lower() == 'true',
@@ -987,7 +985,7 @@ class BasicQueryEngine: #Fahmida
 
         return [
             Journal(
-                identifier=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
                 title=row.get('title', ''),
                 language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
                 seal=str(row.get('seal', 'false')).lower() == 'true',
@@ -1007,7 +1005,7 @@ class BasicQueryEngine: #Fahmida
         
         return [
             Journal(
-                identifier=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
                 title=row.get('title', ''),
                 language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
                 seal=str(row.get('seal', 'false')).lower() == 'true',
@@ -1027,7 +1025,7 @@ class BasicQueryEngine: #Fahmida
     
         return [
             Journal(
-                identifier=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
                 title=row.get('title', ''),
                 language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
                 seal=str(row.get('seal', 'false')).lower() == 'true',
@@ -1062,7 +1060,7 @@ class BasicQueryEngine: #Fahmida
 
         return [
             Category(
-                identifier={row["category_id"]},
+                identifiers={row["category_id"]},
                 quartile=row["quartile"]
             )
             for _, row in merged.iterrows()
@@ -1092,7 +1090,7 @@ class BasicQueryEngine: #Fahmida
         # Convert rows into Area objects
         return [
             Area(
-                identifier={row["area"]}  # <- this is the correct column
+                identifiers={row["area"]}  # <- this is the correct column
             )
             for _, row in merged.iterrows()
         ]
@@ -1119,7 +1117,7 @@ class BasicQueryEngine: #Fahmida
 
         return [
             Category(
-                identifier={row["category_id"]},
+                identifiers={row["category_id"]},
                 quartile=row["quartile"]
             )
             for _, row in merged.iterrows()
@@ -1146,7 +1144,7 @@ class BasicQueryEngine: #Fahmida
 
         return [
             Category(
-                identifier={row["category_id"]},
+                identifiers={row["category_id"]},
                 quartile=row["quartile"]
             )
             for _, row in merged.iterrows()
@@ -1173,7 +1171,7 @@ class BasicQueryEngine: #Fahmida
 
         return [
             Area(
-                identifier={row["area"]}
+                identifiers={row["area"]}
             )
             for _, row in merged.iterrows()
         ]
@@ -1186,8 +1184,8 @@ class FullQueryEngine(BasicQueryEngine):
     FullQueryEngine = “跨源拼接查询”的 QueryEngine。
 
     它做的事不是“替代” BasicQueryEngine，而是在 BasicQueryEngine 的基础上做 mashup：
-    1) 先用 CategoryQueryHandler（SQLite）查出一批 journal identifier（ISSN/EISSN）。
-    2) 再用 JournalQueryHandler（图数据库 / SPARQL）把这些 identifier 对应的 journals 查出来。
+    1) 先用 CategoryQueryHandler（SQLite）查出一批 journal identifiers（ISSN/EISSN）。
+    2) 再用 JournalQueryHandler（图数据库 / SPARQL）把这些 identifiers 对应的 journals 查出来。
     3) 最后返回 Journal 对象列表（领域对象），而不是 DataFrame。
 
     设计风格对齐 BasicQueryEngine：
@@ -1212,7 +1210,7 @@ class FullQueryEngine(BasicQueryEngine):
         把数据库/df 里可能出现的“粘连字符串字段”拆成 list。
 
         为什么需要：
-        - identifier 可能是 "1234-5678; 8765-4321" 或 "1234-5678,8765-4321"
+        - identifiers 可能是 "1234-5678; 8765-4321" 或 "1234-5678,8765-4321"
         - language 可能是 "English; Italian"
         - 有时也可能是 None / 空串
 
@@ -1230,34 +1228,34 @@ class FullQueryEngine(BasicQueryEngine):
         return [p for p in parts if p]
 
     # --------------------------------------------
-    # 2) 辅助：从 categories df “翻译”出 identifier 集合
+    # 2) 辅助：从 categories df “翻译”出 identifiers 集合
     # --------------------------------------------
-    def _add_identifier_from_categories_df(self, df: pd.DataFrame, identifier: Set[str]) -> None:
+    def _add_identifiers_from_categories_df(self, df: pd.DataFrame, identifiers: Set[str]) -> None:
         if df is None or df.empty:
             return
 
-        # 兼容列名：有的地方叫 identifier，有的地方可能叫 identifier
-        col = "identifier" if "identifier" in df.columns else "identifier"
+        # 兼容列名：有的地方叫 identifiers，有的地方可能叫 identifier
+        col = "identifiers" if "identifiers" in df.columns else "identifier"
         if col not in df.columns:
             return
 
         for _, row in df.iterrows():
             for one_id in self._parse_list_field(row.get(col)):
-                identifier.add(one_id)
+                identifiers.add(one_id)
 
     # ---------------------------------------------------
-    # 3) 辅助：从 journals df 中挑出“匹配 identifier 的行”
+    # 3) 辅助：从 journals df 中挑出“匹配 identifiers 的行”
     # ---------------------------------------------------
-    def _add_journals_matching_identifier_from_df(
+    def _add_journals_matching_identifiers_from_df(
         self,
         df: pd.DataFrame,
-        wanted_identifier: Set[str],
+        wanted_identifiers: Set[str],
         journal_map: Dict[str, Journal],
     ) -> None:
-        if df is None or df.empty or not wanted_identifier:
+        if df is None or df.empty or not wanted_identifiers:
             return
 
-        id_col = "identifier" if "identifier" in df.columns else "identifier"
+        id_col = "identifier" if "identifier" in df.columns else "identifiers"
         if id_col not in df.columns:
             return
 
@@ -1266,7 +1264,7 @@ class FullQueryEngine(BasicQueryEngine):
             if not row_ids:
                 continue
 
-            hit = any(one_id in wanted_identifier for one_id in row_ids)
+            hit = any(one_id in wanted_identifiers for one_id in row_ids)
             if not hit:
                 continue
 
@@ -1274,7 +1272,7 @@ class FullQueryEngine(BasicQueryEngine):
 
             if key not in journal_map:
                 journal_map[key] = Journal(
-                    identifier=row_ids,
+                    identifiers=row_ids,
                     title=row.get("title", ""),
                     language=self._parse_list_field(row.get("language")),
                     seal=row.get("seal", False),      # bool 暂且不处理，直接传
@@ -1294,7 +1292,7 @@ class FullQueryEngine(BasicQueryEngine):
         if not category_ids or not quartiles:
             return []
 
-        wanted_identifier: Set[str] = set()
+        wanted_identifiers: Set[str] = set()
 
         for handler in self.categoryQuery:
             df = handler.getCategoriesWithQuartile(quartiles)
@@ -1304,16 +1302,16 @@ class FullQueryEngine(BasicQueryEngine):
             if "category_id" in df.columns:
                 df = df[df["category_id"].isin(category_ids)]
 
-            self._add_identifier_from_categories_df(df, wanted_identifier)
+            self._add_identifiers_from_categories_df(df, wanted_identifiers)
 
-        if not wanted_identifier:
+        if not wanted_identifiers:
             return []
 
         journal_map: Dict[str, Journal] = {}
 
         for handler in self.journalQuery:
             df = handler.getAllJournals()
-            self._add_journals_matching_identifier_from_df(df, wanted_identifier, journal_map)
+            self._add_journals_matching_identifiers_from_df(df, wanted_identifiers, journal_map)
 
         return list(journal_map.values())
 
@@ -1328,19 +1326,19 @@ class FullQueryEngine(BasicQueryEngine):
         if not area_ids or not licenses:
             return []
 
-        wanted_identifier: Set[str] = set()
+        wanted_identifiers: Set[str] = set()
 
         for handler in self.categoryQuery:
             df = handler.getCategoriesAssignedToAreas(area_ids)
-            self._add_identifier_from_categories_df(df, wanted_identifier)
+            self._add_identifiers_from_categories_df(df, wanted_identifiers)
 
-        if not wanted_identifier:
+        if not wanted_identifiers:
             return []
 
         journal_map: Dict[str, Journal] = {}
         for handler in self.journalQuery:
             df = handler.getJournalsWithLicense(licenses)
-            self._add_journals_matching_identifier_from_df(df, wanted_identifier, journal_map)
+            self._add_journals_matching_identifiers_from_df(df, wanted_identifiers, journal_map)
 
         return list(journal_map.values())
 
@@ -1356,7 +1354,7 @@ class FullQueryEngine(BasicQueryEngine):
         if not area_ids or not category_ids or not quartiles:
             return []
 
-        wanted_identifier: Set[str] = set()
+        wanted_identifiers: Set[str] = set()
 
         for handler in self.categoryQuery:
             df = handler.getCategoriesAssignedToAreas(area_ids)
@@ -1368,14 +1366,14 @@ class FullQueryEngine(BasicQueryEngine):
             if "quartile" in df.columns:
                 df = df[df["quartile"].isin(quartiles)]
 
-            self._add_identifier_from_categories_df(df, wanted_identifier)
+            self._add_identifiers_from_categories_df(df, wanted_identifiers)
 
-        if not wanted_identifier:
+        if not wanted_identifiers:
             return []
 
         journal_map: Dict[str, Journal] = {}
         for handler in self.journalQuery:
             df = handler.getAllJournals()
-            self._add_journals_matching_identifier_from_df(df, wanted_identifier, journal_map)
+            self._add_journals_matching_identifiers_from_df(df, wanted_identifiers, journal_map)
 
         return list(journal_map.values())
