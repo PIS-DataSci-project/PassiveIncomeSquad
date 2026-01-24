@@ -194,8 +194,6 @@ class BasicQueryEngine: #Fahmida
         return None
 
 # --------------------------------------------------------
-
-
 # Helper function to print Journal details
 def print_journal(journal):
     if journal is None:
@@ -251,5 +249,5 @@ que = BasicQueryEngine()
 que.addCategoryHandler(cat_qh)
 que.addJournalHandler(jou_qh)
 
-result_q4 = que.getEntityById("0007-9235")
+result_q4 = que.getEntityById("2527-5968")
 print_journal(result_q4)
