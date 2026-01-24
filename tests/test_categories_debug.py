@@ -10,7 +10,7 @@ print("=" * 60)
 
 # 1. Check if it's in the JSON
 print("\n1. Checking Scimago JSON:")
-with open('data/scimago-json.json') as f:
+with open('data/scimago.json') as f:
     data = json.load(f)
     
 found = [r for r in data if test_id in r.get('identifiers', [])]
