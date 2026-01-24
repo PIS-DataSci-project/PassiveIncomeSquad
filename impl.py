@@ -360,11 +360,11 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {{
             ?journal rdf:type schema:Periodical .
             OPTIONAL {{ ?journal schema:title ?title }}
-            ?journal schema:identifier ?identifiers .
+            ?journal schema:identifier ?identifier .
             FILTER(CONTAINS(STR(?identifiers), "{escaped_id}"))
             OPTIONAL {{ ?journal schema:inLanguage ?language }}
             OPTIONAL {{ ?journal schema:publishedBy ?publisher }}
@@ -382,11 +382,11 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {
             ?journal rdf:type schema:Periodical .
             OPTIONAL { ?journal schema:title ?title }
-            OPTIONAL { ?journal schema:identifier ?identifiers }
+            OPTIONAL { ?journal schema:identifier ?identifier }
             OPTIONAL { ?journal schema:inLanguage ?language }
             OPTIONAL { ?journal schema:publishedBy ?publisher }
             OPTIONAL { ?journal schema:award ?seal }
@@ -409,12 +409,12 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {{
             ?journal rdf:type schema:Periodical .
             ?journal schema:title ?title .
             FILTER(CONTAINS(LCASE(?title), LCASE("{escaped_title}")))
-            OPTIONAL {{ ?journal schema:identifier ?identifiers }}
+            OPTIONAL {{ ?journal schema:identifier ?identifier }}
             OPTIONAL {{ ?journal schema:inLanguage ?language }}
             OPTIONAL {{ ?journal schema:publishedBy ?publisher }}
             OPTIONAL {{ ?journal schema:award ?seal }}
@@ -437,13 +437,13 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {{
             ?journal rdf:type schema:Periodical .
             OPTIONAL {{ ?journal schema:title ?title }}
             ?journal schema:publishedBy ?publisher .
             FILTER(CONTAINS(LCASE(?publisher), LCASE("{escaped_publisher}")))
-            OPTIONAL {{ ?journal schema:identifier ?identifiers }}
+            OPTIONAL {{ ?journal schema:identifier ?identifier }}
             OPTIONAL {{ ?journal schema:inLanguage ?language }}
             OPTIONAL {{ ?journal schema:award ?seal }}
             OPTIONAL {{ ?journal schema:license ?license }}
@@ -475,13 +475,13 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {{
             ?journal rdf:type schema:Periodical .
             OPTIONAL {{ ?journal schema:title ?title }}
             ?journal schema:license ?license .
             FILTER({license_filter})
-            OPTIONAL {{ ?journal schema:identifier ?identifiers }}
+            OPTIONAL {{ ?journal schema:identifier ?identifier }}
             OPTIONAL {{ ?journal schema:inLanguage ?language }}
             OPTIONAL {{ ?journal schema:publishedBy ?publisher }}
             OPTIONAL {{ ?journal schema:award ?seal }}
@@ -498,13 +498,13 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {
             ?journal rdf:type schema:Periodical .
             OPTIONAL { ?journal schema:title ?title }
             ?journal schema:processingFee ?apc .
             FILTER(?apc = true)
-            OPTIONAL { ?journal schema:identifier ?identifiers }
+            OPTIONAL { ?journal schema:identifier ?identifier }
             OPTIONAL { ?journal schema:inLanguage ?language }
             OPTIONAL { ?journal schema:publishedBy ?publisher }
             OPTIONAL { ?journal schema:award ?seal }
@@ -521,13 +521,13 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
         WHERE {
             ?journal rdf:type schema:Periodical .
             OPTIONAL { ?journal schema:title ?title }
             ?journal schema:award ?seal .
             FILTER(?seal = true)
-            OPTIONAL { ?journal schema:identifier ?identifiers }
+            OPTIONAL { ?journal schema:identifier ?identifier }
             OPTIONAL { ?journal schema:inLanguage ?language }
             OPTIONAL { ?journal schema:publishedBy ?publisher }
             OPTIONAL { ?journal schema:license ?license }
