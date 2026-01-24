@@ -32,10 +32,12 @@ class TestProjectBasic(unittest.TestCase):
     graph = "http://127.0.0.1:9999/blazegraph/sparql"
     
     def test_01_JournalUploadHandler(self):
+        print("\n✅ TEST 1: JournalUploadHandler")
         u = JournalUploadHandler()
         self.assertTrue(u.setDbPathOrUrl(self.graph))
         self.assertEqual(u.getDbPathOrUrl(), self.graph)
         self.assertTrue(u.pushDataToDb(self.journal))
+        print("   ✓ Upload handler working correctly")
 
     def test_02_CategoryUploadHandler(self):
         u = CategoryUploadHandler()
