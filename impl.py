@@ -355,12 +355,12 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
         WHERE {{
             ?journal rdf:type schema:Periodical .
             OPTIONAL {{ ?journal schema:title ?title }}
-            ?journal schema:identifier ?identifier .
-            FILTER(CONTAINS(STR(?identifier), "{escaped_id}"))
+            ?journal schema:identifier ?identifiers .
+            FILTER(CONTAINS(STR(?identifiers), "{escaped_id}"))
             OPTIONAL {{ ?journal schema:inLanguage ?language }}
             OPTIONAL {{ ?journal schema:publishedBy ?publisher }}
             OPTIONAL {{ ?journal schema:award ?seal }}
@@ -377,11 +377,11 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
         WHERE {
             ?journal rdf:type schema:Periodical .
             OPTIONAL { ?journal schema:title ?title }
-            OPTIONAL { ?journal schema:identifier ?identifier }
+            OPTIONAL { ?journal schema:identifier ?identifiers }
             OPTIONAL { ?journal schema:inLanguage ?language }
             OPTIONAL { ?journal schema:publishedBy ?publisher }
             OPTIONAL { ?journal schema:award ?seal }
@@ -404,12 +404,12 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
         WHERE {{
             ?journal rdf:type schema:Periodical .
             ?journal schema:title ?title .
             FILTER(CONTAINS(LCASE(?title), LCASE("{escaped_title}")))
-            OPTIONAL {{ ?journal schema:identifier ?identifier }}
+            OPTIONAL {{ ?journal schema:identifier ?identifiers }}
             OPTIONAL {{ ?journal schema:inLanguage ?language }}
             OPTIONAL {{ ?journal schema:publishedBy ?publisher }}
             OPTIONAL {{ ?journal schema:award ?seal }}
@@ -432,13 +432,13 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
         WHERE {{
             ?journal rdf:type schema:Periodical .
             OPTIONAL {{ ?journal schema:title ?title }}
             ?journal schema:publishedBy ?publisher .
             FILTER(CONTAINS(LCASE(?publisher), LCASE("{escaped_publisher}")))
-            OPTIONAL {{ ?journal schema:identifier ?identifier }}
+            OPTIONAL {{ ?journal schema:identifier ?identifiers }}
             OPTIONAL {{ ?journal schema:inLanguage ?language }}
             OPTIONAL {{ ?journal schema:award ?seal }}
             OPTIONAL {{ ?journal schema:license ?license }}
@@ -470,13 +470,13 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
         WHERE {{
             ?journal rdf:type schema:Periodical .
             OPTIONAL {{ ?journal schema:title ?title }}
             ?journal schema:license ?license .
             FILTER({license_filter})
-            OPTIONAL {{ ?journal schema:identifier ?identifier }}
+            OPTIONAL {{ ?journal schema:identifier ?identifiers }}
             OPTIONAL {{ ?journal schema:inLanguage ?language }}
             OPTIONAL {{ ?journal schema:publishedBy ?publisher }}
             OPTIONAL {{ ?journal schema:award ?seal }}
@@ -493,13 +493,13 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
         WHERE {
             ?journal rdf:type schema:Periodical .
             OPTIONAL { ?journal schema:title ?title }
             ?journal schema:processingFee ?apc .
             FILTER(?apc = true)
-            OPTIONAL { ?journal schema:identifier ?identifier }
+            OPTIONAL { ?journal schema:identifier ?identifiers }
             OPTIONAL { ?journal schema:inLanguage ?language }
             OPTIONAL { ?journal schema:publishedBy ?publisher }
             OPTIONAL { ?journal schema:award ?seal }
@@ -516,13 +516,13 @@ class JournalQueryHandler(QueryHandler):
         PREFIX schema: <https://schema.org/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         
-        SELECT ?journal ?title ?identifier ?language ?publisher ?seal ?license ?apc
+        SELECT ?journal ?title ?identifiers ?language ?publisher ?seal ?license ?apc
         WHERE {
             ?journal rdf:type schema:Periodical .
             OPTIONAL { ?journal schema:title ?title }
             ?journal schema:award ?seal .
             FILTER(?seal = true)
-            OPTIONAL { ?journal schema:identifier ?identifier }
+            OPTIONAL { ?journal schema:identifier ?identifiers }
             OPTIONAL { ?journal schema:inLanguage ?language }
             OPTIONAL { ?journal schema:publishedBy ?publisher }
             OPTIONAL { ?journal schema:license ?license }
@@ -825,10 +825,10 @@ class BasicQueryEngine: #Fahmida
             if not merged.empty:
                 row = merged.iloc[0]
                 
-                # Parse identifiers from the identifier field (may contain multiple IDs separated by "; ")
+                # Parse identifiers from the identifiers field (may contain multiple IDs separated by "; ")
                 identifiers = []
-                if 'identifier' in row and pd.notna(row['identifier']):
-                    id_str = str(row['identifier'])
+                if 'identifiers' in row and pd.notna(row['identifiers']):
+                    id_str = str(row['identifiers'])
                     identifiers = [id.strip() for id in id_str.split(';') if id.strip()]
                 
                 # Ensure the searched entity_id is in the identifiers list
@@ -887,8 +887,6 @@ class BasicQueryEngine: #Fahmida
                 
                 # Return Category
                 identifiers = []
-                if 'category_id' in row:
-                    identifiers.append(str(row['category_id']))
                 if 'identifiers' in row and pd.notna(row['identifiers']):
                     identifiers.append(str(row['identifiers']))
                 

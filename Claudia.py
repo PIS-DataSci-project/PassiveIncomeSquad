@@ -180,8 +180,6 @@ class BasicQueryEngine: #Fahmida
                 
                 # Return Category
                 identifiers = []
-                if 'category_id' in row:
-                    identifiers.append(str(row['category_id']))
                 if 'identifiers' in row and pd.notna(row['identifiers']):
                     identifiers.append(str(row['identifiers']))
                 
