@@ -249,5 +249,5 @@ que = BasicQueryEngine()
 que.addCategoryHandler(cat_qh)
 que.addJournalHandler(jou_qh)
 
-result_q4 = que.getEntityById("2527-5968")
+result_q4 = que.getEntityById("1471-0072")
 print_journal(result_q4)
