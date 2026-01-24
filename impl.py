@@ -1176,3 +1176,205 @@ class BasicQueryEngine: #Fahmida
             )
             for _, row in merged.iterrows()
         ]
+    
+#------------------------------------------------
+#FullQueryEngine
+#------------------------------------------------
+class FullQueryEngine(BasicQueryEngine):
+    """
+    FullQueryEngine = “跨源拼接查询”的 QueryEngine。
+
+    它做的事不是“替代” BasicQueryEngine，而是在 BasicQueryEngine 的基础上做 mashup：
+    1) 先用 CategoryQueryHandler（SQLite）查出一批 journal identifiers（ISSN/EISSN）。
+    2) 再用 JournalQueryHandler（图数据库 / SPARQL）把这些 identifiers 对应的 journals 查出来。
+    3) 最后返回 Journal 对象列表（领域对象），而不是 DataFrame。
+
+    设计风格对齐 BasicQueryEngine：
+    - handler 负责查 df
+    - engine 负责把 df 变成对象（复用类似 _add_journals_from_df 的“翻译器”思路）
+    """
+
+    def __init__(self, journalQuery=None, categoryQuery=None):
+        # 原 River_full.py 的 super().__init__(journalQuery or [], categoryQuery or [])
+        # 但你现有 BasicQueryEngine.__init__ 不接参数，所以这里做“等价初始化”：
+        super().__init__()
+        if journalQuery:
+            self.journalQuery.extend(journalQuery)
+        if categoryQuery:
+            self.categoryQuery.extend(categoryQuery)
+
+    # --------------------------
+    # 1) Parse：你要求“必须用”
+    # --------------------------
+    def _parse_list_field(self, raw) -> List[str]:
+        """
+        把数据库/df 里可能出现的“粘连字符串字段”拆成 list。
+
+        为什么需要：
+        - identifiers 可能是 "1234-5678; 8765-4321" 或 "1234-5678,8765-4321"
+        - language 可能是 "English; Italian"
+        - 有时也可能是 None / 空串
+
+        我们不处理 bool（按你的要求），这里只做“字符串拆分”。
+        """
+        if raw is None:
+            return []
+        text = str(raw).strip()
+        if not text:
+            return []
+
+        # 兼容两种常见分隔符：; 和 ,
+        text = text.replace(";", ",")
+        parts = [p.strip() for p in text.split(",")]
+        return [p for p in parts if p]
+
+    # --------------------------------------------
+    # 2) 辅助：从 categories df “翻译”出 identifiers 集合
+    # --------------------------------------------
+    def _add_identifiers_from_categories_df(self, df: pd.DataFrame, identifiers: Set[str]) -> None:
+        if df is None or df.empty:
+            return
+
+        # 兼容列名：有的地方叫 identifiers，有的地方可能叫 identifier
+        col = "identifiers" if "identifiers" in df.columns else "identifier"
+        if col not in df.columns:
+            return
+
+        for _, row in df.iterrows():
+            for one_id in self._parse_list_field(row.get(col)):
+                identifiers.add(one_id)
+
+    # ---------------------------------------------------
+    # 3) 辅助：从 journals df 中挑出“匹配 identifiers 的行”
+    # ---------------------------------------------------
+    def _add_journals_matching_identifiers_from_df(
+        self,
+        df: pd.DataFrame,
+        wanted_identifiers: Set[str],
+        journal_map: Dict[str, Journal],
+    ) -> None:
+        if df is None or df.empty or not wanted_identifiers:
+            return
+
+        id_col = "identifier" if "identifier" in df.columns else "identifiers"
+        if id_col not in df.columns:
+            return
+
+        for _, row in df.iterrows():
+            row_ids = self._parse_list_field(row.get(id_col))
+            if not row_ids:
+                continue
+
+            hit = any(one_id in wanted_identifiers for one_id in row_ids)
+            if not hit:
+                continue
+
+            key = row_ids[0]
+
+            if key not in journal_map:
+                journal_map[key] = Journal(
+                    identifiers=row_ids,
+                    title=row.get("title", ""),
+                    language=self._parse_list_field(row.get("language")),
+                    seal=row.get("seal", False),      # bool 暂且不处理，直接传
+                    license=row.get("license", ""),
+                    apc=row.get("apc", False),        # bool 暂且不处理，直接传
+                    publisher=row.get("publisher", None),
+                )
+
+    # ==========================
+    # Mashup 查询 1
+    # ==========================
+    def getJournalsInCategoriesWithQuartile(
+        self,
+        category_ids: Set[str],
+        quartiles: Set[str],
+    ) -> List[Journal]:
+        if not category_ids or not quartiles:
+            return []
+
+        wanted_identifiers: Set[str] = set()
+
+        for handler in self.categoryQuery:
+            df = handler.getCategoriesWithQuartile(quartiles)
+            if df is None or df.empty:
+                continue
+
+            if "category_id" in df.columns:
+                df = df[df["category_id"].isin(category_ids)]
+
+            self._add_identifiers_from_categories_df(df, wanted_identifiers)
+
+        if not wanted_identifiers:
+            return []
+
+        journal_map: Dict[str, Journal] = {}
+
+        for handler in self.journalQuery:
+            df = handler.getAllJournals()
+            self._add_journals_matching_identifiers_from_df(df, wanted_identifiers, journal_map)
+
+        return list(journal_map.values())
+
+    # ==========================
+    # Mashup 查询 2
+    # ==========================
+    def getJournalsInAreasWithLicense(
+        self,
+        area_ids: Set[str],
+        licenses: Set[str],
+    ) -> List[Journal]:
+        if not area_ids or not licenses:
+            return []
+
+        wanted_identifiers: Set[str] = set()
+
+        for handler in self.categoryQuery:
+            df = handler.getCategoriesAssignedToAreas(area_ids)
+            self._add_identifiers_from_categories_df(df, wanted_identifiers)
+
+        if not wanted_identifiers:
+            return []
+
+        journal_map: Dict[str, Journal] = {}
+        for handler in self.journalQuery:
+            df = handler.getJournalsWithLicense(licenses)
+            self._add_journals_matching_identifiers_from_df(df, wanted_identifiers, journal_map)
+
+        return list(journal_map.values())
+
+    # ==========================
+    # Mashup 查询 3
+    # ==========================
+    def getJournalsInAreasAndCategoriesWithQuartile(
+        self,
+        area_ids: Set[str],
+        category_ids: Set[str],
+        quartiles: Set[str],
+    ) -> List[Journal]:
+        if not area_ids or not category_ids or not quartiles:
+            return []
+
+        wanted_identifiers: Set[str] = set()
+
+        for handler in self.categoryQuery:
+            df = handler.getCategoriesAssignedToAreas(area_ids)
+            if df is None or df.empty:
+                continue
+
+            if "category_id" in df.columns:
+                df = df[df["category_id"].isin(category_ids)]
+            if "quartile" in df.columns:
+                df = df[df["quartile"].isin(quartiles)]
+
+            self._add_identifiers_from_categories_df(df, wanted_identifiers)
+
+        if not wanted_identifiers:
+            return []
+
+        journal_map: Dict[str, Journal] = {}
+        for handler in self.journalQuery:
+            df = handler.getAllJournals()
+            self._add_journals_matching_identifiers_from_df(df, wanted_identifiers, journal_map)
+
+        return list(journal_map.values())

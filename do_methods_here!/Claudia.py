@@ -3,7 +3,7 @@ import pandas as pd
 from typing import List, Dict
 from impl import IdentifiableEntity, Journal, Category, Area
 from impl import JournalQueryHandler, CategoryQueryHandler  
-from QueryEngine import *
+from from_uml_to_files.QueryEngine import *
 from os import sep
 
 #------------------------------------------------

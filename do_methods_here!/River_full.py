@@ -5,7 +5,7 @@ from typing import Set, Dict, List
 
 import pandas as pd
 
-from QueryEngine import BasicQueryEngine
+from from_uml_to_files.QueryEngine import BasicQueryEngine
 from impl import Journal
 
 

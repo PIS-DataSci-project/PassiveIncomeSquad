@@ -5,7 +5,7 @@
 from os import sep # for testing 
 from posixpath import sep # for testing 
 import pandas as pd 
-from typing import List, Dict
+from typing import Set, Dict, List
 from impl import Journal, Category, Area
 from impl import JournalQueryHandler, CategoryQueryHandler
 import sqlite3
@@ -497,11 +497,6 @@ class BasicQueryEngine: #Fahmida
 #------------------------------------------------
 #FullQueryEngine
 #------------------------------------------------
-from typing import Set, Dict, List
-import pandas as pd
-from impl import Journal
-
-
 class FullQueryEngine(BasicQueryEngine):
     """
     FullQueryEngine = “跨源拼接查询”的 QueryEngine。
