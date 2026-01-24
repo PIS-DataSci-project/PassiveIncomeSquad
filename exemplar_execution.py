@@ -8,7 +8,7 @@ from impl import CategoryUploadHandler, CategoryQueryHandler
 from impl import JournalUploadHandler, JournalQueryHandler
 
 # 3) Importing the class for dealing with mashup queries
-from impl import FullQueryEngine
+from impl import BasicQueryEngine
 
 # Once all the classes are imported, first create the relational
 # database using the related source data
@@ -26,7 +26,7 @@ grp_endpoint = "http://127.0.0.1:9999/blazegraph/sparql"
 jou = JournalUploadHandler()
 jou.setDbPathOrUrl(grp_endpoint) 
 jou.serializeToTTL("data/doaj.csv", "data/doaj.ttl")
-jou.pushDataToDb("data/doaj.csv")
+# jou.pushDataToDb("data/doaj.csv")
 # Please remember that one could, in principle, push one or more files
 # calling the method one or more times (even calling the method twice
 # specifying the same file!)
@@ -41,7 +41,7 @@ jou_qh.setDbPathOrUrl(grp_endpoint)
 
 # Finally, create a advanced mashup object for asking
 # about data
-que = FullQueryEngine()
+que = BasicQueryEngine()
 que.addCategoryHandler(cat_qh)
 que.addJournalHandler(jou_qh)
 
