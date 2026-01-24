@@ -507,6 +507,44 @@ if result is None:
     print("Test passed: getEntityById returned None for non-existent ID")
 else:
     print("Test failed: expected None but got", result)
+
+# Test with a real identifier that has categories (exists in both DOAJ and Scimago)
+print("\n" + "=" * 60)
+print("Testing with identifier that has categories: 0001-3765")
+print("=" * 60)
+result_q4 = fq.getEntityById("0001-3765")
+
+if result_q4:
+    print(f"\nTitle: {result_q4.getTitle()}")
+    print(f"IDs: {result_q4.getIds()}")
+    print(f"Publisher: {result_q4.getPublisher()}")
+    print(f"Languages: {result_q4.getLanguage()}")
+    print(f"DOAJ Seal: {result_q4.hasDOAJSeal()}")
+    print(f"License: {result_q4.getLicense()}")
+    print(f"Has APC: {result_q4.hasAPC()}")
+    
+    # Print categories
+    categories = result_q4.getCategories()
+    if categories:
+        print(f"\nCategories ({len(categories)}):")
+        for cat in categories:
+            cat_ids = cat.getIds()
+            quartile = cat.getQuartile()
+            print(f"  - {cat_ids[0] if cat_ids else 'N/A'} (Quartile: {quartile})")
+    else:
+        print("\nCategories: []")
+    
+    # Print areas
+    areas = result_q4.getAreas()
+    if areas:
+        print(f"\nAreas ({len(areas)}):")
+        for area in areas:
+            area_ids = area.getIds()
+            print(f"  - {area_ids[0] if area_ids else 'N/A'}")
+    else:
+        print("\nAreas: []")
+else:
+    print("Result is None")
     
 # USAGE 
 cat_qh = CategoryQueryHandler()
