@@ -282,7 +282,7 @@ class CategoryUploadHandler(UploadHandler):  # River
 
         # ⭐ 真正生成 DataFrame
         df = pd.DataFrame(rows)
-        return df
+        return True
 
 
 #---------------------------------------------------------------------------------------------
