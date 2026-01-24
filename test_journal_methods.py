@@ -5,7 +5,7 @@ handler = JournalQueryHandler("data/doaj-csv.csv")
 # ============================================
 # URL Blazegraph
 # ============================================
-BLAZEGRAPH_URL = "http://10.44.28.30:9999/blazegraph/namespace/kb/sparql"  # endpoint
+BLAZEGRAPH_URL = "http://127.0.0.1:9999/blazegraph/sparql"  # endpoint
 
 # ============================================
 # TESTS
