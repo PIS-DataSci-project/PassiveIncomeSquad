@@ -2,8 +2,8 @@
 #------------------------------------------------
 #QueryEngine
 #------------------------------------------------
-from os import sep
-from posixpath import sep
+from os import sep # for testing 
+from posixpath import sep # for testing 
 import pandas as pd 
 from typing import List, Dict
 from impl import Journal, Category, Area
