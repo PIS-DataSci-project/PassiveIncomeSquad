@@ -251,6 +251,44 @@ def print_journal(journal):
         print("Areas: []")
 
 # --------------------------------
+# Helper function to print Journal details
+def print_journal(journal):
+    if journal is None:
+        print("None")
+        return
+    
+    try:
+        print(f"Title: {journal.getTitle()}")
+    except UnicodeEncodeError:
+        print(f"Title: [Unicode encoding error - cannot display]")
+    print(f"IDs: {journal.getIds()}")
+    print(f"Publisher: {journal.getPublisher()}")
+    print(f"Languages: {journal.getLanguage()}")
+    print(f"DOAJ Seal: {journal.hasDOAJSeal()}")
+    print(f"License: {journal.getLicense()}")
+    print(f"Has APC: {journal.hasAPC()}")
+    
+    # Print categories with their details
+    categories = journal.getCategories()
+    if categories:
+        print(f"Categories ({len(categories)}):")
+        for cat in categories:
+            cat_ids = cat.getIds()
+            quartile = cat.getQuartile()
+            print(f"  - {cat_ids[0] if cat_ids else 'N/A'} (Quartile: {quartile})")
+    else:
+        print("Categories: []")
+    
+    # Print areas with their details
+    areas = journal.getAreas()
+    if areas:
+        print(f"Areas ({len(areas)}):")
+        for area in areas:
+            area_ids = area.getIds()
+            print(f"  - {area_ids[0] if area_ids else 'N/A'}")
+    else:
+        print("Areas: []")
+        
 journal = "data" + sep + "doaj.csv"
 category = "data" + sep + "scimago.json"
 relational = "." + sep + "relational.db"
@@ -286,5 +324,11 @@ que = BasicQueryEngine()
 que.addCategoryHandler(cat_qh)
 que.addJournalHandler(jou_qh)
 
+print("\nSearching for journal with ID: 1471-0072")
+print("=" * 60)
 result_q4 = que.getEntityById("1471-0072")
-print_journal(result_q4)
+
+if result_q4 is None:
+    print("Result is None - journal not found in any database")
+else:
+    print_journal(result_q4)
