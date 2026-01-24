@@ -653,9 +653,9 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
         df = df[["area"]].dropna().drop_duplicates().reset_index(drop=True)
         return df
     
-    # -----------------------------------------
+    # -----------------------------
     # Get categories by journal identifier
-    # -----------------------------------------
+    # -----------------------------
     def getCategoriesByJournalId(self, journal_id) -> pd.DataFrame:
         """
         Returns categories associated with a specific journal identifier.
@@ -673,23 +673,24 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
     # -----------------------------
     # Get areas by journal identifier
     # -----------------------------
-    def getAreasByJournalId(self, journal_id) -> pd.DataFrame: # Claudia
-        """Get all areas for a specific journal identifier"""
-        if not journal_id:
-            return pd.DataFrame()
+    def getAreasByJournalId(self, journal_id) -> pd.DataFrame:
+        """
+        Returns areas associated with a specific journal identifier.
+        """
         query = """
         SELECT DISTINCT areas
         FROM categories
-        WHERE identifiers = ? AND areas IS NOT NULL
+        WHERE identifiers = ?
+          AND areas IS NOT NULL
         """
         conn = sqlite3.connect(self.getDbPathOrUrl())
         df = pd.read_sql_query(query, conn, params=(journal_id,))
         conn.close()
-
-        if df.empty:
-            return df
-
-        df["area"] = df["areas"].str.split(",")
-        df = df.explode("area")
-        df = df[["area"]].dropna().drop_duplicates().reset_index(drop=True)
+        
+        # Split comma-separated values into individual rows
+        if not df.empty:
+            df["area"] = df["areas"].str.split(",")
+            df = df.explode("area")
+            df = df[["area"]].dropna().drop_duplicates().reset_index(drop=True)
+        
         return df
