@@ -156,6 +156,3 @@ class TestProjectBasic(unittest.TestCase):
         self.assertIsInstance(r, list)
         for i in r:
             self.assertIsInstance(i, Journal)
-
-if __name__ == '__main__':
-    unittest.main()
