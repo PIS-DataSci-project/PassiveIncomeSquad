@@ -326,7 +326,7 @@ que.addJournalHandler(jou_qh)
 
 print("\nSearching for journal with ID: 1471-0072")
 print("=" * 60)
-result_q4 = que.getEntityById("1471-0072")
+result_q4 = que.getEntityById("0007-9235")
 
 if result_q4 is None:
     print("Result is None - journal not found in any database")
