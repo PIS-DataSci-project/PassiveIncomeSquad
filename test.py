@@ -15,7 +15,10 @@
 import unittest
 from os import sep
 from pandas import DataFrame
-from impl import * 
+from impl import JournalUploadHandler, CategoryUploadHandler
+from impl import JournalQueryHandler, CategoryQueryHandler
+from impl import FullQueryEngine
+from impl import Journal, Category, Area
 
 # REMEMBER: before launching the tests, please run the Blazegraph instance!
 

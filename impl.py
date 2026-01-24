@@ -1346,7 +1346,7 @@ class FullQueryEngine(BasicQueryEngine):
     # ==========================
     # Mashup 查询 3
     # ==========================
-    def getJournalsInAreasAndCategoriesWithQuartile(
+    def getDiamondJournalsInAreasAndCategoriesWithQuartile(
         self,
         area_ids: Set[str],
         category_ids: Set[str],
