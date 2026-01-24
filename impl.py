@@ -1,6 +1,7 @@
 #ALL IMPORTS AT THE TOP OF THE FILE
 #General imports
 import pandas as pd 
+from typing import List, Set, Dict
 
 #For Graph Database
 from rdflib import Graph, URIRef, RDF, Literal, XSD
