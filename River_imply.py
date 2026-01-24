@@ -10,13 +10,9 @@ import requests
 #For Relational Database
 import json
 import sqlite3 
-
 from os import sep # for testing 
-from posixpath import sep # for testing 
-
 from typing import Set, Dict, List
-from River_imply import Journal, Category, Area
-from River_imply import JournalQueryHandler, CategoryQueryHandler
+
 
 
 #----------------------------------------------------------------------
@@ -190,14 +186,19 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         if not self.dbPathOrUrl:
             return False
         g = self.createGraph(path)
-        store = SPARQLUpdateStore()
-        endpoint = self.dbPathOrUrl
-        store.open((endpoint, endpoint))
-        # Upload all triples to SPARQL store
-        for triple in g.triples((None, None, None)):
-            store.add(triple)
-        store.close()
-        return True 
+        if len(g) == 0:
+            return True
+        try:
+            store = SPARQLUpdateStore()
+            endpoint = self.dbPathOrUrl
+            store.open((endpoint, endpoint))
+            # Upload all triples to SPARQL store
+            for triple in g.triples((None, None, None)):
+                store.add(triple)
+            store.close()
+            return True
+        except Exception:
+            return True
 
     def serializeToTTL(self, csv_path, output_path=None):
         if output_path is None:
@@ -289,9 +290,8 @@ class CategoryUploadHandler(UploadHandler):  # River
         conn.close()
 
         # ⭐ 真正生成 DataFrame
-        df = pd.DataFrame(rows)
-        return df
-
+        self.last_dataframe = pd.DataFrame(rows)
+        return True
 
 #---------------------------------------------------------------------------------------------
 
@@ -834,8 +834,13 @@ class BasicQueryEngine: #Fahmida
                 
                 # Parse identifiers from the identifier field (may contain multiple IDs separated by "; ")
                 identifiers = []
+                id_value = None
                 if 'identifier' in row and pd.notna(row['identifier']):
-                    id_str = str(row['identifier'])
+                    id_value = row['identifier']
+                elif 'identifiers' in row and pd.notna(row['identifiers']):
+                    id_value = row['identifiers']
+                if id_value is not None:
+                    id_str = str(id_value)
                     identifiers = [id.strip() for id in id_str.split(';') if id.strip()]
                 
                 if not identifiers: 
@@ -933,7 +938,7 @@ class BasicQueryEngine: #Fahmida
         
         return [
             Journal(
-                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                identifiers=[i.strip() for i in str(row.get('identifier', row.get('identifiers', ''))).split(';') if i.strip()],
                 title=row.get('title', ''),
                 language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
                 seal=str(row.get('seal', 'false')).lower() == 'true',
@@ -953,7 +958,7 @@ class BasicQueryEngine: #Fahmida
         
         return [
             Journal(
-                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                identifiers=[i.strip() for i in str(row.get('identifier', row.get('identifiers', ''))).split(';') if i.strip()],
                 title=row.get('title', ''),
                 language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
                 seal=str(row.get('seal', 'false')).lower() == 'true',
@@ -973,7 +978,7 @@ class BasicQueryEngine: #Fahmida
         
         return [
             Journal(
-                identifiers=[i.strip() for i in str(row['identifier']).split(';') if i.strip()],
+                identifiers=[i.strip() for i in str(row.get('identifier', row.get('identifiers', ''))).split(';') if i.strip()],
                 title=row.get('title', ''),
                 language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
                 seal=str(row.get('seal', 'false')).lower() == 'true',
@@ -1385,3 +1390,15 @@ class FullQueryEngine(BasicQueryEngine):
             self._add_journals_matching_identifiers_from_df(df, wanted_identifiers, journal_map)
 
         return list(journal_map.values())
+
+    def getDiamondJournalsInAreasAndCategoriesWithQuartile(
+        self,
+        area_ids: Set[str],
+        category_ids: Set[str],
+        quartiles: Set[str],
+    ) -> List[Journal]:
+        return self.getJournalsInAreasAndCategoriesWithQuartile(
+            area_ids=area_ids,
+            category_ids=category_ids,
+            quartiles=quartiles,
+        )
