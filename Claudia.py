@@ -226,7 +226,7 @@ que.addJournalHandler(jou_qh)
 print("\nTesting various IDs:")
 print("-" * 50)
 
-result_q3 = que.getEntityById("Artificial Intelligence")
+result_q3 = que.getEntityById("Salento")
 print(result_q3)
 result_q4 = que.getEntityById("2224-9281")
 print_journal(result_q4)
