@@ -156,8 +156,8 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         journals["Publisher"] = journals["Publisher"].fillna("").astype(str).str.strip()
         journals["Journal ISSN (print version)"] = journals["Journal ISSN (print version)"].astype(str).str.strip()
         journals["Journal EISSN (online version)"] = journals["Journal EISSN (online version)"].astype(str).str.strip()
-        journals['DOAJ Seal'] = journals['DOAJ Seal'].str.lower().replace({'yes': True, 'no': False})
-        journals['APC'] = journals['APC'].str.lower().replace({'yes': True, 'no': False})
+        journals['DOAJ Seal'] = journals['DOAJ Seal'].str.lower().replace({'yes': True, 'no': False}).astype(bool)
+        journals['APC'] = journals['APC'].str.lower().replace({'yes': True, 'no': False}).astype(bool)
         
         for idx, row in journals.iterrows():
             local_id = "journal-" + str(idx) 
