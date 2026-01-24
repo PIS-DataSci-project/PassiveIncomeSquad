@@ -46,6 +46,72 @@ class BasicQueryEngine: #Fahmida
         self.categoryQuery.append(handler)
         return True
     
+    def getCategoriesByJournalId(self, journal_id) -> list: # Claudia
+        """
+        Get all Category objects for journal identifiers.
+        Transforms DataFrames from CategoryQueryHandler into Category objects.
+        """
+        if isinstance(journal_id, str):
+            journal_ids = [journal_id]
+        else:
+            journal_ids = journal_id
+        
+        categories = []
+        for handler in self.categoryQuery:
+            for journal_id in journal_ids:
+                cat_df = handler.getCategoriesByJournalId(journal_id)
+                if cat_df is not None and not cat_df.empty:
+                    for _, row in cat_df.iterrows():
+                        cat = Category(
+                            identifiers=[str(row['category_id'])],
+                            quartile=str(row.get('quartile', ''))
+                        )
+                        categories.append(cat)
+        
+        # Remove duplicates based on category_id
+        unique_categories = []
+        seen_ids = set()
+        for cat in categories:
+            cat_id = cat.getIds()[0] if cat.getIds() else None
+            if cat_id and cat_id not in seen_ids:
+                seen_ids.add(cat_id)
+                unique_categories.append(cat)
+        
+        return unique_categories
+
+    # ---------------------------------------------------------
+
+    def getAreasByJournalId(self, journal_id) -> list: # Claudia
+        """
+        Get all Area objects for journal identifiers.
+        Transforms DataFrames from CategoryQueryHandler into Area objects.
+        """
+        if isinstance(journal_id, str):
+            journal_ids = [journal_id]
+        else:
+            journal_ids = journal_id
+        
+        areas = []
+        for handler in self.categoryQuery:
+            for journal_id in journal_ids:
+                area_df = handler.getAreasByJournalId(journal_id)
+                if area_df is not None and not area_df.empty:
+                    for _, row in area_df.iterrows():
+                        if 'area' in row and pd.notna(row['area']):
+                            area_name = str(row['area']).strip()
+                            if area_name:
+                                area = Area(identifiers=[area_name])
+                                areas.append(area)
+        
+        # Remove duplicates based on area identifier
+        unique_areas = {}
+        for area in areas:
+            area_id = area.getIds()[0] if area.getIds() else None
+            if area_id and area_id not in unique_areas:
+                unique_areas[area_id] = area
+        
+        return list(unique_areas.values())
+    
     def getEntityById(self, entity_id: str):
         """
         Search for entity by ID in all databases.
@@ -79,6 +145,10 @@ class BasicQueryEngine: #Fahmida
                     lang_str = str(row['language'])
                     languages = [lang.strip() for lang in lang_str.split(',') if lang.strip()]
                 
+                # Get categories and areas using helper methods
+                categories = self.getCategoriesByJournalId(identifiers)
+                areas = self.getAreasByJournalId(identifiers)
+                
                 # Convert boolean strings to actual booleans
                 seal = False
                 if 'seal' in row:
@@ -102,8 +172,8 @@ class BasicQueryEngine: #Fahmida
                     license=str(row.get('license', '')),
                     apc=apc,
                     publisher=str(row.get('publisher', '')),
-                    categories = self.getCategoriesByJournalId(identifiers),
-                    areas = self.getAreasByJournalId(identifiers)
+                    categories=categories,
+                    areas=areas
                 )
         
         # 2. Search in category handlers (SQLite)
@@ -131,10 +201,28 @@ class BasicQueryEngine: #Fahmida
                     quartile=str(row.get('quartile', ''))
                 )
         
-        # 3. Not found in any database
+        # 3. If not found as journal in Blazegraph or as category, check if we have category/area data for this identifier
+        categories = self.getCategoriesByJournalId(entity_id)
+        areas = self.getAreasByJournalId(entity_id)
+        
+        if categories or areas:
+            # Found category/area data, return minimal Journal object
+            return Journal(
+                identifiers=[entity_id],
+                title="",
+                language=[],
+                seal=False,
+                license="",
+                apc=False,
+                publisher="",
+                categories=categories,
+                areas=areas
+            )
+        
+        # 4. Not found in any database
         return None
        
-
+       
     # ============================================
     # JOURNAL-RELATED METHODS (Polina)
     # ============================================
@@ -395,3 +483,43 @@ class BasicQueryEngine: #Fahmida
             )
             for _, row in merged.iterrows()
         ]
+
+# TESTING 
+# --------------------------------
+journal = "data" + sep + "doaj.csv"
+category = "data" + sep + "scimago.json"
+relational = "." + sep + "relational.db"
+grp_endpoint = "http://127.0.0.1:9999/blazegraph/sparql"
+    
+jq = JournalQueryHandler()
+jq.setDbPathOrUrl(grp_endpoint)
+cq = CategoryQueryHandler()
+cq.setDbPathOrUrl(relational)
+
+fq = BasicQueryEngine()
+fq.cleanJournalHandlers()
+fq.cleanCategoryHandlers()
+fq.addJournalHandler(jq)
+fq.addCategoryHandler(cq)
+
+result = fq.getEntityById("just_a_test")
+if result is None:
+    print("Test passed: getEntityById returned None for non-existent ID")
+else:
+    print("Test failed: expected None but got", result)
+    
+# USAGE 
+cat_qh = CategoryQueryHandler()
+cat_qh.setDbPathOrUrl(relational)
+
+jou_qh = JournalQueryHandler()
+jou_qh.setDbPathOrUrl(grp_endpoint)
+
+# Finally, create a advanced mashup object for asking
+# about data
+que = BasicQueryEngine()
+que.addCategoryHandler(cat_qh)
+que.addJournalHandler(jou_qh)
+
+result_q4 = que.getEntityById("1678-2690")
+print(result_q4)
