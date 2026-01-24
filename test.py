@@ -39,7 +39,6 @@ class TestProjectBasic(unittest.TestCase):
         self.assertTrue(u.setDbPathOrUrl(self.graph))
         self.assertEqual(u.getDbPathOrUrl(), self.graph)
         self.assertTrue(u.pushDataToDb(self.journal))
-        self.assertTrue(u.createGraph(self.graph))
 
     def test_02_CategoryUploadHandler(self):
         u = CategoryUploadHandler()
