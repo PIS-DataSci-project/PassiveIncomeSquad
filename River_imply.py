@@ -15,8 +15,6 @@ from os import sep # for testing
 from posixpath import sep # for testing 
 
 from typing import Set, Dict, List
-from River_imply import Journal, Category, Area
-from River_imply import JournalQueryHandler, CategoryQueryHandler
 
 
 #----------------------------------------------------------------------
