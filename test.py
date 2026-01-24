@@ -26,8 +26,8 @@ class TestProjectBasic(unittest.TestCase):
     # the SPARQL endpoint must be updated depending on how you launch it - currently, it is
     # specified the URL introduced during the course, which is the one used for a standard
     # launch of the database.
-    journal = "data" + sep + "doaj.csv"
-    category = "data" + sep + "scimago.json"
+    journal = "data" + sep + "doaj-csv.csv"
+    category = "data" + sep + "scimago-json.json"
     relational = "." + sep + "relational.db"
     graph = "http://127.0.0.1:9999/blazegraph/sparql"
     
@@ -37,6 +37,7 @@ class TestProjectBasic(unittest.TestCase):
         self.assertTrue(u.setDbPathOrUrl(self.graph))
         self.assertEqual(u.getDbPathOrUrl(), self.graph)
         self.assertTrue(u.pushDataToDb(self.journal))
+        self.assertTrue(u.createGraph(self.graph))
         print("   ✓ Upload handler working correctly")
 
     def test_02_CategoryUploadHandler(self):
@@ -154,4 +155,7 @@ class TestProjectBasic(unittest.TestCase):
         r = fq.getDiamondJournalsInAreasAndCategoriesWithQuartile({"just_a_test"}, {"just_a_test"}, {"just_a_test"})
         self.assertIsInstance(r, list)
         for i in r:
-            self.assertIsInstance(i, Journal) 
+            self.assertIsInstance(i, Journal)
+
+if __name__ == '__main__':
+    unittest.main()
