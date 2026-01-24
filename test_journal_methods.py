@@ -196,3 +196,99 @@ journals = engine.getJournalsWithAPC()
 # show the list (first 5)
 print("The actual list object:")
 print(journals[:5])
+
+print("\n\nList contents (readable):")
+for i, j in enumerate(journals[:5], 1):
+    print(f"\n{i}. {j.getTitle()}")
+    print(f"   IDs: {j.getIds()}")
+    print(f"   Publisher: {j.getPublisher()}")
+    print(f"   Languages: {j.getLanguage()}")
+    print(f"   Has APC: {j.hasAPC()}")
+    print(f"   Has DOAJ Seal: {j.hasDOAJSeal()}")
+    print(f"   License: {j.getLicense()}")
+
+#--------------------------------------------
+#TESTING ALL THE METHODS (To get lists)
+#--------------------------------------------
+
+print("="*100)
+print("SHOWING ACTUAL LIST OBJECTS")
+print("="*100)
+
+# ============================================
+# METHOD 1: getAllJournals()
+# ============================================
+print("\n" + "="*100)
+print("METHOD 1: getAllJournals()")
+print("="*100)
+
+journals = engine.getAllJournals()
+print(f"Type: {type(journals)}")
+print(f"Length: {len(journals)}")
+print(f"\nThe actual list (first 3 elements):")
+print(journals[:3])  # the list
+
+# ============================================
+# METHOD 2: getJournalsWithTitle()
+# ============================================
+print("\n" + "="*100)
+print("METHOD 2: getJournalsWithTitle('nature')")
+print("="*100)
+
+journals = engine.getJournalsWithTitle("nature")
+print(f"Type: {type(journals)}")
+print(f"Length: {len(journals)}")
+print(f"\nThe actual list (first 3 elements):")
+print(journals[:3])  # the list
+
+# ============================================
+# METHOD 3: getJournalsPublishedBy()
+# ============================================
+print("\n" + "="*100)
+print("METHOD 3: getJournalsPublishedBy('springer')")
+print("="*100)
+
+journals = engine.getJournalsPublishedBy("springer")
+print(f"Type: {type(journals)}")
+print(f"Length: {len(journals)}")
+print(f"\nThe actual list (first 3 elements):")
+print(journals[:3])  # the list
+
+# ============================================
+# METHOD 4: getJournalsWithLicense()
+# ============================================
+print("\n" + "="*100)
+print("METHOD 4: getJournalsWithLicense({'CC BY'})")
+print("="*100)
+
+journals = engine.getJournalsWithLicense({"CC BY"})
+print(f"Type: {type(journals)}")
+print(f"Length: {len(journals)}")
+print(f"\nThe actual list (first 3 elements):")
+print(journals[:3])  # the list
+
+#============================================
+# METHOD 5: getJournalsWithAPC()
+# ============================================
+print("\n" + "="*100)
+print("METHOD 5: getJournalsWithAPC()")
+print("="*100)
+
+journals = engine.getJournalsWithAPC()
+print(f"Type: {type(journals)}")
+print(f"Length: {len(journals)}")
+print(f"\nThe actual list (first 3 elements):")
+print(journals[:3])  # the list
+
+# ============================================
+# METHOD 6: getJournalsWithDOAJSeal()
+# ============================================
+print("\n" + "="*100)
+print("METHOD 6: getJournalsWithDOAJSeal()")
+print("="*100)
+
+journals = engine.getJournalsWithDOAJSeal()
+print(f"Type: {type(journals)}")
+print(f"Length: {len(journals)}")
+print(f"\nThe actual list (first 3 elements):")
+print(journals[:3])  # the list
