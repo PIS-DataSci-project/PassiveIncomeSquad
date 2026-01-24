@@ -1050,7 +1050,7 @@ class BasicQueryEngine: #Fahmida
         
         return [
             Journal(
-                identifiers=[i.strip() for i in str(row.get('identifier', row.get('identifiers',''))).replace(';', ',').split(',') if i.strip()],,
+                identifiers=[i.strip() for i in str(row.get('identifier', row.get('identifiers',''))).replace(';', ',').split(',') if i.strip()],
                 title=row.get('title', ''),
                 language=[l.strip() for l in str(row.get('language', '')).split(',') if l.strip()],
                 seal=str(row.get('seal', 'false')).lower() == 'true',
