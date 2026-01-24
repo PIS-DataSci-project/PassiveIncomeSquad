@@ -1,3 +1,6 @@
+import pandas as pd
+from typing import List, Dict
+from impl import Journal, Category, Area
 from QueryEngine import BasicQueryEngine
 from impl import JournalQueryHandler
 handler = JournalQueryHandler("data/doaj-csv.csv")
@@ -5,7 +8,7 @@ handler = JournalQueryHandler("data/doaj-csv.csv")
 # ============================================
 # URL Blazegraph
 # ============================================
-BLAZEGRAPH_URL = "http://172.20.10.2:9999/blazegraph/namespace/kb/sparql"  # endpoint
+BLAZEGRAPH_URL = "http://10.44.28.30:9999/blazegraph/namespace/kb/sparql"  # endpoint
 
 # ============================================
 # TESTS
@@ -189,3 +192,9 @@ except Exception as e:
 print("\n" + "=" * 60)
 print("TESTING COMPLETE")
 print("=" * 60)
+
+journals = engine.getJournalsWithAPC()
+
+# show the list (first 5)
+print("The actual list object:")
+print(journals[:5])
