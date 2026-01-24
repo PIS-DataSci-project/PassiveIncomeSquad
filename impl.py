@@ -151,7 +151,12 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         
         # Create RDF graph
         g = Graph()
-        journals = pd.read_csv(path)
+        journals = pd.read_csv(path, keep_default_na=False)
+        # Strip whitespace from column names
+        journals.columns = journals.columns.str.strip()
+
+        # Clean and convert data types
+        journals["Publisher"] = journals["Publisher"].fillna("").astype(str).str.strip()
         
         # Clean and convert data types
         journals["Journal ISSN (print version)"] = journals["Journal ISSN (print version)"].astype(str).str.strip()
