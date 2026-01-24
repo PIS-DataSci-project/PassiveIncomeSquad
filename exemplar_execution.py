@@ -24,7 +24,7 @@ cat.pushDataToDb("data/scimago.json")
 # Blazegraph instance) using the related source data
 grp_endpoint = "http://127.0.0.1:9999/blazegraph/sparql"
 jou = JournalUploadHandler()
-jou.setDbPathOrUrl(grp_endpoint)
+jou.setDbPathOrUrl(grp_endpoint) 
 jou.serializeToTTL("data/doaj.csv", "data/doaj.ttl")
 jou.pushDataToDb("data/doaj.csv")
 # Please remember that one could, in principle, push one or more files
