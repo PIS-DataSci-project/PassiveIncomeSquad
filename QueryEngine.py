@@ -2,6 +2,8 @@
 #------------------------------------------------
 #QueryEngine
 #------------------------------------------------
+from os import sep
+from posixpath import sep
 import pandas as pd 
 from typing import List, Dict
 from impl import Journal, Category, Area
@@ -77,10 +79,6 @@ class BasicQueryEngine: #Fahmida
                     lang_str = str(row['language'])
                     languages = [lang.strip() for lang in lang_str.split(',') if lang.strip()]
                 
-                # Get categories and areas using helper methods
-                categories = self.getCategoriesByJournalId(identifiers)
-                areas = self.getAreasByJournalId(identifiers)
-                
                 # Convert boolean strings to actual booleans
                 seal = False
                 if 'seal' in row:
@@ -104,8 +102,8 @@ class BasicQueryEngine: #Fahmida
                     license=str(row.get('license', '')),
                     apc=apc,
                     publisher=str(row.get('publisher', '')),
-                    categories=categories,
-                    areas=areas
+                    categories = self.getCategoriesByJournalId(identifiers),
+                    areas = self.getAreasByJournalId(identifiers)
                 )
         
         # 2. Search in category handlers (SQLite)
