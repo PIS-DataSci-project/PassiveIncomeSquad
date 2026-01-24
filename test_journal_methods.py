@@ -1,6 +1,4 @@
-import pandas as pd
-from typing import List, Dict
-from impl import Journal, Category, Area
+# testing journal related methods in BasicQueryEngine
 from QueryEngine import BasicQueryEngine
 from impl import JournalQueryHandler
 handler = JournalQueryHandler("data/doaj-csv.csv")

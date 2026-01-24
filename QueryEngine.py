@@ -135,9 +135,11 @@ class BasicQueryEngine: #Fahmida
         return None
        
 
-    #Polina methods from here
+    # ============================================
+    # JOURNAL-RELATED METHODS (Polina)
+    # ============================================
     def getAllJournals(self) -> list:
-        """Получить все журналы"""
+        #Get all the journals
         all_dfs = [handler.getAllJournals() for handler in self.journalQuery]
         merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
         
@@ -154,8 +156,10 @@ class BasicQueryEngine: #Fahmida
             for _, row in merged.iterrows()
         ]
 
+    # ---------------------------------------------------------
+
     def getJournalsWithTitle(self, partialTitle: str) -> list:
-        """Найти журналы по названию"""
+        # find all the journals with a partial title match
         all_dfs = [handler.getJournalsWithTitle(partialTitle) for handler in self.journalQuery]
         merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
         
@@ -172,8 +176,10 @@ class BasicQueryEngine: #Fahmida
             for _, row in merged.iterrows()
         ]
 
+    # ---------------------------------------------------------
+
     def getJournalsPublishedBy(self, partialName: str) -> list:
-        """Найти журналы по издателю"""
+        #get the journals published by a publisher
         all_dfs = [handler.getJournalsPublishedBy(partialName) for handler in self.journalQuery]
         merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
         
@@ -189,9 +195,11 @@ class BasicQueryEngine: #Fahmida
             )
             for _, row in merged.iterrows()
         ]
+ 
+    # ---------------------------------------------------------
 
     def getJournalsWithLicense(self, licenses: set) -> list:
-        """Найти журналы с лицензиями"""
+        # get all the journals with a license
         all_dfs = [handler.getJournalsWithLicense(licenses) for handler in self.journalQuery]
         merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
 
@@ -208,8 +216,10 @@ class BasicQueryEngine: #Fahmida
             for _, row in merged.iterrows()
         ]
 
+    # ---------------------------------------------------------
+
     def getJournalsWithAPC(self) -> list:
-        """Найти журналы с APC"""
+        #get all the journals with APC
         all_dfs = [handler.getJournalsWithAPC() for handler in self.journalQuery]
         merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
         
@@ -226,8 +236,10 @@ class BasicQueryEngine: #Fahmida
             for _, row in merged.iterrows()
         ]
 
+    # ---------------------------------------------------------
+    
     def getJournalsWithDOAJSeal(self) -> list:
-        """Найти журналы с DOAJ Seal"""
+        # get all the journals with DOAJ Seal
         all_dfs = [handler.getJournalsWithDOAJSeal() for handler in self.journalQuery]
         merged = pd.concat(all_dfs).drop_duplicates() if all_dfs else pd.DataFrame()
     
