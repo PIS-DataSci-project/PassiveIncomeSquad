@@ -78,8 +78,8 @@ class BasicQueryEngine: #Fahmida
                     languages = [lang.strip() for lang in lang_str.split(',') if lang.strip()]
                 
                 # Get categories and areas using helper methods
-                categories = GetCategoriesByJournalId(self, identifiers)
-                areas = GetAreasByJournalId(self, identifiers)
+                categories = self.getCategoriesByJournalId(identifiers)
+                areas = self.getAreasByJournalId(identifiers)
                 
                 # Convert boolean strings to actual booleans
                 seal = False
@@ -385,5 +385,3 @@ class BasicQueryEngine: #Fahmida
             )
             for _, row in merged.iterrows()
         ]
-
-# Subclass ---> FullQueryEngine(BasicQueryEngine)

@@ -1,3 +1,4 @@
+from dbm import sqlite3
 import pandas as pd
 from typing import List, Dict
 from impl import IdentifiableEntity, Journal, Category, Area
@@ -123,6 +124,114 @@ class BasicQueryEngine: #Fahmida
         
         # 3. Not found in any database
         return None
+    
+    # -----------------------------
+    # GET CATEGORIES AND AREAS BY JOURNAL ID
+    # -----------------------------
+    def getCategoriesByJournalId(self, journal_id) -> pd.DataFrame:
+        """Get all categories for a specific journal identifier"""
+        if not journal_id:
+            return pd.DataFrame()
+        query = """
+        SELECT category_id, quartile, identifiers, areas
+        FROM categories
+        WHERE identifiers = ?
+        """
+        conn = sqlite3.connect(self.getDbPathOrUrl())
+        df = pd.read_sql_query(query, conn, params=(journal_id,))
+        conn.close()
+        return df
+
+    # -----------------------------
+    
+    def getAreasByJournalId(self, journal_id) -> pd.DataFrame:
+        """Get all areas for a specific journal identifier"""
+        if not journal_id:
+            return pd.DataFrame()
+        query = """
+        SELECT DISTINCT areas
+        FROM categories
+        WHERE identifiers = ? AND areas IS NOT NULL
+        """
+        conn = sqlite3.connect(self.getDbPathOrUrl())
+        df = pd.read_sql_query(query, conn, params=(journal_id,))
+        conn.close()
+
+        if df.empty:
+            return df
+
+        df["area"] = df["areas"].str.split(",")
+        df = df.explode("area")
+        df = df[["area"]].dropna().drop_duplicates().reset_index(drop=True)
+        return df
+
+    # --------------------------------------------------------
+    # DF TO PY OBJECT
+    # --------------------------------------------------------
+
+    def getCategoriesByJournalId(self, journal_ids) -> list:
+        """
+        Get all Category objects for journal identifiers.
+        Transforms DataFrames from CategoryQueryHandler into Category objects.
+        """
+        if isinstance(journal_ids, str):
+            journal_ids = [journal_ids]
+        
+        categories = []
+        for handler in self.categoryQuery:
+            for journal_id in journal_ids:
+                cat_df = handler.getCategoriesByJournalId(journal_id)
+                if cat_df is not None and not cat_df.empty:
+                    for _, row in cat_df.iterrows():
+                        cat = Category(
+                            identifiers=[str(row['category_id'])],
+                            quartile=str(row.get('quartile', ''))
+                        )
+                        categories.append(cat)
+        
+        # Remove duplicates based on category_id
+        unique_categories = []
+        seen_ids = set()
+        for cat in categories:
+            cat_id = cat.getIds()[0] if cat.getIds() else None
+            if cat_id and cat_id not in seen_ids:
+                seen_ids.add(cat_id)
+                unique_categories.append(cat)
+        
+        return unique_categories
+
+    # ---------------------------------------------------------
+
+    def getAreasByJournalId(self, journal_ids) -> list:
+        """
+        Get all Area objects for journal identifiers.
+        Transforms DataFrames from CategoryQueryHandler into Area objects.
+        """
+        if isinstance(journal_ids, str):
+            journal_ids = [journal_ids]
+        
+        areas = []
+        for handler in self.categoryQuery:
+            for journal_id in journal_ids:
+                area_df = handler.getAreasByJournalId(journal_id)
+                if area_df is not None and not area_df.empty:
+                    for _, row in area_df.iterrows():
+                        if 'area' in row and pd.notna(row['area']):
+                            area_name = str(row['area']).strip()
+                            if area_name:
+                                area = Area(identifiers=[area_name])
+                                areas.append(area)
+        
+        # Remove duplicates based on area identifier
+        unique_areas = {}
+        for area in areas:
+            area_id = area.getIds()[0] if area.getIds() else None
+            if area_id and area_id not in unique_areas:
+                unique_areas[area_id] = area
+        
+        return list(unique_areas.values())
+
+# --------------------------------------------------------
 
 
 # Helper function to print Journal details
@@ -140,52 +249,6 @@ def print_journal(journal):
     print(f"Has APC: {journal.hasAPC()}")
     print(f"Categories: {journal.getCategories()}")
     print(f"Areas: {journal.getAreas()}")
-
-def GetCategoriesByJournalId(engine, journal_ids):
-    """Get all Category objects for a journal. Prints category details."""
-    if isinstance(journal_ids, str):
-        journal_ids = [journal_ids]
-    
-    categories = []
-    for handler in engine.categoryQuery:
-        for journal_id in journal_ids:
-            cat_df = handler.getById(journal_id)
-            if cat_df is not None and not cat_df.empty:
-                for _, row in cat_df.iterrows():
-                    cat = Category(
-                        identifiers=[str(row['category_id'])],
-                        quartile=str(row.get('quartile', ''))
-                    )
-                    categories.append(cat)
-                    # Print category details
-                    if cat:
-                        print(f"Category IDs: {cat.getIds()}")
-                        print(f"Quartile: {cat.getQuartile()}")
-    return categories
-
-def GetAreasByJournalId(engine, journal_ids):
-    """Get all Area objects for a journal. Prints area details."""
-    if isinstance(journal_ids, str):
-        journal_ids = [journal_ids]
-    
-    areas = []
-    for handler in engine.categoryQuery:
-        for journal_id in journal_ids:
-            cat_df = handler.getById(journal_id)
-            if cat_df is not None and not cat_df.empty:
-                for _, row in cat_df.iterrows():
-                    if 'areas' in row and pd.notna(row['areas']):
-                        area_names = [a.strip() for a in str(row['areas']).split(',') if a.strip()]
-                        for area_name in area_names:
-                            area = Area(identifiers=[area_name])
-                            areas.append(area)
-                            # Print area details
-                            if area:
-                                print(f"Area IDs: {area.getIds()}")
-    
-    # Remove duplicates
-    unique_areas = list({a.getIds()[0]: a for a in areas}.values())
-    return unique_areas
 
 # --------------------------------
 journal = "data" + sep + "doaj.csv"
@@ -225,11 +288,5 @@ que.addJournalHandler(jou_qh)
 
 print("\nTesting various IDs:")
 print("-" * 50)
-
-result_q3 = que.getJournalPublishedBy("Salento")
-print(result_q3)
 result_q4 = que.getEntityById("2224-9281")
 print_journal(result_q4)
-
-if result_q3 and result_q4: 
-    print("Both entities found successfully! ⭐")
