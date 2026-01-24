@@ -1,6 +1,5 @@
 # testing journal related methods in BasicQueryEngine
-from QueryEngine import BasicQueryEngine
-from impl import JournalQueryHandler
+from impl import JournalQueryHandler, BasicQueryEngine 
 handler = JournalQueryHandler("data/doaj-csv.csv")
 
 # ============================================
