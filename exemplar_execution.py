@@ -34,7 +34,7 @@ try:
     jou = JournalUploadHandler()
     jou.setDbPathOrUrl(grp_endpoint) 
     jou.serializeToTTL("data/doaj.csv", "data/doaj.ttl")
-    # jou.pushDataToDb("data/doaj.csv")
+    jou.pushDataToDb("data/doaj.csv")
     print("✓ SUCCESS: Graph database handler created and data serialized to TTL")
 except Exception as e:
     print(f"✗ FAIL: Graph database creation failed - {e}")
