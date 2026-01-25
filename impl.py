@@ -558,14 +558,14 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
     # -----------------------------
     # Get by identifiers
     # -----------------------------
-    def getById(self, identifiers) -> pd.DataFrame:
+    def getById(self, category_id) -> pd.DataFrame:
         query = """
         SELECT category_id, quartile, identifiers, areas
         FROM categories
-        WHERE identifiers = ?
+        WHERE category_id = ?
         """
         conn = sqlite3.connect(self.getDbPathOrUrl())
-        df = pd.read_sql_query(query, conn, params=(identifiers,))
+        df = pd.read_sql_query(query, conn, params=(category_id,))
         conn.close()
         return df
 
