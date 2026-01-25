@@ -1,7 +1,7 @@
 # test_queryengine_simple.py
 # Testing BasicQueryEngine (assumes databases already populated)
 
-from impl_backup import CategoryQueryHandler, JournalQueryHandler, BasicQueryEngine
+from impl import CategoryQueryHandler, JournalQueryHandler, BasicQueryEngine
 
 print("=" * 70)
 print("TESTING BasicQueryEngine with impl_backup.py")
