@@ -32,11 +32,10 @@ class TestProjectBasic(unittest.TestCase):
     journal = "data" + sep + "doaj.csv"
     category = "data" + sep + "scimago.json"
     relational = "." + sep + "relational.db"
-<<<<<<<< HEAD:do_methods_here!/River_test.py
-    graph = "http://192.168.78.152:9999/blazegraph/sparql"
-========
-    graph = "http://192.168.78.106:9999/blazegraph/"
->>>>>>>> c84608529aa89d4bf8e10d20d497a332528c1607:tests/River_test.py
+
+    graph = "http://192.168.1.22:9999/blazegraph/sparql"
+
+
 
     
     def test_01_JournalUploadHandler(self):
@@ -163,5 +162,4 @@ class TestProjectBasic(unittest.TestCase):
         for i in r:
             self.assertIsInstance(i, Journal)
 
-if __name__ == '__main__':
-    unittest.main()
+unittest.main(verbosity=2)
