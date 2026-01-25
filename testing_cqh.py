@@ -3,7 +3,7 @@
 # ------------------------
 # Test file for CategoryQueryHandler (relational DB)
 # No Graph DB dependencies
-from impl_fahmy import CategoryQueryHandler
+from impl import CategoryQueryHandler
 
 # ------------------------
 # Configure database path
@@ -18,8 +18,8 @@ cqh = CategoryQueryHandler(dbPathOrUrl=db_path)
 # ------------------------
 # 1️⃣ Test getById()
 # ------------------------
-identifiers = "2658-6533"  # Replace with a valid identifiers from your DB
-df_by_id = cqh.getById(identifiers)
+category_id = "Genetics"  # Replace with a valid category_id from your DB
+df_by_id = cqh.getById(category_id)
 print("=== getById() ===")
 print(df_by_id)
 print("\nRows returned:", len(df_by_id))
