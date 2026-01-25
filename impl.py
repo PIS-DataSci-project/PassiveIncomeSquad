@@ -556,16 +556,16 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
             self.setDbPathOrUrl(dbPathOrUrl)
 
     # -----------------------------
-    # Get by category_id
+    # Get by identifiers
     # -----------------------------
-    def getById(self, category_id) -> pd.DataFrame:
+    def getById(self, identifiers) -> pd.DataFrame:
         query = """
         SELECT category_id, quartile, identifiers, areas
         FROM categories
-        WHERE category_id = ?
+        WHERE identifiers = ?
         """
         conn = sqlite3.connect(self.getDbPathOrUrl())
-        df = pd.read_sql_query(query, conn, params=(category_id,))
+        df = pd.read_sql_query(query, conn, params=(identifiers,))
         conn.close()
         return df
 
