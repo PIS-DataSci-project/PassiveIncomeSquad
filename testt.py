@@ -30,7 +30,7 @@ else:
 # Test 3: Setup and test
 print("\n3. Testing full integration...")
 jq = JournalQueryHandler()
-jq.setDbPathOrUrl("http://127.0.0.1:8080/blazegraph/sparql")
+jq.setDbPathOrUrl("http://127.0.0.1:9999/blazegraph/sparql")
 engine.addJournalHandler(jq)
 
 cq = CategoryQueryHandler()

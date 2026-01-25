@@ -365,7 +365,7 @@ class JournalQueryHandler(QueryHandler):
             ?journal rdf:type schema:Periodical .
             OPTIONAL {{ ?journal schema:title ?title }}
             ?journal schema:identifier ?identifier .
-            FILTER(CONTAINS(STR(?identifiers), "{escaped_id}"))
+            FILTER(CONTAINS(STR(?identifier), "{escaped_id}"))
             OPTIONAL {{ ?journal schema:inLanguage ?language }}
             OPTIONAL {{ ?journal schema:publishedBy ?publisher }}
             OPTIONAL {{ ?journal schema:award ?seal }}
