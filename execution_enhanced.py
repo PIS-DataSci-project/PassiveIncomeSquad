@@ -10,6 +10,47 @@ from impl import JournalUploadHandler, JournalQueryHandler
 # 3) Importing the class for dealing with mashup queries
 from impl import BasicQueryEngine, FullQueryEngine
 
+import os
+import sqlite3
+from SPARQLWrapper import SPARQLWrapper, JSON
+
+# Helper function to check if Blazegraph has data
+def check_blazegraph_data(endpoint):
+    """Check if Blazegraph already contains journal data"""
+    try:
+        sparql = SPARQLWrapper(endpoint)
+        query = """
+        PREFIX schema: <https://schema.org/>
+        SELECT (COUNT(?journal) as ?count)
+        WHERE {
+            ?journal a schema:Periodical .
+        }
+        """
+        sparql.setQuery(query)
+        sparql.setReturnFormat(JSON)
+        results = sparql.query().convert()
+        count = int(results["results"]["bindings"][0]["count"]["value"])
+        return count
+    except Exception as e:
+        print(f"  Warning: Could not check Blazegraph data: {e}")
+        return 0
+
+# Helper function to check if SQLite has data
+def check_sqlite_data(db_path):
+    """Check if SQLite database already contains category data"""
+    if not os.path.exists(db_path):
+        return 0
+    try:
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM categories")
+        count = cur.fetchone()[0]
+        conn.close()
+        return count
+    except Exception as e:
+        print(f"  Warning: Could not check SQLite data: {e}")
+        return 0
+
 # Once all the classes are imported, first create the relational
 # database using the related source data
 print("=" * 60)
@@ -17,10 +58,28 @@ print("STEP 1: Creating relational database")
 print("=" * 60)
 try:
     rel_path = "relational.db"
-    cat = CategoryUploadHandler()
-    cat.setDbPathOrUrl(rel_path)
-    cat.pushDataToDb("data/scimago.json")
-    print("✓ SUCCESS: Relational database created and data uploaded")
+    
+    # Check for existing data
+    existing_count = check_sqlite_data(rel_path)
+    if existing_count > 0:
+        print(f"⚠ WARNING: Database already contains {existing_count} category records")
+        response = input("  Do you want to skip upload? (yes/no): ").strip().lower()
+        if response == "yes":
+            print("✓ Skipping relational database upload")
+            cat = CategoryUploadHandler()
+            cat.setDbPathOrUrl(rel_path)
+        else:
+            print("  Proceeding with upload (may create duplicates)...")
+            cat = CategoryUploadHandler()
+            cat.setDbPathOrUrl(rel_path)
+            cat.pushDataToDb("data/scimago.json")
+            print("✓ SUCCESS: Relational database created and data uploaded")
+    else:
+        print("  Database is empty - safe to upload")
+        cat = CategoryUploadHandler()
+        cat.setDbPathOrUrl(rel_path)
+        cat.pushDataToDb("data/scimago.json")
+        print("✓ SUCCESS: Relational database created and data uploaded")
 except Exception as e:
     print(f"✗ FAIL: Relational database creation failed - {e}")
 
@@ -31,11 +90,30 @@ print("STEP 2: Creating graph database")
 print("=" * 60)
 try:
     grp_endpoint = "http://127.0.0.1:9999/blazegraph/sparql"
-    jou = JournalUploadHandler()
-    jou.setDbPathOrUrl(grp_endpoint) 
-    jou.serializeToTTL("data/doaj.csv", "data/doaj.ttl")
-    jou.pushDataToDb("data/doaj.csv")
-    print("✓ SUCCESS: Graph database handler created and data serialized to TTL")
+    
+    # Check for existing data
+    existing_count = check_blazegraph_data(grp_endpoint)
+    if existing_count > 0:
+        print(f"⚠ WARNING: Blazegraph already contains {existing_count} journal records")
+        response = input("  Do you want to skip upload? (yes/no): ").strip().lower()
+        if response == "yes":
+            print("✓ Skipping graph database upload")
+            jou = JournalUploadHandler()
+            jou.setDbPathOrUrl(grp_endpoint)
+        else:
+            print("  Proceeding with upload (may create duplicates)...")
+            jou = JournalUploadHandler()
+            jou.setDbPathOrUrl(grp_endpoint)
+            jou.serializeToTTL("data/doaj.csv", "data/doaj.ttl")
+            jou.pushDataToDb("data/doaj.csv")
+            print("✓ SUCCESS: Graph database handler created and data serialized to TTL")
+    else:
+        print("  Database is empty - safe to upload")
+        jou = JournalUploadHandler()
+        jou.setDbPathOrUrl(grp_endpoint)
+        jou.serializeToTTL("data/doaj.csv", "data/doaj.ttl")
+        jou.pushDataToDb("data/doaj.csv")
+        print("✓ SUCCESS: Graph database handler created and data serialized to TTL")
 except Exception as e:
     print(f"✗ FAIL: Graph database creation failed - {e}")
 
