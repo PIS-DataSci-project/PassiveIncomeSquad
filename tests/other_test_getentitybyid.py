@@ -1,4 +1,6 @@
 from os import sep
+import sys
+sys.path.append('..')
 
 from matplotlib.pylab import rint
 from impl import JournalQueryHandler, CategoryQueryHandler, BasicQueryEngine
