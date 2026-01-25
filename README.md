@@ -1,66 +1,66 @@
+||━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+<div align="center">
+
 # 🤖 Data Science Project
 
 Welcome to this little corner of data, code, and curiosity ✨  
-This project was developed as part of a **Data Science / Digital Humanities** course and focuses on data processing, querying, and integration using Python.
+This project was developed for the [Data Science course](https://www.unibo.it/en/teaching/course-unit-catalogue/course-unit/2024/467046) exam of the [Digital Humanities and Digital Knowledge MA's degree](https://corsi.unibo.it/2cycle/DigitalHumanitiesKnowledge) at the [University of Bologna](http://www.unibo.it/en) and focuses on data processing, querying, and integration using Python.
 
+-:-
 ## 🧠 Project Overview
 
 This project explores:
-- 📊 Data collection and cleaning
-- 🗄️ Structured data (CSV, JSON, databases)
-- 🔍 Query engines and query handlers
-- 🧪 Integration of multiple data sources
+📊 Data collection and cleaning
+|🗄️ Structured data (CSV, JSON, databases)
+|🔍 Query engines and query handlers
+|🧪 Integration of multiple data sources
 
 The goal is to transform raw data into meaningful, queryable knowledge 💫
 
-## 🛠️ Technologies Used
-
-- **Python 🐍**
-- pandas
-- numpy
-- rdflib
-- sqlalchemy
-- requests
-- Blazegraph (RDF triplestore)
-
-
----
+-:-
 ## 🧩 UML Diagrams Gallery
 
 Visual overview of the system architecture and class relationships 🌷
 
-<table>
+<table align="center">
   <tr>
-   <td align="center">
-      <a href="img_project">
-        <img src="img_project\workflow.png" width="300"/>
+    <td align="center">
+      <a href="img_project/workflow.png">
+        <img src="img_project/workflow.png" width="300"/>
       </a><br/>
       <sub><b>Workflow</b></sub>
     </td>
     <td align="center">
-      <a href="img_project">
-        <img src="img_project\data_model.png" width="300"/>
+      <a href="img_project/data_model.png">
+        <img src="img_project/data_model.png" width="300"/>
       </a><br/>
       <sub><b>Data Model</b></sub>
     </td>
     <td align="center">
-      <a href="img_project">
-        <img src="img_project\uml_data_model_classes.png" width="300"/>
+      <a href="img_project/uml_data_model_classes.png">
+        <img src="img_project/uml_data_model_classes.png" width="300"/>
       </a><br/>
       <sub><b>Data Model Classes</b></sub>
     </td>
     <td align="center">
-      <a href="img_project">
-        <img src="img_project\uml_additional_classes.png" width="300"/>
+      <a href="img_project/uml_additional_classes.png">
+        <img src="img_project/uml_additional_classes.png" width="300"/>
       </a><br/>
       <sub><b>Additional Classes</b></sub>
     </td>
   </tr>
 </table>
 
-# PassiveIncomeSquad
+-:-
 
-🌟 Claudia
-🌟 Fahmida
-🌟 Polina
-🌟 River
+# The Team: *PassiveIncomeSquad*
+
+<p align="center">
+ <a href="https://github.com/claudiarom"><b>Claudia</b></a> &nbsp;•&nbsp;
+ <a href="https://github.com/Fahmyrose"><b>Fahmida</b></a> &nbsp;•&nbsp;
+ <a href="https://github.com/polinakhrm"><b>Polina</b></a> &nbsp;•&nbsp;
+ <a href="https://github.com/ChenQingHa"><b>River</b></a>
+</p>
+</div>
