@@ -20,8 +20,27 @@ def print_journal(journal):
     print(f"DOAJ Seal: {journal.hasDOAJSeal()}")
     print(f"License: {journal.getLicense()}")
     print(f"Has APC: {journal.hasAPC()}")
-    print(f"Categories:({journal.getCategories()})")
-    print(f"Areas ({journal.getAreas()}):")
+    
+    # Print categories with their details
+    categories = journal.getCategories()
+    if categories:
+        print(f"Categories ({len(categories)}):")
+        for cat in categories:
+            cat_ids = cat.getIds()
+            quartile = cat.getQuartile()
+            print(f"  - {cat_ids[0] if cat_ids else 'N/A'} (Quartile: {quartile})")
+    else:
+        print("Categories: []")
+    
+    # Print areas with their details
+    areas = journal.getAreas()
+    if areas:
+        print(f"Areas ({len(areas)}):")
+        for area in areas:
+            area_ids = area.getIds()
+            print(f"  - {area_ids[0] if area_ids else 'N/A'}")
+    else:
+        print("Areas: []")
         
 journal = "data" + sep + "doaj.csv"
 category = "data" + sep + "scimago.json"
