@@ -812,25 +812,24 @@ class BasicQueryEngine: #Fahmida
     def getEntityById(self, entity_id: str):
         """
         Search for entity by ID in all databases.
-        Returns: Journal, Category, Area, or None
+        Returns: IdentifiableEntity (Journal, Category, or Area), or None
         """
         if not entity_id:
             return None
             
-        # 1. Search in journal handlers (Blazegraph)
+        # 1. Try to find as a Journal (by ISSN/EISSN)
         journal_dfs = []
         for handler in self.journalQuery:
             result_df = handler.getById(entity_id)
             if result_df is not None and not result_df.empty:
                 journal_dfs.append(result_df)
         
-        # Merge and remove duplicates from journal results
         if journal_dfs:
             merged = pd.concat(journal_dfs, ignore_index=True).drop_duplicates()
             if not merged.empty:
                 row = merged.iloc[0]
                 
-                # Parse identifiers from the identifier field (may contain multiple IDs separated by "; ")
+                # Parse identifiers
                 identifiers = []
                 if 'identifier' in row and pd.notna(row['identifier']):
                     id_str = str(row['identifier'])
@@ -839,17 +838,17 @@ class BasicQueryEngine: #Fahmida
                 if not identifiers: 
                     identifiers = [entity_id]
                 
-                # Parse languages from the language field (may contain multiple languages)
+                # Parse languages
                 languages = []
                 if 'language' in row and pd.notna(row['language']):
                     lang_str = str(row['language'])
                     languages = [lang.strip() for lang in lang_str.split(',') if lang.strip()]
                 
-                # Get categories and areas using helper methods
+                # Get categories and areas
                 categories = self.getCategoriesByJournalId(identifiers)
                 areas = self.getAreasByJournalId(identifiers)
                 
-                # Convert boolean strings to actual booleans
+                # Convert booleans
                 seal = False
                 if 'seal' in row:
                     if isinstance(row['seal'], str):
@@ -876,26 +875,27 @@ class BasicQueryEngine: #Fahmida
                     areas=areas
                 )
         
-        # 2. Search in category handlers (SQLite) by category_id
-        category_dfs = []
+        # 2. Try to find as a Category (by category_id)
         for handler in self.categoryQuery:
-            result_df = handler.getById(entity_id)
-            if result_df is not None and not result_df.empty:
-                category_dfs.append(result_df)
+            all_cats = handler.getAllCategories()
+            if not all_cats.empty:
+                matching = all_cats[all_cats['category_id'] == entity_id]
+                if not matching.empty:
+                    row = matching.iloc[0]
+                    return Category(
+                        identifiers=[str(row['category_id'])],
+                        quartile=str(row.get('quartile', ''))
+                    )
         
-        # Merge and remove duplicates from category results
-        if category_dfs:
-            merged = pd.concat(category_dfs, ignore_index=True).drop_duplicates()
-            if not merged.empty:
-                row = merged.iloc[0]
-                
-                # Return Category with category_id as identifier
-                return Category(
-                    identifiers=[str(row.get('category_id', entity_id))],
-                    quartile=str(row.get('quartile', ''))
-                )
+        # 3. Try to find as an Area (by area name/id)
+        for handler in self.categoryQuery:
+            all_areas = handler.getAllAreas()
+            if not all_areas.empty:
+                matching = all_areas[all_areas['area'] == entity_id]
+                if not matching.empty:
+                    return Area(identifiers=[entity_id])
         
-        # 3. Not found in any database
+        # 4. Not found
         return None
        
        

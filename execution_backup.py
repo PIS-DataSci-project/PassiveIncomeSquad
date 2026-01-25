@@ -64,6 +64,21 @@ except Exception as e:
     print(f"✗ Error: {e}")
     error_count += 1
 
+print("\n[TEST 2.1] getEntityById('Medicine')")
+print("\n" + "-" * 70)
+try: 
+    resultq2_1 = que.getEntityById("Medicine")
+    if resultq2_1:
+        print(f"✓ Found entity: {type(resultq2_1).__name__}")
+        print(f"  IDs: {resultq2_1.getIds()}")
+        if hasattr(resultq2_1, 'getQuartile'):
+            print(f"  Quartile: {resultq2_1.getQuartile()}")
+    else:
+        print("✗ Entity not found (returned None)")
+except Exception as e:
+    print(f"✗ Error: {e}")
+    error_count += 1    
+
 # Test 3: Get entity by journal ISSN
 print("\n[TEST 3] getEntityById('2096-6652')")
 print("-" * 70)
