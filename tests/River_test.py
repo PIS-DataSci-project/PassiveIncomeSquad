@@ -15,10 +15,10 @@
 import unittest
 from os import sep
 from pandas import DataFrame
-from impl import JournalUploadHandler, CategoryUploadHandler
-from impl import JournalQueryHandler, CategoryQueryHandler
-from impl import FullQueryEngine
-from impl import Journal, Category, Area
+from River_imply import JournalUploadHandler, CategoryUploadHandler
+from River_imply import JournalQueryHandler, CategoryQueryHandler
+from River_imply import FullQueryEngine
+from River_imply import Journal, Category, Area
 
 # REMEMBER: before launching the tests, please run the Blazegraph instance!
 
@@ -32,13 +32,15 @@ class TestProjectBasic(unittest.TestCase):
     journal = "data" + sep + "doaj.csv"
     category = "data" + sep + "scimago.json"
     relational = "." + sep + "relational.db"
-    graph = "http://192.168.78.102:9999/blazegraph/namespace/kb/sparql"
+    graph = "http://192.168.78.106:9999/blazegraph/"
+
     
     def test_01_JournalUploadHandler(self):
         u = JournalUploadHandler()
         self.assertTrue(u.setDbPathOrUrl(self.graph))
         self.assertEqual(u.getDbPathOrUrl(), self.graph)
         self.assertTrue(u.pushDataToDb(self.journal))
+        self.assertTrue(u.createGraph(self.graph))
 
     def test_02_CategoryUploadHandler(self):
         u = CategoryUploadHandler()
@@ -156,3 +158,6 @@ class TestProjectBasic(unittest.TestCase):
         self.assertIsInstance(r, list)
         for i in r:
             self.assertIsInstance(i, Journal)
+
+if __name__ == '__main__':
+    unittest.main()

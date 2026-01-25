@@ -15,10 +15,10 @@
 import unittest
 from os import sep
 from pandas import DataFrame
-from River_imply import JournalUploadHandler, CategoryUploadHandler
-from River_imply import JournalQueryHandler, CategoryQueryHandler
-from River_imply import FullQueryEngine
-from River_imply import Journal, Category, Area
+from impl import JournalUploadHandler, CategoryUploadHandler
+from impl import JournalQueryHandler, CategoryQueryHandler
+from impl import FullQueryEngine
+from impl import Journal, Category, Area
 
 # REMEMBER: before launching the tests, please run the Blazegraph instance!
 
@@ -32,49 +32,9 @@ class TestProjectBasic(unittest.TestCase):
     journal = "data" + sep + "doaj.csv"
     category = "data" + sep + "scimago.json"
     relational = "." + sep + "relational.db"
-    graph = "http://192.168.1.22:9999/blazegraph/sparql"
-
+    graph = "http://192.168.78.106:9999/blazegraph/"
     
-    def test_01_JournalUploadHandler(self):
-        u = JournalUploadHandler()
-        self.assertTrue(u.setDbPathOrUrl(self.graph))
-        self.assertEqual(u.getDbPathOrUrl(), self.graph)
-        self.assertTrue(u.pushDataToDb(self.journal))
-        self.assertTrue(u.createGraph(self.graph))
-
-    def test_02_CategoryUploadHandler(self):
-        u = CategoryUploadHandler()
-        self.assertTrue(u.setDbPathOrUrl(self.relational))
-        self.assertEqual(u.getDbPathOrUrl(), self.relational)
-        self.assertTrue(u.pushDataToDb(self.category))
-    
-    def test_03_JournalQueryHandler(self):
-        q = JournalQueryHandler()
-        self.assertTrue(q.setDbPathOrUrl(self.graph))
-        self.assertEqual(q.getDbPathOrUrl(), self.graph)
-
-        self.assertIsInstance(q.getById("just_a_test"), DataFrame)
-
-        self.assertIsInstance(q.getAllJournals(), DataFrame)
-        self.assertIsInstance(q.getJournalsWithTitle("just_a_test"), DataFrame)
-        self.assertIsInstance(q.getJournalsPublishedBy("just_a_test"), DataFrame)
-        self.assertIsInstance(q.getJournalsWithLicense({"just_a_test"}), DataFrame)
-        self.assertIsInstance(q.getJournalsWithAPC(), DataFrame)
-        self.assertIsInstance(q.getJournalsWithDOAJSeal(), DataFrame)
-    
-    def test_04_ProcessDataQueryHandler(self):
-        q = CategoryQueryHandler()
-        self.assertTrue(q.setDbPathOrUrl(self.relational))
-        self.assertEqual(q.getDbPathOrUrl(), self.relational)
-
-        self.assertIsInstance(q.getById("just_a_test"), DataFrame)
-
-        self.assertIsInstance(q.getAllCategories(), DataFrame)
-        self.assertIsInstance(q.getAllAreas(), DataFrame)
-        self.assertIsInstance(q.getCategoriesWithQuartile({"just_a_test"}), DataFrame)
-        self.assertIsInstance(q.getCategoriesAssignedToAreas({"just_a_test"}), DataFrame)
-        self.assertIsInstance(q.getAreasAssignedToCategories({"just_a_test"}), DataFrame)
-        
+   
     def test_05_FullQueryEngine(self):
         jq = JournalQueryHandler()
         jq.setDbPathOrUrl(self.graph)
@@ -158,6 +118,3 @@ class TestProjectBasic(unittest.TestCase):
         self.assertIsInstance(r, list)
         for i in r:
             self.assertIsInstance(i, Journal)
-
-if __name__ == '__main__':
-    unittest.main()
