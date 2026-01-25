@@ -812,7 +812,7 @@ class BasicQueryEngine: #Fahmida
     def getEntityById(self, entity_id: str):
         """
         Search for entity by ID in all databases.
-        Returns: Journal or Category, or None
+        Returns: Journal, Category, Area, or None
         """
         if not entity_id:
             return None
@@ -876,7 +876,7 @@ class BasicQueryEngine: #Fahmida
                     areas=areas
                 )
         
-        # 2. Search in category handlers (SQLite)
+        # 2. Search in category handlers (SQLite) by category_id
         category_dfs = []
         for handler in self.categoryQuery:
             result_df = handler.getById(entity_id)
@@ -889,35 +889,13 @@ class BasicQueryEngine: #Fahmida
             if not merged.empty:
                 row = merged.iloc[0]
                 
-                # Return Category
-                identifiers = []
-                if 'identifiers' in row and pd.notna(row['identifiers']):
-                    identifiers.append(str(row['identifiers']))
-                
+                # Return Category with category_id as identifier
                 return Category(
-                    identifiers=list(set(identifiers)) if identifiers else [entity_id],
+                    identifiers=[str(row.get('category_id', entity_id))],
                     quartile=str(row.get('quartile', ''))
                 )
         
-        # 3. If not found as journal in Blazegraph or as category, check if we have category/area data for this identifier
-        categories = self.getCategoriesByJournalId(entity_id)
-        areas = self.getAreasByJournalId(entity_id)
-        
-        if categories or areas:
-            # Found category/area data, return minimal Journal object
-            return Journal(
-                identifiers=[entity_id],
-                title="",
-                language=[],
-                seal=False,
-                license="",
-                apc=False,
-                publisher="",
-                categories=categories,
-                areas=areas
-            )
-        
-        # 4. Not found in any database
+        # 3. Not found in any database
         return None
        
        

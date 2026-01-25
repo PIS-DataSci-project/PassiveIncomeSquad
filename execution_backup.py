@@ -1,7 +1,7 @@
 # test_queryengine_simple.py
 # Testing BasicQueryEngine (assumes databases already populated)
 
-from impl import CategoryQueryHandler, JournalQueryHandler, BasicQueryEngine
+from impl_backup import CategoryQueryHandler, JournalQueryHandler, BasicQueryEngine
 
 print("=" * 70)
 print("TESTING BasicQueryEngine with impl_backup.py")
@@ -77,8 +77,18 @@ try:
             print(f"  Publisher: {result_q4.getPublisher()}")
             print(f"  Has DOAJ Seal: {result_q4.hasDOAJSeal()}")
             print(f"  Has APC: {result_q4.hasAPC()}")
-            print(f"  Categories: {len(result_q4.getCategories())}")
-            print(f"  Areas: {len(result_q4.getAreas())}")
+            
+            # Show category details
+            categories = result_q4.getCategories()
+            print(f"  Categories ({len(categories)}):")
+            for cat in categories:
+                print(f"    - {cat.getIds()[0]} (Quartile: {cat.getQuartile()})")
+            
+            # Show area details
+            areas = result_q4.getAreas()
+            print(f"  Areas ({len(areas)}):")
+            for area in areas:
+                print(f"    - {area.getIds()[0]}")
     else:
         print("✗ Entity not found (returned None)")
 except Exception as e:
