@@ -556,7 +556,7 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
             self.setDbPathOrUrl(dbPathOrUrl)
 
     # -----------------------------
-    # Get by identifiers
+    # Get by category_id
     # -----------------------------
     def getById(self, category_id) -> pd.DataFrame:
         query = """

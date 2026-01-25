@@ -457,7 +457,7 @@ class CategoryQueryHandler(QueryHandler):
     # -----------------------------
     # Get by category_id
     # -----------------------------
-    def getById(self, category_id) -> pd.DataFrame:
+    def getById(self, category_id) -> pd.DataFrame: #identifiers or category_id
         query = """
         SELECT category_id, quartile, identifiers, areas
         FROM categories
