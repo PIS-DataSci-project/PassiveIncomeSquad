@@ -661,7 +661,7 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
     # -----------------------------
     # Get categories by journal identifier
     # -----------------------------
-    def getCategoriesByJournalId(self, journal_id) -> pd.DataFrame:
+    def getCategoriesByJournalId(self, journal_id) -> pd.DataFrame: # Claudia
         """
         Returns categories associated with a specific journal identifier.
         """
@@ -678,7 +678,7 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
     # -----------------------------
     # Get areas by journal identifier
     # -----------------------------
-    def getAreasByJournalId(self, journal_id) -> pd.DataFrame:
+    def getAreasByJournalId(self, journal_id) -> pd.DataFrame: # Claudia
         """
         Returns areas associated with a specific journal identifier.
         """
