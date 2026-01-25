@@ -164,7 +164,7 @@ class JournalUploadHandler(UploadHandler): # CLAUDIA
         journals['DOAJ Seal'] = journals['DOAJ Seal'].str.lower() == 'yes'
         journals['APC'] = journals['APC'].str.lower() == 'yes'
         
-        for idx, row in journals.iterrows():
+        for idx, row in journals.iterrows(): 
             local_id = "journal-" + str(idx) 
             subj = URIRef(base_url + "/" + local_id)
             g.add((subj, RDF.type, Journal))
