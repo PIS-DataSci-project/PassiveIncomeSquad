@@ -4,7 +4,7 @@ from impl import JournalQueryHandler
 # ================================
 # CONFIG 
 # ================================
-ENDPOINT = "http://172.20.10.2:9999/blazegraph/namespace/kb/sparql" 
+ENDPOINT = "http://127.0.0.1:9999/blazegraph/sparql" 
 print("=" * 60)
 print("Testing JournalQueryHandler")
 print("Connecting to Blazegraph endpoint:")
