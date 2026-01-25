@@ -21,14 +21,14 @@ class IdentifiableEntity(object): # CLAUDIA
     def __init__(self, identifiers): 
         self.identifiers = list()
         for identifier in identifiers:
-            self.identifiers.append(identifier)
+            self.identifiers.append(identifier) # or self.identifiers.add(identifier)
              
     def getIds(self):
         list_ids = list()
         for identifier in self.identifiers:
             list_ids.append(identifier)
         list_ids.sort() # sort the list of IDs
-        return list_ids
+        return list_ids # or return sorted(self.identifiers)
     
 #subclass1 of IdentifiableEntity    
 class Journal(IdentifiableEntity): # CLAUDIA 
