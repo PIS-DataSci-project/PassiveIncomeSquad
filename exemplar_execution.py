@@ -33,7 +33,7 @@ try:
     grp_endpoint = "http://172.20.10.2:9999/blazegraph/sparql"
     jou = JournalUploadHandler()
     jou.setDbPathOrUrl(grp_endpoint) 
-    jou.serializeToTTL("data/doaj.csv", "data/doaj.ttl")
+    jou.serializeToTTL("data/doaj.csv", "doaj.ttl")
     jou.pushDataToDb("data/doaj.csv")
     print("✓ SUCCESS: Graph database handler created and data serialized to TTL")
 except Exception as e:

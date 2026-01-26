@@ -1,74 +1,89 @@
-# Test script - save as test_fixes.py
-from impl import BasicQueryEngine, JournalQueryHandler, CategoryQueryHandler
+from dbm import sqlite3
+import pandas as pd
+from typing import List, Dict
+from impl import IdentifiableEntity, Journal, Category, Area
+from impl import JournalQueryHandler, CategoryQueryHandler  
+from from_uml_to_files.QueryEngine import *
+from os import sep
 
-print("=" * 60)
-print("TESTING IMMEDIATE FIXES")
-print("=" * 60)
-
-# Test 1: Check imports
-print("\n1. Testing imports...")
-try:
-    from pandas import read_csv
-    print("✓ read_csv import works")
-except ImportError as e:
-    print(f"✗ Import failed: {e}")
-
-# Test 2: Check methods exist
-print("\n2. Testing BasicQueryEngine methods...")
-engine = BasicQueryEngine()
-
-if hasattr(engine, 'getCategoriesByJournalId'):
-    print("✓ getCategoriesByJournalId exists")
-else:
-    print("✗ getCategoriesByJournalId MISSING")
-
-if hasattr(engine, 'getAreasByJournalId'):
-    print("✓ getAreasByJournalId exists")
-else:
-    print("✗ getAreasByJournalId MISSING")
-
-# Test 3: Setup and test
-print("\n3. Testing full integration...")
-jq = JournalQueryHandler()
-jq.setDbPathOrUrl("http://127.0.0.1:9999/blazegraph/sparql")
-engine.addJournalHandler(jq)
-
-cq = CategoryQueryHandler()
-cq.setDbPathOrUrl("relational.db")
-engine.addCategoryHandler(cq)
-
-# Test getCategoriesByJournalId
-print("\n4. Testing getCategoriesByJournalId...")
-try:
-    categories = engine.getCategoriesByJournalId("2532-8816")
-    print(f"✓ Method works, returned: {categories}")
-except Exception as e:
-    print(f"✗ Error: {e}")
-
-# Test getAreasByJournalId
-print("\n5. Testing getAreasByJournalId...")
-try:
-    areas = engine.getAreasByJournalId("2532-8816")
-    print(f"✓ Method works, returned: {areas}")
-except Exception as e:
-    print(f"✗ Error: {e}")
-
-# Test getEntityById
-print("\n6. Testing getEntityById...")
-try:
-    entity = engine.getEntityById("2532-8816")
-    if entity:
-        print(f"✓ Found entity: {type(entity).__name__}")
-        print(f"  Title: {entity.getTitle() if hasattr(entity, 'getTitle') else 'N/A'}")
-        print(f"  Categories: {entity.getCategories() if hasattr(entity, 'getCategories') else 'N/A'}")
-        print(f"  Areas: {entity.getAreas() if hasattr(entity, 'getAreas') else 'N/A'}")
+def print_journal(journal):
+    if journal is None:
+        print("None")
+        return
+    
+    try:
+        print(f"Title: {journal.getTitle()}")
+    except UnicodeEncodeError:
+        print(f"Title: [Unicode encoding error - cannot display]")
+    print(f"IDs: {journal.getIds()}")
+    print(f"Publisher: {journal.getPublisher()}")
+    print(f"Languages: {journal.getLanguage()}")
+    print(f"DOAJ Seal: {journal.hasDOAJSeal()}")
+    print(f"License: {journal.getLicense()}")
+    print(f"Has APC: {journal.hasAPC()}")
+    
+    # Print categories with their details
+    categories = journal.getCategories()
+    if categories:
+        print(f"Categories ({len(categories)}):")
+        for cat in categories:
+            cat_ids = cat.getIds()
+            quartile = cat.getQuartile()
+            print(f"  - {cat_ids[0] if cat_ids else 'N/A'} (Quartile: {quartile})")
     else:
-        print("✗ Entity not found")
-except Exception as e:
-    print(f"✗ Error: {e}")
-    import traceback
-    traceback.print_exc()
+        print("Categories: []")
+    
+    # Print areas with their details
+    areas = journal.getAreas()
+    if areas:
+        print(f"Areas ({len(areas)}):")
+        for area in areas:
+            area_ids = area.getIds()
+            print(f"  - {area_ids[0] if area_ids else 'N/A'}")
+    else:
+        print("Areas: []")
+        
+journal = "data" + sep + "doaj.csv"
+category = "data" + sep + "scimago.json"
+relational = "." + sep + "relational.db"
+grp_endpoint = "http://127.0.0.1:9999/blazegraph/sparql"
+    
+jq = JournalQueryHandler()
+jq.setDbPathOrUrl(grp_endpoint)
+cq = CategoryQueryHandler()
+cq.setDbPathOrUrl(relational)
 
-print("\n" + "=" * 60)
-print("TEST COMPLETE")
+fq = BasicQueryEngine()
+fq.cleanJournalHandlers()
+fq.cleanCategoryHandlers()
+fq.addJournalHandler(jq)
+fq.addCategoryHandler(cq)
+
+result = fq.getEntityById("just_a_test")
+if result is None:
+    print("Test passed: getEntityById returned None for non-existent ID")
+else:
+    print("Test failed: expected None but got", result)
+    
+# USAGE 
+cat_qh = CategoryQueryHandler()
+cat_qh.setDbPathOrUrl(relational)
+
+jou_qh = JournalQueryHandler()
+jou_qh.setDbPathOrUrl(grp_endpoint)
+
+# Finally, create a advanced mashup object for asking
+# about data
+que = BasicQueryEngine()
+que.addCategoryHandler(cat_qh)
+que.addJournalHandler(jou_qh)
+
+search_id = "1678-4766"
+print("\nSearching for journal with ID:", search_id)
 print("=" * 60)
+result_q4 = que.getEntityById(search_id)
+
+if result_q4 is None:
+    print("Result is None - journal not found in any database")
+else:
+    print_journal(result_q4)
