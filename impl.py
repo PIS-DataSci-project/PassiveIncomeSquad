@@ -119,7 +119,7 @@ class Handler(object): # CLAUDIA
             return False 
 
 #subclass of Handler
-class UploadHandler(Handler): #RIVER 
+class UploadHandler(Handler): # CLAUDIA 
     #Abstract handler for data upload operations
     def __init__(self):
         super().__init__()
