@@ -53,6 +53,20 @@ Visual overview of the system architecture and class relationships
   </tr>
 </table>
 
+
+
+
+-:-
+## 🧩 Brain Break: Crossword
+
+Tests taking too long? Try this crossword puzzle!
+
+<p align="center">
+  <a href="https://puzzles.independent.co.uk/games/easy-crossword" target="_blank">
+    <img src="https://img.shields.io/badge/🧩_Play_Crossword-FF6B6B?style=for-the-badge&logo=target&logoColor=white" alt="Crossword"/>
+  </a>
+</p>
+
 -:-
 # The Team: *PassiveIncomeSquad*
 
