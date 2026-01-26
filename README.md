@@ -17,7 +17,7 @@ This project explores:
 |🔍 Query engines and query handlers
 |🧪 Integration of multiple data sources
 
-The goal is to transform raw data into meaningful, queryable knowledge 💫
+**The goal of the project is to develop a software that enables one to process data stored in different formats and to upload them into two distinct databases to query these databases simultaneously according to predefined operations.**
 
 -:-
 ## 🧩 UML Diagrams Gallery
@@ -57,9 +57,9 @@ Visual overview of the system architecture and class relationships
 # The Team: *PassiveIncomeSquad*
 
 <p align="center">
- <a href="https://github.com/claudiarom"><b>Claudia</b></a> &nbsp;•&nbsp;
- <a href="https://github.com/Fahmyrose"><b>Fahmida</b></a> &nbsp;•&nbsp;
- <a href="https://github.com/polinakhrm"><b>Polina</b></a> &nbsp;•&nbsp;
- <a href="https://github.com/ChenQingHa"><b>River</b></a>
+ <a href="https://github.com/claudiarom"><b>Claudia Romanello</b></a> &nbsp;•&nbsp;
+ <a href="https://github.com/Fahmyrose"><b>Fahmida Islam</b></a> &nbsp;•&nbsp;
+ <a href="https://github.com/ChenQingHa"><b>QingHao Chen</b></a> &nbsp;•&nbsp;
+ <a href="https://github.com/polinakhrm"><b>Polina Khromtcova</b></a> 
 </p>
 </div>
