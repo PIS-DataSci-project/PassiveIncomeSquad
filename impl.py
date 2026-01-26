@@ -60,6 +60,7 @@ class Journal(IdentifiableEntity): # CLAUDIA
             list_langs.append(lang)
         list_langs.sort() # sort the list of languages
         return list_langs
+    
     def hasDOAJSeal(self): # boolean
         return self.seal
     
