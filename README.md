@@ -27,26 +27,26 @@ Visual overview of the system architecture and class relationships
 <table align="center">
   <tr>
     <td align="center">
-      <a href="img_project/workflow.png">
-        <img src="img_project/workflow.png" width="335"/>
+      <a href="img/workflow.png">
+        <img src="img/workflow.png" width="335"/>
       </a><br/>
       <sub><b>Workflow</b></sub>
     </td>
     <td align="center">
-      <a href="img_project/data_model.png">
-        <img src="img_project/data_model.png" width="400"/>
+      <a href="img/data_model.png">
+        <img src="img/data_model.png" width="400"/>
       </a><br/>
       <sub><b>Data Model</b></sub>
     </td>
     <td align="center">
-      <a href="img_project/uml_data_model_classes.png">
-        <img src="img_project/uml_data_model_classes.png" width="285"/>
+      <a href="img/uml_data_model_classes.png">
+        <img src="img/uml_data_model_classes.png" width="285"/>
       </a><br/>
       <sub><b>Data Model Classes</b></sub>
     </td>
     <td align="center">
-      <a href="img_project/uml_additional_classes.png">
-        <img src="img_project/uml_additional_classes.png" width="170"/>
+      <a href="img/uml_additional_classes.png">
+        <img src="img/uml_additional_classes.png" width="170"/>
       </a><br/>
       <sub><b>Additional Classes</b></sub>
     </td>
