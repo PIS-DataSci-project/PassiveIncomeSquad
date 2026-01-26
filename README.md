@@ -3,7 +3,7 @@
 # 🤖 Data Science Project
 
 Welcome to this little corner of data, code, and curiosity ✨  
-This project was developed for the 2024/25 [Data Science course](https://www.unibo.it/en/teaching/course-unit-catalogue/course-unit/2024/467046) exam of the [Digital Humanities and Digital Knowledge MA's degree](https://corsi.unibo.it/2cycle/DigitalHumanitiesKnowledge) at the [University of Bologna](http://www.unibo.it/en) and focuses on data processing, querying, and integration using Python.
+This project was developed for the 2024/25 [Data Science course](https://www.unibo.it/en/teaching/course-unit-catalogue/course-unit/2024/467046) exam taught by [Silvio Peroni](https://www.unibo.it/sitoweb/silvio.peroni) in the [Digital Humanities and Digital Knowledge MA's degree](https://corsi.unibo.it/2cycle/DigitalHumanitiesKnowledge) at the [University of Bologna](http://www.unibo.it/en) and focuses on data processing, querying, and integration using Python.
 
 -:-
 ## 🧠 Project Overview
@@ -52,7 +52,6 @@ Visual overview of the system architecture and class relationships
 </table>
 
 -:-
-
 # The Team: *PassiveIncomeSquad*
 
 <p align="center">
