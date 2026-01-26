@@ -32,7 +32,7 @@ class TestProjectBasic(unittest.TestCase):
     journal = "data" + sep + "doaj.csv"
     category = "data" + sep + "scimago.json"
     relational = "." + sep + "relational.db"
-    graph = "http://192.168.78.102:9999/blazegraph/namespace/kb/sparql"
+    graph = "http://10.44.28.59:9999/blazegraph/sparql"
     
     def test_01_JournalUploadHandler(self):
         u = JournalUploadHandler()
