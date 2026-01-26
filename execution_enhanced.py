@@ -89,7 +89,7 @@ print("\n" + "=" * 60)
 print("STEP 2: Creating graph database")
 print("=" * 60)
 try:
-    grp_endpoint = "http://127.0.0.1:9999/blazegraph/sparql"
+    grp_endpoint = "http://172.20.10.2:9999/blazegraph/sparql"
     
     # Check for existing data
     existing_count = check_blazegraph_data(grp_endpoint)
