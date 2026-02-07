@@ -51,7 +51,7 @@ class TestEntities(unittest.TestCase):
         self.assertTrue(journal.hasPublisher("Test Publisher"))
         self.assertFalse(journal.hasPublisher("Other Publisher"))
         
-        langs = journal.getLanguage()
+        langs = journal.getLanguages()
         self.assertIn("English", langs)
         self.assertIn("Spanish", langs)
         
@@ -67,7 +67,7 @@ class TestEntities(unittest.TestCase):
         print("  - getTitle()")
         print("  - getPublisher()")
         print("  - hasPublisher()")
-        print("  - getLanguage()")
+        print("  - getLanguages()")
         print("  - hasDOAJSeal()")
         print("  - getLicense()")
         print("  - hasAPC()")
@@ -402,7 +402,7 @@ class TestReturnTypes(unittest.TestCase):
         self.assertIsInstance(journal.getTitle(), str)
         self.assertIsInstance(journal.getPublisher(), str)
         self.assertIsInstance(journal.hasPublisher("Test"), bool)
-        self.assertIsInstance(journal.getLanguage(), list)
+        self.assertIsInstance(journal.getLanguages(), list)
         self.assertIsInstance(journal.hasDOAJSeal(), bool)
         self.assertIsInstance(journal.getLicense(), str)
         self.assertIsInstance(journal.hasAPC(), bool)

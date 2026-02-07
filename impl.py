@@ -54,7 +54,7 @@ class Journal(IdentifiableEntity): # CLAUDIA
             return True
         return False
     
-    def getLanguage(self):
+    def getLanguages(self):
         list_langs = list()
         for lang in self.language:
             list_langs.append(lang)

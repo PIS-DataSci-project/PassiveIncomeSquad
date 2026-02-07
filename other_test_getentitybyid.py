@@ -16,7 +16,7 @@ def print_journal(journal):
         print(f"Title: [Unicode encoding error - cannot display]")
     print(f"IDs: {journal.getIds()}")
     print(f"Publisher: {journal.getPublisher()}")
-    print(f"Languages: {journal.getLanguage()}")
+    print(f"Languages: {journal.getLanguages()}")
     print(f"DOAJ Seal: {journal.hasDOAJSeal()}")
     print(f"License: {journal.getLicense()}")
     print(f"Has APC: {journal.hasAPC()}")
