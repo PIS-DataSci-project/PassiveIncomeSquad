@@ -42,6 +42,10 @@ class FullQueryEngine(BasicQueryEngine):
         """
         if raw is None:
             return []
+        if isinstance(raw, (list, tuple, set)):
+            return [str(part).strip() for part in raw if str(part).strip()]
+        if pd.isna(raw):
+            return []
         text = str(raw).strip()
         if not text:
             return []
@@ -111,19 +115,19 @@ class FullQueryEngine(BasicQueryEngine):
                 continue
 
             # 只要这一行的任意 identifier 在 wanted_identifiers 里，就认为“命中”
-            hit = any(one_id in wanted_identifiers for one_id in row_ids)
-            if not hit:
+            matched_ids = [one_id for one_id in row_ids if one_id in wanted_identifiers]
+            if not matched_ids:
                 continue
 
             # 选一个稳定的 key：用“第一条 identifier”作为 map key（去重用）
             # 为什么不用 row["journal"]（URI）：
             # - 你们 mashup 的桥梁是 identifiers（ISSN/EISSN）
             # - categories 侧提供的也是 identifiers
-            key = row_ids[0]
+            key = matched_ids[0]
 
             if key not in journal_map:
                 journal_map[key] = Journal(
-                    identifiers=row_ids,
+                    identifiers=matched_ids,
                     title=row.get("title", ""),
                     language=self._parse_list_field(row.get("language")),
                     seal=row.get("seal", False),      # bool 暂且不处理，直接传
