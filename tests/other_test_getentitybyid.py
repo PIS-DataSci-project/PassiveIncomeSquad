@@ -46,7 +46,8 @@ journal = "data" + sep + "doaj.csv"
 category = "data" + sep + "scimago.json"
 relational = "." + sep + "relational.db"
 grp_endpoint = "http://127.0.0.1:9999/blazegraph/sparql"
-    
+
+   
 jq = JournalQueryHandler()
 jq.setDbPathOrUrl(grp_endpoint)
 cq = CategoryQueryHandler()
