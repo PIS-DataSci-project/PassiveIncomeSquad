@@ -45,8 +45,9 @@ def print_journal(journal):
 journal = "data" + sep + "doaj.csv"
 category = "data" + sep + "scimago.json"
 relational = "." + sep + "relational.db"
-grp_endpoint = "http://127.0.0.1:9999/blazegraph/sparql"
-    
+grp_endpoint = "http://172.20.10.2:9999/blazegraph/sparql"
+
+   
 jq = JournalQueryHandler()
 jq.setDbPathOrUrl(grp_endpoint)
 cq = CategoryQueryHandler()
