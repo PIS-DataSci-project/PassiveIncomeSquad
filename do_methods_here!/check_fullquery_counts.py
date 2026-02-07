@@ -8,7 +8,7 @@ import pandas as pd
 
 # ========= 你需要改这里：导入你实际的 Engine 和 Handlers =========
 # 例：from impl import FullQueryEngine, BasicQueryEngine, JournalQueryHandler, CategoryQueryHandler
-from impl import FullQueryEngine  # 你也可以换成 River_full 里的 FullQueryEngine
+from River_imply import FullQueryEngine  # 你也可以换成 River_full 里的 FullQueryEngine
 # from impl import JournalQueryHandler, CategoryQueryHandler
 # ================================================================
 

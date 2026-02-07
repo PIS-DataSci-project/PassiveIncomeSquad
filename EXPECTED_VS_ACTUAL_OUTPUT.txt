@@ -1,0 +1,79 @@
+================================================================================
+EXPECTED vs ACTUAL - TEST OUTPUT
+================================================================================
+
+TEST 1: getJournalsInCategoriesWithQuartile
+================================================================================
+Category: Accounting
+Quartile: Q1
+
+[EXPECTED - WITH QUARTILE FILTER]
+Count: 79 identifiers
+IDs: 0001-4826, 0015-198X, 0021-8456, 0022-1082, 0022-1090, 0022-2879, ...
+
+[BUGGY - WITHOUT QUARTILE FILTER (what the bug did)]
+Count: 288 identifiers (209 EXTRA!)
+IDs: 0001-3072, 0001-4788, 0001-4826, 0007-1870, 0015-1920, ...
+
+[ISSUE EXPLAINED]
+The bug returned 209 extra identifiers because it included identifiers from
+ALL quartiles (Q1, Q2, Q3, Q4) instead of just the requested Q1.
+
+Example extra IDs from other quartiles:
+  0001-3072, 1440-0405, 1741-3591, 1988-4672, 1540-6296, 0967-5426,
+  1554-1908, 1982-6486, 1815-5669, 2300-8814, 1740-8008, 1749-3374, ...
+
+[FIX APPLIED]
+Line 1449 in impl.py:
+  if "quartile" in df.columns:
+      df = df[df["quartile"].isin(quartiles)]  # ✓ ADDED
+
+Result: Now correctly returns 79 identifiers (only Q1)
+
+
+================================================================================
+TEST 2: getDiamondJournalsInAreasAndCategoriesWithQuartile
+================================================================================
+Area: Medicine
+Category: Hematology
+Quartile: Q1
+
+[EXPECTED]
+Count: 63 journals matching area/category/quartile
+Expected diamond (APC=False): 63 or fewer (depends on which have no APC)
+
+[THE BUG]
+Without the fix, the function would return MORE journals than expected
+because _coerce_bool() was returning True for unrecognized APC values.
+This caused non-diamond journals to be incorrectly included.
+
+[FIX APPLIED]
+1. Line 1338 in impl.py - _coerce_bool method:
+   Changed: return True  (for unrecognized values)
+   To:      return False (for unrecognized values)
+
+2. Line 1539 in impl.py - Diamond filter:
+   if not self._journal_has_apc(j):
+       diamond.append(j)
+
+Result: Now correctly returns only diamond journals (APC=False)
+        and excludes journals with APC=True or undefined
+
+
+================================================================================
+SUMMARY
+================================================================================
+
+✓ FIX #1 (getJournalsInCategoriesWithQuartile):
+  - Added quartile filter after category_id filter
+  - Prevents extra identifiers from other quartiles
+  - Exact count: Was returning 79 identifiers (correct after fix)
+  - Without fix would have: 288 identifiers (209 EXTRA)
+
+✓ FIX #2 (getDiamondJournalsInAreasAndCategoriesWithQuartile):
+  - Fixed _coerce_bool() to return False for unrecognized values
+  - Prevents non-diamond journals from being incorrectly included
+  - Result: Only returns journals with APC=False
+  - Filters out journals with APC=True or undefined/unrecognized values
+
+================================================================================

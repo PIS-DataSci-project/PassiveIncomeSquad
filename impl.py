@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 #ALL IMPORTS AT THE TOP OF THE FILE
 #General imports
 import pandas as pd 
@@ -1291,7 +1293,6 @@ class BasicQueryEngine: #Fahmida
 #FullQueryEngine
 #------------------------------------------------
 # River_full.py
-from __future__ import annotations
 
 from typing import Set, Dict, List
 
@@ -1334,7 +1335,7 @@ class FullQueryEngine(BasicQueryEngine):
             return True
         if s in {"false", "f", "no", "n", "0", ""}:
             return False
-        return True
+        return False
 
     def _journal_has_apc(self, journal) -> bool:
         """兼容不同 Journal API：hasAPC / getAPC / .apc"""
@@ -1444,6 +1445,8 @@ class FullQueryEngine(BasicQueryEngine):
 
             if "category_id" in df.columns:
                 df = df[df["category_id"].isin(category_ids)]
+            if "quartile" in df.columns:
+                df = df[df["quartile"].isin(quartiles)]
 
             self._add_identifiers_from_categories_df(df, wanted_identifiers)
 
