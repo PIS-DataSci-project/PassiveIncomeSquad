@@ -1290,62 +1290,93 @@ class BasicQueryEngine: #Fahmida
 #------------------------------------------------
 #FullQueryEngine
 #------------------------------------------------
+# River_full.py
+from __future__ import annotations
+
+from typing import Set, Dict, List
+
+import pandas as pd
+
+from from_uml_to_files.QueryEngine import BasicQueryEngine
+from impl import Journal
+
+
 class FullQueryEngine(BasicQueryEngine):
     """
     FullQueryEngine = “跨源拼接查询”的 QueryEngine。
-
-    它做的事不是“替代” BasicQueryEngine，而是在 BasicQueryEngine 的基础上做 mashup：
-    1) 先用 CategoryQueryHandler（SQLite）查出一批 journal identifiers（ISSN/EISSN）。
-    2) 再用 JournalQueryHandler（图数据库 / SPARQL）把这些 identifiers 对应的 journals 查出来。
-    3) 最后返回 Journal 对象列表（领域对象），而不是 DataFrame。
-
-    设计风格对齐 BasicQueryEngine：
-    - handler 负责查 df
-    - engine 负责把 df 变成对象（复用类似 _add_journals_from_df 的“翻译器”思路）
+    - SQLite（categories/areas/quartile）先筛出 identifiers（ISSN/EISSN）
+    - 图数据库（journals）再取回完整 Journal 对象
     """
 
     def __init__(self, journalQuery=None, categoryQuery=None):
-        # 原 River_full.py 的 super().__init__(journalQuery or [], categoryQuery or [])
-        # 但你现有 BasicQueryEngine.__init__ 不接参数，所以这里做“等价初始化”：
+        # ✅ 适配 BasicQueryEngine.__init__() 无参版本
         super().__init__()
-        if journalQuery:
-            self.journalQuery.extend(journalQuery)
-        if categoryQuery:
-            self.categoryQuery.extend(categoryQuery)
+        self.journalQuery.extend(journalQuery or [])
+        self.categoryQuery.extend(categoryQuery or [])
 
     # --------------------------
-    # 1) Parse：你要求“必须用”
+    # Bool helpers（diamond 需要）
+    # --------------------------
+    def _coerce_bool(self, x) -> bool:
+        """把 True/False、'true'/'false'、1/0、'1'/'0' 等统一成 bool。"""
+        if isinstance(x, bool):
+            return x
+        if x is None:
+            return False
+        if isinstance(x, (int, float)):
+            try:
+                return bool(int(x))
+            except Exception:
+                return bool(x)
+
+        s = str(x).strip().lower()
+        if s in {"true", "t", "yes", "y", "1"}:
+            return True
+        if s in {"false", "f", "no", "n", "0", ""}:
+            return False
+        return True
+
+    def _journal_has_apc(self, journal) -> bool:
+        """兼容不同 Journal API：hasAPC / getAPC / .apc"""
+        if hasattr(journal, "hasAPC") and callable(getattr(journal, "hasAPC")):
+            return bool(journal.hasAPC())
+        if hasattr(journal, "getAPC") and callable(getattr(journal, "getAPC")):
+            return bool(journal.getAPC())
+        return bool(getattr(journal, "apc", False))
+
+    # --------------------------
+    # Parse：必须用
     # --------------------------
     def _parse_list_field(self, raw) -> List[str]:
         """
         把数据库/df 里可能出现的“粘连字符串字段”拆成 list。
-
-        为什么需要：
-        - identifiers 可能是 "1234-5678; 8765-4321" 或 "1234-5678,8765-4321"
-        - language 可能是 "English; Italian"
-        - 有时也可能是 None / 空串
-
-        我们不处理 bool（按你的要求），这里只做“字符串拆分”。
+        支持：None / NaN / list / "a;b" / "a,b"
         """
         if raw is None:
             return []
+        if isinstance(raw, (list, tuple, set)):
+            return [str(part).strip() for part in raw if str(part).strip()]
+        try:
+            if pd.isna(raw):
+                return []
+        except Exception:
+            pass
+
         text = str(raw).strip()
         if not text:
             return []
 
-        # 兼容两种常见分隔符：; 和 ,
         text = text.replace(";", ",")
         parts = [p.strip() for p in text.split(",")]
         return [p for p in parts if p]
 
     # --------------------------------------------
-    # 2) 辅助：从 categories df “翻译”出 identifiers 集合
+    # 从 categories df 累积 identifiers
     # --------------------------------------------
     def _add_identifiers_from_categories_df(self, df: pd.DataFrame, identifiers: Set[str]) -> None:
         if df is None or df.empty:
             return
 
-        # 兼容列名：有的地方叫 identifiers，有的地方可能叫 identifier
         col = "identifiers" if "identifiers" in df.columns else "identifier"
         if col not in df.columns:
             return
@@ -1355,7 +1386,7 @@ class FullQueryEngine(BasicQueryEngine):
                 identifiers.add(one_id)
 
     # ---------------------------------------------------
-    # 3) 辅助：从 journals df 中挑出“匹配 identifiers 的行”
+    # 从 journals df 中筛出 wanted_identifiers 命中的行，构造 Journal 放入 map
     # ---------------------------------------------------
     def _add_journals_matching_identifiers_from_df(
         self,
@@ -1366,8 +1397,8 @@ class FullQueryEngine(BasicQueryEngine):
         if df is None or df.empty or not wanted_identifiers:
             return
 
-        id_col = "identifier" if "identifier" in df.columns else "identifiers"
-        if id_col not in df.columns:
+        id_col = "identifier" if "identifier" in df.columns else ("identifiers" if "identifiers" in df.columns else None)
+        if id_col is None:
             return
 
         for _, row in df.iterrows():
@@ -1375,20 +1406,21 @@ class FullQueryEngine(BasicQueryEngine):
             if not row_ids:
                 continue
 
-            hit = any(one_id in wanted_identifiers for one_id in row_ids)
-            if not hit:
+            # 命中判定：任意 id 在 wanted_identifiers 中即可
+            if not any(one_id in wanted_identifiers for one_id in row_ids):
                 continue
 
-            key = row_ids[0]
+            # ✅ 稳定 key：同一本 journal（ISSN/EISSN）不会因为命中不同 id 而重复
+            stable_key = "|".join(sorted(set(row_ids)))
 
-            if key not in journal_map:
-                journal_map[key] = Journal(
-                    identifiers=row_ids,
+            if stable_key not in journal_map:
+                journal_map[stable_key] = Journal(
+                    identifiers=row_ids,  # 保留完整 ISSN/EISSN
                     title=row.get("title", ""),
                     language=self._parse_list_field(row.get("language")),
-                    seal=row.get("seal", False),      # bool 暂且不处理，直接传
+                    seal=self._coerce_bool(row.get("seal", False)),
                     license=row.get("license", ""),
-                    apc=row.get("apc", False),        # bool 暂且不处理，直接传
+                    apc=self._coerce_bool(row.get("apc", False)),
                     publisher=row.get("publisher", None),
                 )
 
@@ -1419,7 +1451,6 @@ class FullQueryEngine(BasicQueryEngine):
             return []
 
         journal_map: Dict[str, Journal] = {}
-
         for handler in self.journalQuery:
             df = handler.getAllJournals()
             self._add_journals_matching_identifiers_from_df(df, wanted_identifiers, journal_map)
@@ -1456,7 +1487,7 @@ class FullQueryEngine(BasicQueryEngine):
     # ==========================
     # Mashup 查询 3
     # ==========================
-    def getDiamondJournalsInAreasAndCategoriesWithQuartile(
+    def getJournalsInAreasAndCategoriesWithQuartile(
         self,
         area_ids: Set[str],
         category_ids: Set[str],
@@ -1488,3 +1519,21 @@ class FullQueryEngine(BasicQueryEngine):
             self._add_journals_matching_identifiers_from_df(df, wanted_identifiers, journal_map)
 
         return list(journal_map.values())
+
+    # ==========================
+    # Diamond mashup：APC 必须为 False
+    # ==========================
+    def getDiamondJournalsInAreasAndCategoriesWithQuartile(
+        self,
+        area_ids: Set[str],
+        category_ids: Set[str],
+        quartiles: Set[str],
+    ) -> List[Journal]:
+        journals = self.getJournalsInAreasAndCategoriesWithQuartile(area_ids, category_ids, quartiles)
+
+        diamond: List[Journal] = []
+        for j in journals:
+            if not self._journal_has_apc(j):
+                diamond.append(j)
+
+        return diamond
