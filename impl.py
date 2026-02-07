@@ -574,8 +574,9 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
     # Get all categories
     # -----------------------------
     def getAllCategories(self) -> pd.DataFrame:
+        # Return one row per unique category_id (ignore quartile and other variations)
         query = """
-        SELECT DISTINCT category_id, quartile, identifiers, areas
+        SELECT DISTINCT category_id
         FROM categories
         """
         conn = sqlite3.connect(self.getDbPathOrUrl())
@@ -596,11 +597,52 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
         df = pd.read_sql_query(query, conn)
         conn.close()
 
-        # Split comma-separated values into individual rows
-        df["area"] = df["areas"].str.split(",")
-        df = df.explode("area")
-        df = df[["area"]].dropna().drop_duplicates().reset_index(drop=True)
-        return df
+        # Define the 27 known areas to properly split combined area strings
+        known_areas = {
+            "Agricultural and Biological Sciences",
+            "Arts and Humanities",
+            "Biochemistry, Genetics and Molecular Biology",
+            "Business, Management and Accounting",
+            "Chemical Engineering",
+            "Chemistry",
+            "Computer Science",
+            "Decision Sciences",
+            "Dentistry",
+            "Earth and Planetary Sciences",
+            "Economics, Econometrics and Finance",
+            "Energy",
+            "Engineering",
+            "Environmental Science",
+            "Health Professions",
+            "Immunology and Microbiology",
+            "Materials Science",
+            "Mathematics",
+            "Medicine",
+            "Multidisciplinary",
+            "Neuroscience",
+            "Nursing",
+            "Pharmacology, Toxicology and Pharmaceutics",
+            "Physics and Astronomy",
+            "Psychology",
+            "Social Sciences",
+            "Veterinary"
+        }
+        
+        # Parse areas intelligently by looking for known area names
+        parsed_areas = set()
+        for areas_str in df["areas"]:
+            if pd.isna(areas_str):
+                continue
+            # Try to match known areas in the string
+            remaining = areas_str
+            for area in sorted(known_areas, key=len, reverse=True):  # longer areas first
+                while area in remaining:
+                    parsed_areas.add(area)
+                    remaining = remaining.replace(area, "", 1).lstrip(",").strip()
+        
+        # Create dataframe with parsed areas
+        result_df = pd.DataFrame({"area": sorted(list(parsed_areas))})
+        return result_df
 
     # -----------------------------
     # Get categories filtered by quartile(s)
@@ -609,13 +651,18 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
         if not quartiles:
             return pd.DataFrame()
         placeholders = ",".join(["?"] * len(quartiles))
+        # Return one row per category that has at least one of the specified quartiles
+        # We select the minimum quartile alphabetically to ensure consistency
         query = f"""
-        SELECT category_id, quartile, identifiers, areas
+        SELECT DISTINCT category_id, 
+               (SELECT MIN(quartile) FROM categories c2 
+                WHERE c2.category_id = categories.category_id 
+                AND c2.quartile IN ({placeholders})) as quartile
         FROM categories
         WHERE quartile IN ({placeholders})
         """
         conn = sqlite3.connect(self.getDbPathOrUrl())
-        df = pd.read_sql_query(query, conn, params=tuple(quartiles))
+        df = pd.read_sql_query(query, conn, params=tuple(quartiles) + tuple(quartiles))
         conn.close()
         return df
 
@@ -625,16 +672,49 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
     def getCategoriesAssignedToAreas(self, area_ids) -> pd.DataFrame:
         if not area_ids:
             return pd.DataFrame()
-        conditions = " OR ".join(["areas LIKE ?"] * len(area_ids))
-        params = [f"%{area}%" for area in area_ids]
-        query = f"""
-        SELECT DISTINCT category_id, quartile, identifiers, areas
-        FROM categories
-        WHERE {conditions}
-        """
+        
+        # Build SQL conditions for exact area matching in comma-separated list
+        # Areas can appear at start (area,), middle (,area,), end (,area), or alone
         conn = sqlite3.connect(self.getDbPathOrUrl())
-        df = pd.read_sql_query(query, conn, params=params)
+        
+        all_matching_cats = set()
+        
+        for area in area_ids:
+            # Create conditions to match the area as a complete item
+            query = f"""
+            SELECT DISTINCT category_id 
+            FROM categories 
+            WHERE areas = ? 
+               OR areas LIKE ?
+               OR areas LIKE ?
+               OR areas LIKE ?
+            """
+            params = (
+                area,  # exact match
+                f"{area},%",  # at start
+                f"%,{area},%",  # in middle
+                f"%,{area}"  # at end
+            )
+            df = pd.read_sql_query(query, conn, params=params)
+            if not df.empty:
+                all_matching_cats.update(df['category_id'].tolist())
+        
+        if not all_matching_cats:
+            conn.close()
+            return pd.DataFrame(columns=['category_id', 'quartile'])
+        
+        # Get the categories with their quartiles (selecting MIN quartile for consistency)
+        placeholders = ",".join(["?"] * len(all_matching_cats))
+        query = f"""
+        SELECT DISTINCT category_id, 
+               (SELECT MIN(quartile) FROM categories c2 
+                WHERE c2.category_id = categories.category_id) as quartile
+        FROM categories
+        WHERE category_id IN ({placeholders})
+        """
+        df = pd.read_sql_query(query, conn, params=tuple(all_matching_cats))
         conn.close()
+        
         return df
 
     # -----------------------------
@@ -654,10 +734,52 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
         df = pd.read_sql_query(query, conn, params=tuple(category_ids))
         conn.close()
 
-        df["area"] = df["areas"].str.split(",")
-        df = df.explode("area")
-        df = df[["area"]].dropna().drop_duplicates().reset_index(drop=True)
-        return df
+        # Define the 27 known areas to properly split combined area strings
+        known_areas = {
+            "Agricultural and Biological Sciences",
+            "Arts and Humanities",
+            "Biochemistry, Genetics and Molecular Biology",
+            "Business, Management and Accounting",
+            "Chemical Engineering",
+            "Chemistry",
+            "Computer Science",
+            "Decision Sciences",
+            "Dentistry",
+            "Earth and Planetary Sciences",
+            "Economics, Econometrics and Finance",
+            "Energy",
+            "Engineering",
+            "Environmental Science",
+            "Health Professions",
+            "Immunology and Microbiology",
+            "Materials Science",
+            "Mathematics",
+            "Medicine",
+            "Multidisciplinary",
+            "Neuroscience",
+            "Nursing",
+            "Pharmacology, Toxicology and Pharmaceutics",
+            "Physics and Astronomy",
+            "Psychology",
+            "Social Sciences",
+            "Veterinary"
+        }
+        
+        # Parse areas intelligently by looking for known area names
+        parsed_areas = set()
+        for areas_str in df["areas"]:
+            if pd.isna(areas_str):
+                continue
+            # Try to match known areas in the string
+            remaining = areas_str
+            for area in sorted(known_areas, key=len, reverse=True):  # longer areas first
+                while area in remaining:
+                    parsed_areas.add(area)
+                    remaining = remaining.replace(area, "", 1).lstrip(",").strip()
+        
+        # Create dataframe with parsed areas
+        result_df = pd.DataFrame({"area": sorted(list(parsed_areas))})
+        return result_df
     
     # -----------------------------
     # Get categories by journal identifier
@@ -1041,11 +1163,12 @@ class BasicQueryEngine: #Fahmida
         if not dfs:
             return []
 
-        merged = pd.concat(dfs, ignore_index=True).drop_duplicates()
+        # deduplicate by category_id (logical key)
+        merged = pd.concat(dfs, ignore_index=True).drop_duplicates(subset=["category_id"])
 
         return [
             Category(
-                identifiers={row["category_id"]},
+                identifiers=[row["category_id"]],
                 quartile=row["quartile"]
             )
             for _, row in merged.iterrows()
@@ -1069,13 +1192,13 @@ class BasicQueryEngine: #Fahmida
         if not dfs:
             return []
 
-        # Merge and remove duplicates
-        merged = pd.concat(dfs, ignore_index=True).drop_duplicates()
+        # Merge and remove duplicates by logical key 'area'
+        merged = pd.concat(dfs, ignore_index=True).drop_duplicates(subset=["area"]).reset_index(drop=True)
 
         # Convert rows into Area objects
         return [
             Area(
-                identifiers={row["area"]}  # <- this is the correct column
+                identifiers=[row["area"]]
             )
             for _, row in merged.iterrows()
         ]
@@ -1098,11 +1221,12 @@ class BasicQueryEngine: #Fahmida
         if not dfs:
             return []
 
-        merged = pd.concat(dfs, ignore_index=True).drop_duplicates()
+        # deduplicate by category_id (logical key)
+        merged = pd.concat(dfs, ignore_index=True).drop_duplicates(subset=["category_id"])
 
         return [
             Category(
-                identifiers={row["category_id"]},
+                identifiers=[row["category_id"]],
                 quartile=row["quartile"]
             )
             for _, row in merged.iterrows()
@@ -1125,11 +1249,12 @@ class BasicQueryEngine: #Fahmida
         if not dfs:
             return []
 
-        merged = pd.concat(dfs, ignore_index=True).drop_duplicates()
+        # deduplicate by category_id (logical key)
+        merged = pd.concat(dfs, ignore_index=True).drop_duplicates(subset=["category_id"])
 
         return [
             Category(
-                identifiers={row["category_id"]},
+                identifiers=[row["category_id"]],
                 quartile=row["quartile"]
             )
             for _, row in merged.iterrows()
@@ -1152,11 +1277,12 @@ class BasicQueryEngine: #Fahmida
         if not dfs:
             return []
 
-        merged = pd.concat(dfs, ignore_index=True).drop_duplicates()
+        # deduplicate by logical key 'area'
+        merged = pd.concat(dfs, ignore_index=True).drop_duplicates(subset=["area"]).reset_index(drop=True)
 
         return [
             Area(
-                identifiers={row["area"]}
+                identifiers=[row["area"]]
             )
             for _, row in merged.iterrows()
         ]
