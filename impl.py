@@ -255,7 +255,7 @@ class CategoryUploadHandler(UploadHandler):  # River
 
                 category_id = category.get("id")
                 quartile = category.get("quartile")
-                if not (category_id and quartile):
+                if not category_id:
                     continue
 
                 areas = category.get("areas", record.get("areas"))
@@ -576,10 +576,11 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
     # Get all categories
     # -----------------------------
     def getAllCategories(self) -> pd.DataFrame:
-        # Return one row per unique category_id (ignore quartile and other variations)
+        # Return all unique categories (one row per category_id) with quartile information
         query = """
-        SELECT DISTINCT category_id
+        SELECT category_id, MIN(quartile) as quartile
         FROM categories
+        GROUP BY category_id
         """
         conn = sqlite3.connect(self.getDbPathOrUrl())
         df = pd.read_sql_query(query, conn)
