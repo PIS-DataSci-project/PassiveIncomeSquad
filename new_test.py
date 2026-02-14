@@ -15,7 +15,7 @@ que.addCategoryHandler(cat_qh)
 que.addJournalHandler(jou_qh)
 
 # Test queries
-result1 = que.getJournalsInCategoriesWithQuartile({"AI"}, {"Q1"})
+result1 = que.getJournalsInCategoriesWithQuartile({"Artificial Intelligence"}, {"Q1"})
 print(f"Found {len(result1)} journals")  # Should return > 0
 
 result2 = que.getJournalsInAreasWithLicense({"Computer Science"}, {"CC-BY"})
