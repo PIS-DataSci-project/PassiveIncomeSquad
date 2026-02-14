@@ -1387,6 +1387,52 @@ class FullQueryEngine(BasicQueryEngine):
             for one_id in self._parse_list_field(row.get(col)):
                 identifiers.add(one_id)
 
+    # --------------------------------------------
+    # Query identifiers directly from database
+    # --------------------------------------------
+    def _query_identifiers_from_db(self, category_ids: Set[str], quartiles: Set[str] = None) -> Set[str]:
+        """Query identifiers from categories table for given category_ids and optional quartiles."""
+        if not category_ids:
+            return set()
+        
+        # Use the first category handler to get the database path
+        handler = self.categoryQuery[0] if self.categoryQuery else None
+        if not handler:
+            return set()
+        
+        conn = sqlite3.connect(handler.getDbPathOrUrl())
+        
+        if quartiles:
+            # Query with both category_ids and quartiles
+            placeholders_cat = ",".join(["?"] * len(category_ids))
+            placeholders_quart = ",".join(["?"] * len(quartiles))
+            query = f"""
+            SELECT DISTINCT identifiers
+            FROM categories
+            WHERE category_id IN ({placeholders_cat})
+              AND quartile IN ({placeholders_quart})
+            """
+            params = tuple(category_ids) + tuple(quartiles)
+        else:
+            # Query with only category_ids
+            placeholders = ",".join(["?"] * len(category_ids))
+            query = f"""
+            SELECT DISTINCT identifiers
+            FROM categories
+            WHERE category_id IN ({placeholders})
+            """
+            params = tuple(category_ids)
+        
+        df = pd.read_sql_query(query, conn, params=params)
+        conn.close()
+        
+        identifiers = set()
+        for _, row in df.iterrows():
+            for one_id in self._parse_list_field(row.get("identifiers")):
+                identifiers.add(one_id)
+        
+        return identifiers
+
     # ---------------------------------------------------
     # 从 journals df 中筛出 wanted_identifiers 命中的行，构造 Journal 放入 map
     # ---------------------------------------------------
@@ -1440,16 +1486,22 @@ class FullQueryEngine(BasicQueryEngine):
         wanted_identifiers: Set[str] = set()
 
         for handler in self.categoryQuery:
-            df = handler.getCategoriesWithQuartile(quartiles)
-            if df is None or df.empty:
-                continue
-
-            if "category_id" in df.columns:
-                df = df[df["category_id"].isin(category_ids)]
-            if "quartile" in df.columns:
-                df = df[df["quartile"].isin(quartiles)]
-
-            self._add_identifiers_from_categories_df(df, wanted_identifiers)
+            # Query database directly with both category_ids and quartiles
+            placeholders_cat = ",".join(["?"] * len(category_ids))
+            placeholders_quart = ",".join(["?"] * len(quartiles))
+            query = f"""
+            SELECT DISTINCT identifiers
+            FROM categories
+            WHERE category_id IN ({placeholders_cat})
+              AND quartile IN ({placeholders_quart})
+            """
+            conn = sqlite3.connect(handler.getDbPathOrUrl())
+            df_identifiers = pd.read_sql_query(query, conn, params=tuple(category_ids) + tuple(quartiles))
+            conn.close()
+            
+            for _, row in df_identifiers.iterrows():
+                for one_id in self._parse_list_field(row.get("identifiers")):
+                    wanted_identifiers.add(one_id)
 
         if not wanted_identifiers:
             return []
@@ -1475,8 +1527,27 @@ class FullQueryEngine(BasicQueryEngine):
         wanted_identifiers: Set[str] = set()
 
         for handler in self.categoryQuery:
+            # Step 1: Get category_ids from areas
             df = handler.getCategoriesAssignedToAreas(area_ids)
-            self._add_identifiers_from_categories_df(df, wanted_identifiers)
+            if df is None or df.empty:
+                continue
+            category_ids = set(df['category_id'].unique())
+            
+            # Step 2: Query database to get identifiers for those category_ids
+            if category_ids:
+                placeholders = ",".join(["?"] * len(category_ids))
+                query = f"""
+                SELECT DISTINCT identifiers
+                FROM categories
+                WHERE category_id IN ({placeholders})
+                """
+                conn = sqlite3.connect(handler.getDbPathOrUrl())
+                df_identifiers = pd.read_sql_query(query, conn, params=tuple(category_ids))
+                conn.close()
+                
+                for _, row in df_identifiers.iterrows():
+                    for one_id in self._parse_list_field(row.get("identifiers")):
+                        wanted_identifiers.add(one_id)
 
         if not wanted_identifiers:
             return []
@@ -1503,16 +1574,32 @@ class FullQueryEngine(BasicQueryEngine):
         wanted_identifiers: Set[str] = set()
 
         for handler in self.categoryQuery:
+            # Step 1: Get categories from areas
             df = handler.getCategoriesAssignedToAreas(area_ids)
             if df is None or df.empty:
                 continue
-
-            if "category_id" in df.columns:
-                df = df[df["category_id"].isin(category_ids)]
-            if "quartile" in df.columns:
-                df = df[df["quartile"].isin(quartiles)]
-
-            self._add_identifiers_from_categories_df(df, wanted_identifiers)
+            area_category_ids = set(df['category_id'].unique())
+            
+            # Step 2: Find intersection with requested category_ids
+            matching_categories = area_category_ids.intersection(category_ids)
+            
+            # Step 3: Query database for identifiers with quartile filter
+            if matching_categories:
+                placeholders_cat = ",".join(["?"] * len(matching_categories))
+                placeholders_quart = ",".join(["?"] * len(quartiles))
+                query = f"""
+                SELECT DISTINCT identifiers
+                FROM categories
+                WHERE category_id IN ({placeholders_cat})
+                  AND quartile IN ({placeholders_quart})
+                """
+                conn = sqlite3.connect(handler.getDbPathOrUrl())
+                df_identifiers = pd.read_sql_query(query, conn, params=tuple(matching_categories) + tuple(quartiles))
+                conn.close()
+                
+                for _, row in df_identifiers.iterrows():
+                    for one_id in self._parse_list_field(row.get("identifiers")):
+                        wanted_identifiers.add(one_id)
 
         if not wanted_identifiers:
             return []
