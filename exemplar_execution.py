@@ -30,7 +30,7 @@ print("\n" + "=" * 60)
 print("STEP 2: Creating graph database")
 print("=" * 60)
 try:
-    grp_endpoint = "http://172.20.10.2:9999/blazegraph/sparql"
+    grp_endpoint = "http://192.168.78.104:9999/blazegraph/sparql"
     jou = JournalUploadHandler()
     jou.setDbPathOrUrl(grp_endpoint) 
     jou.serializeToTTL("data/doaj.csv", "doaj.ttl")
