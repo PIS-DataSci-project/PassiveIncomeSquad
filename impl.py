@@ -66,7 +66,7 @@ class Journal(IdentifiableEntity): # CLAUDIA
     def hasDOAJSeal(self): # boolean
         return self.seal
     
-    def getLicense(self):
+    def getLicence(self):
         return self.license
     
     def hasAPC(self): # boolean
