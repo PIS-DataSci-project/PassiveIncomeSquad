@@ -2,7 +2,7 @@
 from impl import * 
 
 rel_path = "relational.db"
-grp_endpoint = "http://127.0.0.1:9999/blazegraph/sparql"
+grp_endpoint = "http://192.168.78.76:9999/blazegraph/sparql"
 
 cat_qh = CategoryQueryHandler()
 cat_qh.setDbPathOrUrl(rel_path)
