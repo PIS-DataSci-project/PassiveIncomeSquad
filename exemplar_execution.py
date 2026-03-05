@@ -530,3 +530,27 @@ print(df_journal)
 
 # Step 3: check if that same id is in the overlap set
 print(f"\nStep 3 - Is '{test_id}' in the overlap set?", test_id.strip() in overlap)
+
+import sqlite3
+
+conn = sqlite3.connect(rel_path)
+df_ai = pd.read_sql_query("""
+    SELECT DISTINCT identifiers 
+    FROM categories 
+    WHERE category_id = 'Artificial Intelligence' 
+    AND quartile = 'Q1'
+""", conn)
+conn.close()
+
+ai_ids = set(df_ai['identifiers'].str.strip())
+
+df_graph = jou_qh.getAllJournals()
+graph_ids = set()
+for val in df_graph['identifier'].dropna():
+    for part in val.split(';'):
+        graph_ids.add(part.strip())
+
+ai_overlap = ai_ids.intersection(graph_ids)
+print(f"AI/Q1 has {len(ai_ids)} identifiers in SQLite")
+print(f"Of those, {len(ai_overlap)} exist in the graph")
+print("Matching ones:", list(ai_overlap)[:10])
