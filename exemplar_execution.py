@@ -11,6 +11,7 @@ from impl import JournalUploadHandler, JournalQueryHandler
 from impl import BasicQueryEngine, FullQueryEngine
 
 import sqlite3
+import pandas as pd
 
 # Once all the classes are imported, first create the relational
 # database using the related source data
