@@ -505,3 +505,28 @@ print("- BasicQueryEngine: 18 methods tested")
 print("- FullQueryEngine: 12 methods tested (3 mashup + 3 helper + 6 inheritance)")
 print("- Total: 30 test cases executed")
 print("=" * 80)
+
+import sqlite3
+
+# Step 1: check what SQLite returns for a category we know exists
+conn = sqlite3.connect(rel_path)
+df_test = pd.read_sql_query("""
+    SELECT DISTINCT identifiers 
+    FROM categories 
+    WHERE category_id = 'Artificial Intelligence' 
+    AND quartile = 'Q1'
+    LIMIT 5
+""", conn)
+conn.close()
+print("Step 1 - SQLite identifiers for AI/Q1:")
+print(df_test)
+
+# Step 2: take one of those identifiers and check if the graph finds it
+test_id = df_test['identifiers'].iloc[0]
+print(f"\nStep 2 - Looking for '{test_id}' in graph...")
+df_journal = jou_qh.getById(test_id)
+print(f"Graph result for {test_id}:")
+print(df_journal)
+
+# Step 3: check if that same id is in the overlap set
+print(f"\nStep 3 - Is '{test_id}' in the overlap set?", test_id.strip() in overlap)
