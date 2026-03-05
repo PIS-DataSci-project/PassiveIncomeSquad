@@ -10,6 +10,8 @@ from impl import JournalUploadHandler, JournalQueryHandler
 # 3) Importing the class for dealing with mashup queries
 from impl import BasicQueryEngine, FullQueryEngine
 
+import sqlite3
+
 # Once all the classes are imported, first create the relational
 # database using the related source data
 print("=" * 60)
@@ -33,8 +35,8 @@ try:
     grp_endpoint = "http://10.201.35.165:9999/blazegraph/sparql"  # Update with your Blazegraph endpoint
     jou = JournalUploadHandler()
     jou.setDbPathOrUrl(grp_endpoint) 
-    jou.serializeToTTL("data/doaj.csv", "doaj.ttl")
-    jou.pushDataToDb("data/doaj.csv")
+    # jou.serializeToTTL("data/doaj.csv", "doaj.ttl")
+    # jou.pushDataToDb("data/doaj.csv")
     print("✓ SUCCESS: Graph database handler created and data serialized to TTL")
 except Exception as e:
     print(f"✗ FAIL: Graph database creation failed - {e}")
@@ -180,6 +182,25 @@ try:
     print(f"✓ SUCCESS: Found {count} area(s) for Artificial Intelligence")
 except Exception as e:
     print(f"✗ FAIL: getAreasAssignedToCategories() failed - {e}")
+    
+
+# --- CHECK SQLITE SIDE ---
+conn = sqlite3.connect(rel_path)
+df_sqlite = pd.read_sql_query("""
+    SELECT DISTINCT identifiers 
+    FROM categories 
+    WHERE category_id = 'Artificial Intelligence' 
+    AND quartile = 'Q1'
+    LIMIT 10
+""", conn)
+conn.close()
+print("SQLite identifiers for AI/Q1:")
+print(df_sqlite)
+
+# --- CHECK GRAPH SIDE ---
+df_graph = jou_qh.getAllJournals()
+print("\nGraph identifiers (first 10):")
+print(df_graph['identifier'].head(10))
 
 # =============================================================================
 # ENTITY LOOKUP METHODS
