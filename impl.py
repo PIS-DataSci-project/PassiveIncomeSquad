@@ -878,8 +878,8 @@ class BasicQueryEngine: #Fahmida
         
         categories = []
         for handler in self.categoryQuery:
-            for journal_id in journal_ids:
-                cat_df = handler.getCategoriesByJournalId(journal_id)
+            for jid in journal_ids:
+                cat_df = handler.getCategoriesByJournalId(jid)
                 if cat_df is not None and not cat_df.empty:
                     for _, row in cat_df.iterrows():
                         cat = Category(
@@ -913,8 +913,8 @@ class BasicQueryEngine: #Fahmida
         
         areas = []
         for handler in self.categoryQuery:
-            for journal_id in journal_ids:
-                area_df = handler.getAreasByJournalId(journal_id)
+            for jid in journal_ids:
+                area_df = handler.getAreasByJournalId(jid)
                 if area_df is not None and not area_df.empty:
                     for _, row in area_df.iterrows():
                         if 'area' in row and pd.notna(row['area']):
