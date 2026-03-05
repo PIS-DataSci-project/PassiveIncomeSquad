@@ -89,9 +89,8 @@ class Category(IdentifiableEntity): # FAHMIDA
     def __init__(self, identifiers, quartile):
         self.quartile = quartile
         super().__init__(identifiers)
-
-
-#method to get quartile
+        
+    # method to get quartile
     def getQuartile(self):
         return self.quartile
 
@@ -1294,13 +1293,6 @@ class BasicQueryEngine: #Fahmida
 #FullQueryEngine
 #------------------------------------------------
 # River_full.py
-
-from typing import Set, Dict, List
-
-import pandas as pd
-
-from from_uml_to_files.QueryEngine import BasicQueryEngine
-from impl import Journal
 
 
 class FullQueryEngine(BasicQueryEngine):
