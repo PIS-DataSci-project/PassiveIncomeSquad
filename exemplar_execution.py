@@ -494,6 +494,30 @@ try:
 except Exception as e:
     print(f"✗ FAIL: getEntityById() failed - {e}")
 
+# Test 1 - getJournalsInCategoriesWithQuartile
+result = full_que.getJournalsInCategoriesWithQuartile(
+    {"Artificial Intelligence"}, {"Q1"}
+)
+print(f"getJournalsInCategoriesWithQuartile: {len(result)} journals")
+if result:
+    print(f"  First journal: {result[0].getTitle()} | license: {result[0].getLicence()}")
+
+# Test 2 - getJournalsInAreasWithLicense
+result = full_que.getJournalsInAreasWithLicense(
+    {"Computer Science"}, {"CC BY"}
+)
+print(f"getJournalsInAreasWithLicense: {len(result)} journals")
+if result:
+    print(f"  First journal: {result[0].getTitle()} | license: {result[0].getLicence()}")
+
+# Test 3 - getDiamondJournalsInAreasAndCategoriesWithQuartile
+result = full_que.getDiamondJournalsInAreasAndCategoriesWithQuartile(
+    {"Computer Science"}, {"Artificial Intelligence"}, {"Q1"}
+)
+print(f"getDiamondJournalsInAreasAndCategoriesWithQuartile: {len(result)} journals")
+if result:
+    print(f"  First journal: {result[0].getTitle()} | APC: {result[0].hasAPC()}")
+
 # =============================================================================
 # FINAL SUMMARY
 # =============================================================================
