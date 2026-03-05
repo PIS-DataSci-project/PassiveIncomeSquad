@@ -203,6 +203,26 @@ df_graph = jou_qh.getAllJournals()
 print("\nGraph identifiers (first 10):")
 print(df_graph['identifier'].head(10))
 
+import sqlite3
+
+conn = sqlite3.connect(rel_path)
+df_sqlite = pd.read_sql_query("SELECT DISTINCT identifiers FROM categories", conn)
+conn.close()
+
+sqlite_ids = set(df_sqlite['identifiers'].str.strip())
+
+df_graph = jou_qh.getAllJournals()
+graph_ids = set()
+for val in df_graph['identifier'].dropna():
+    for part in val.split(';'):
+        graph_ids.add(part.strip())
+
+overlap = sqlite_ids.intersection(graph_ids)
+print(f"SQLite has {len(sqlite_ids)} unique identifiers")
+print(f"Graph has {len(graph_ids)} unique identifiers")
+print(f"Overlap: {len(overlap)} common identifiers")
+print("Sample overlap:", list(overlap)[:10])
+
 # =============================================================================
 # ENTITY LOOKUP METHODS
 # =============================================================================
