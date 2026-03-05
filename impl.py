@@ -913,7 +913,7 @@ class BasicQueryEngine: #Fahmida
         
         areas = []
         for handler in self.categoryQuery:
-            for jid in journal_ids:
+            for jid in journal_ids: 
                 area_df = handler.getAreasByJournalId(jid)
                 if area_df is not None and not area_df.empty:
                     for _, row in area_df.iterrows():

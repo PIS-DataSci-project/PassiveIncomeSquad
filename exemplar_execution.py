@@ -30,7 +30,7 @@ print("\n" + "=" * 60)
 print("STEP 2: Creating graph database")
 print("=" * 60)
 try:
-    grp_endpoint = "http://192.168.1.183:9999/blazegraph/sparql"
+    grp_endpoint = "http://10.201.35.165:9999/blazegraph/sparql"
     jou = JournalUploadHandler()
     jou.setDbPathOrUrl(grp_endpoint) 
     jou.serializeToTTL("data/doaj.csv", "doaj.ttl")
@@ -274,6 +274,15 @@ try:
         print("✗ FAIL: cleanCategoryHandlers() returned False")
 except Exception as e:
     print(f"✗ FAIL: cleanCategoryHandlers() failed - {e}")
+    
+# DEBUG: test getLicence on a real ISSN
+result = que.getEntityById("1991-9468")  # replace with a real ISSN from your data
+print("Entity type:", type(result))
+if result is not None:
+    print("getLicence:", result.getLicence())
+else:
+    print("No entity found - check the ISSN exists in Blazegraph")
+    
 
 # =============================================================================
 # SUMMARY - BASICQUERYENGINE
