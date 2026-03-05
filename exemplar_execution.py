@@ -554,3 +554,44 @@ ai_overlap = ai_ids.intersection(graph_ids)
 print(f"AI/Q1 has {len(ai_ids)} identifiers in SQLite")
 print(f"Of those, {len(ai_overlap)} exist in the graph")
 print("Matching ones:", list(ai_overlap)[:10])
+
+import sqlite3
+
+# Simulate exactly what getJournalsInCategoriesWithQuartile does internally
+category_ids = {"Artificial Intelligence"}
+quartiles = {"Q1"}
+
+# Step 1: what does the SQLite query return?
+conn = sqlite3.connect(rel_path)
+df_identifiers = pd.read_sql_query("""
+    SELECT DISTINCT identifiers
+    FROM categories
+    WHERE category_id IN ('Artificial Intelligence')
+    AND quartile IN ('Q1')
+""", conn)
+conn.close()
+print("Step 1 - SQLite query result:")
+print(df_identifiers.head(10))
+
+# Step 2: what does _parse_list_field do to those identifiers?
+wanted = set()
+for val in df_identifiers['identifiers']:
+    for part in str(val).replace(';', ',').split(','):
+        part = part.strip()
+        if part:
+            wanted.add(part)
+print(f"\nStep 2 - wanted_identifiers after parsing: {len(wanted)} ids")
+print("Sample:", list(wanted)[:5])
+
+# Step 3: what does getAllJournals return from graph?
+df_journals = jou_qh.getAllJournals()
+print(f"\nStep 3 - Graph returned {len(df_journals)} rows")
+print("Sample identifiers:", df_journals['identifier'].head(5).tolist())
+
+# Step 4: how many graph rows match wanted_identifiers?
+matches = 0
+for val in df_journals['identifier'].dropna():
+    row_ids = [p.strip() for p in str(val).replace(';', ',').split(',')]
+    if any(rid in wanted for rid in row_ids):
+        matches += 1
+print(f"\nStep 4 - Graph rows matching wanted_identifiers: {matches}")
