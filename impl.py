@@ -761,7 +761,7 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
             "Mathematics",
             "Medicine",
             "Multidisciplinary",
-            "Neuroscience",
+            
             "Nursing",
             "Pharmacology, Toxicology and Pharmaceutics",
             "Physics and Astronomy",
