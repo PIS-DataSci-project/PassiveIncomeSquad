@@ -68,6 +68,9 @@ class Journal(IdentifiableEntity): # CLAUDIA
     
     def getLicence(self):
         return self.license
+
+    def getLicense(self):
+        return self.license
     
     def hasAPC(self): # boolean
         return self.apc
@@ -1500,9 +1503,8 @@ class FullQueryEngine(BasicQueryEngine):
 
         journal_map: Dict[str, Journal] = {}
         for handler in self.journalQuery:
-            for wid in wanted_identifiers:
-                df = handler.getById(wid)
-                self._add_journals_matching_identifiers_from_df(df, wanted_identifiers, journal_map)
+            all_df = handler.getAllJournals()
+            self._add_journals_matching_identifiers_from_df(all_df, wanted_identifiers, journal_map)
 
         return list(journal_map.values())
 
@@ -1547,9 +1549,8 @@ class FullQueryEngine(BasicQueryEngine):
 
         journal_map: Dict[str, Journal] = {}
         for handler in self.journalQuery:
-            for wid in wanted_identifiers:
-                df = handler.getById(wid)
-                self._add_journals_matching_identifiers_from_df(df, wanted_identifiers, journal_map)
+            license_df = handler.getJournalsWithLicense(licenses)
+            self._add_journals_matching_identifiers_from_df(license_df, wanted_identifiers, journal_map)
 
         return list(journal_map.values())
 
@@ -1600,9 +1601,8 @@ class FullQueryEngine(BasicQueryEngine):
 
         journal_map: Dict[str, Journal] = {}
         for handler in self.journalQuery:
-            for wid in wanted_identifiers:
-                df = handler.getById(wid)
-                self._add_journals_matching_identifiers_from_df(df, wanted_identifiers, journal_map)
+            all_df = handler.getAllJournals()
+            self._add_journals_matching_identifiers_from_df(all_df, wanted_identifiers, journal_map)
 
         return list(journal_map.values())
 
