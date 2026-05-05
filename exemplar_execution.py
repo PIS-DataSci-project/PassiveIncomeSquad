@@ -33,11 +33,11 @@ print("\n" + "=" * 60)
 print("STEP 2: Creating graph database")
 print("=" * 60)
 try:
-    grp_endpoint = "http://10.201.35.165:9999/blazegraph/sparql"  # Update with your Blazegraph endpoint
+    grp_endpoint = "http://192.168.78.51:9999/blazegraph/sparql"  # Update with your Blazegraph endpoint
     jou = JournalUploadHandler()
     jou.setDbPathOrUrl(grp_endpoint) 
-    # jou.serializeToTTL("data/doaj.csv", "doaj.ttl")
-    # jou.pushDataToDb("data/doaj.csv")
+    jou.serializeToTTL("data/doaj.csv", "doaj.ttl")
+    jou.pushDataToDb("data/doaj.csv")
     print("✓ SUCCESS: Graph database handler created and data serialized to TTL")
 except Exception as e:
     print(f"✗ FAIL: Graph database creation failed - {e}")
