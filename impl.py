@@ -820,13 +820,49 @@ class CategoryQueryHandler(QueryHandler): #FAHMIDA
         df = pd.read_sql_query(query, conn, params=(journal_id,))
         conn.close()
         
-        # Split comma-separated values into individual rows
-        if not df.empty:
-            df["area"] = df["areas"].str.split(",")
-            df = df.explode("area")
-            df = df[["area"]].dropna().drop_duplicates().reset_index(drop=True)
-        
-        return df
+        # Parse areas intelligently using known area names (some contain commas)
+        known_areas = {
+            "Agricultural and Biological Sciences",
+            "Arts and Humanities",
+            "Biochemistry, Genetics and Molecular Biology",
+            "Business, Management and Accounting",
+            "Chemical Engineering",
+            "Chemistry",
+            "Computer Science",
+            "Decision Sciences",
+            "Dentistry",
+            "Earth and Planetary Sciences",
+            "Economics, Econometrics and Finance",
+            "Energy",
+            "Engineering",
+            "Environmental Science",
+            "Health Professions",
+            "Immunology and Microbiology",
+            "Materials Science",
+            "Mathematics",
+            "Medicine",
+            "Multidisciplinary",
+            "Neuroscience",
+            "Nursing",
+            "Pharmacology, Toxicology and Pharmaceutics",
+            "Physics and Astronomy",
+            "Psychology",
+            "Social Sciences",
+            "Veterinary"
+        }
+
+        parsed_areas = set()
+        for areas_str in df["areas"]:
+            if pd.isna(areas_str):
+                continue
+            remaining = areas_str
+            for area in sorted(known_areas, key=len, reverse=True):  # longer areas first
+                while area in remaining:
+                    parsed_areas.add(area)
+                    remaining = remaining.replace(area, "", 1).lstrip(",").strip()
+
+        result_df = pd.DataFrame({"area": sorted(list(parsed_areas))})
+        return result_df
 
 
 # -----------------------------------------------------------------------------------
@@ -1506,6 +1542,11 @@ class FullQueryEngine(BasicQueryEngine):
             all_df = handler.getAllJournals()
             self._add_journals_matching_identifiers_from_df(all_df, wanted_identifiers, journal_map)
 
+        # Filter each journal's identifiers to only those in wanted_identifiers
+        # to avoid including partner identifiers (e.g. EISSN) not in the category/quartile data
+        for journal in journal_map.values():
+            journal.identifiers = [id for id in journal.identifiers if id in wanted_identifiers]
+
         return list(journal_map.values())
 
     # ==========================
@@ -1522,27 +1563,27 @@ class FullQueryEngine(BasicQueryEngine):
         wanted_identifiers: Set[str] = set()
 
         for handler in self.categoryQuery:
-            # Step 1: Get category_ids from areas
-            df = handler.getCategoriesAssignedToAreas(area_ids)
-            if df is None or df.empty:
-                continue
-            category_ids = set(df['category_id'].unique())
-            
-            # Step 2: Query database to get identifiers for those category_ids
-            if category_ids:
-                placeholders = ",".join(["?"] * len(category_ids))
-                query = f"""
+            conn = sqlite3.connect(handler.getDbPathOrUrl())
+            for area in area_ids:
+                # Query identifiers directly for rows matching this area
+                # (same LIKE patterns used in getCategoriesAssignedToAreas)
+                query = """
                 SELECT DISTINCT identifiers
                 FROM categories
-                WHERE category_id IN ({placeholders})
+                WHERE (areas = ? OR areas LIKE ? OR areas LIKE ? OR areas LIKE ?)
+                  AND identifiers IS NOT NULL
                 """
-                conn = sqlite3.connect(handler.getDbPathOrUrl())
-                df_identifiers = pd.read_sql_query(query, conn, params=tuple(category_ids))
-                conn.close()
-                
+                params = (
+                    area,
+                    f"{area},%",
+                    f"%,{area},%",
+                    f"%,{area}",
+                )
+                df_identifiers = pd.read_sql_query(query, conn, params=params)
                 for _, row in df_identifiers.iterrows():
                     for one_id in self._parse_list_field(row.get("identifiers")):
                         wanted_identifiers.add(one_id)
+            conn.close()
 
         if not wanted_identifiers:
             return []
