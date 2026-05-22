@@ -1542,10 +1542,11 @@ class FullQueryEngine(BasicQueryEngine):
             all_df = handler.getAllJournals()
             self._add_journals_matching_identifiers_from_df(all_df, wanted_identifiers, journal_map)
 
-        # Filter each journal's identifiers to only those in wanted_identifiers
-        # to avoid including partner identifiers (e.g. EISSN) not in the category/quartile data
+        # Filter each journal's identifiers to only those in wanted_identifiers,
+        # keeping only the first matching one so each journal contributes exactly one identifier
         for journal in journal_map.values():
-            journal.identifiers = [id for id in journal.identifiers if id in wanted_identifiers]
+            filtered = [id for id in journal.identifiers if id in wanted_identifiers]
+            journal.identifiers = filtered[:1] if filtered else []
 
         return list(journal_map.values())
 
@@ -1593,7 +1594,9 @@ class FullQueryEngine(BasicQueryEngine):
             license_df = handler.getJournalsWithLicense(licenses)
             self._add_journals_matching_identifiers_from_df(license_df, wanted_identifiers, journal_map)
 
-        return list(journal_map.values())
+        # Only return journals where ALL their identifiers are in the area's wanted set
+        return [j for j in journal_map.values()
+                if all(id in wanted_identifiers for id in j.identifiers)]
 
     # ==========================
     # Mashup 查询 3
